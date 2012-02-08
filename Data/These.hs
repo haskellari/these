@@ -47,7 +47,7 @@ justThat _        = Nothing
 
 justThese :: These a b -> Maybe (a, b)
 justThese (These a x) = Just (a, x)
-justThere _           = Nothing
+justThese _           = Nothing
 
 isThis, isThat, isThese :: These a b -> Bool
 isThis  = isJust . justThis
