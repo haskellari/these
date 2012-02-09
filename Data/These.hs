@@ -18,11 +18,18 @@ module Data.These (
                     -- $align
                   ) where
 
-import Control.Applicative (Applicative(..), (<$>))
+import Control.Applicative (Applicative(..))
+import Control.Monad
+import Data.Bifoldable
+import Data.Bifunctor
+import Data.Bitraversable
 import Data.Foldable
-import Data.Traversable
+import Data.Functor.Bind
 import Data.Maybe (isJust)
 import Data.Semigroup (Semigroup(..), Monoid(..))
+import Data.Semigroup.Bifoldable
+import Data.Semigroup.Bitraversable
+import Data.Traversable
 import Prelude hiding (foldr)
 
 -- --------------------------------------------------------------------------
@@ -111,22 +118,53 @@ instance Traversable (These a) where
     sequenceA (That x) = That <$> x
     sequenceA (These a x) = These a <$> x
 
+instance Bifunctor These where
+    bimap = mapThese
+    first = mapThis
+    second = mapThat
+
+instance Bifoldable These where
+    bifold = these id id mappend
+    bifoldr f g z = these (`f` z) (`g` z) (\x y -> x `f` (y `g` z))
+    bifoldl f g z = these (z `f`) (z `g`) (\x y -> (z `f` x) `g`  y)
+
+instance Bifoldable1 These where
+    bifold1 = these id id (<>)
+
+instance Bitraversable These where
+    bitraverse f _ (This x) = This <$> f x
+    bitraverse _ g (That x) = That <$> g x
+    bitraverse f g (These x y) = These <$> f x <*> g y
+    bimapM f _ (This x) = liftM This (f x)
+    bimapM _ g (That x) = liftM That (g x)
+    bimapM f g (These x y) = liftM2 These (f x) (g y)
+
+instance Bitraversable1 These where
+    bitraverse1 f _ (This x) = This <$> f x
+    bitraverse1 _ g (That x) = That <$> g x
+    bitraverse1 f g (These x y) = These <$> f x <.> g y
+
+instance (Monoid a) => Apply (These a) where
+    This  a   <.> _         = This a
+    That    _ <.> This  b   = This b
+    That    f <.> That    x = That (f x)
+    That    f <.> These b x = These b (f x)
+    These a _ <.> This  b   = This (mappend a b)
+    These a f <.> That    x = These a (f x)
+    These a f <.> These b x = These (mappend a b) (f x)
+
 instance (Monoid a) => Applicative (These a) where
     pure = That
-    This  a   <*> _         = This a
-    That    f <*> This  b   = This b
-    That    f <*> That    x = That (f x)
-    That    f <*> These b x = These b (f x)
-    These a f <*> This  b   = This (mappend a b)
-    These a f <*> That    x = These a (f x)
-    These a f <*> These b x = These (mappend a b) (f x)
+    (<*>) = (<.>)
 
-instance (Monoid a) => Monad (These a) where
-    return = pure
-    This  a   >>= _ = This a
-    That    x >>= k = k x
-    These a x >>= k = case k x of 
+instance (Monoid a) => Bind (These a) where
+    This  a   >>- _ = This a
+    That    x >>- k = k x
+    These a x >>- k = case k x of
                           This  b   -> This  (mappend a b)
                           That    y -> These a y
                           These b y -> These (mappend a b) y
 
+instance (Monoid a) => Monad (These a) where
+    return = pure
+    (>>=) = (>>-)

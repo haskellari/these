@@ -17,10 +17,9 @@ module Control.Monad.Trans.Chronicle (
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans
-import Control.Monad.Trans.Class
-import Control.Monad.Writer.Class
+import Data.Functor.Apply (Apply(..))
+import Data.Functor.Bind (Bind(..))
 import Data.Functor.Identity
-import Data.Semigroup (Semigroup(..))
 import Data.Monoid (Monoid(..))
 
 import Data.These
@@ -48,9 +47,15 @@ newtype ChronicleT c m a = ChronicleT { runChronicleT :: m (These c a) }
 instance (Functor m) => Functor (ChronicleT c m) where
     fmap f (ChronicleT c) =  ChronicleT (fmap f <$> c)
 
+instance (Monoid c, Apply m) => Apply (ChronicleT c m) where
+    ChronicleT f <.> ChronicleT x = ChronicleT ((<.>) <$> f <.> x)
+
 instance (Monoid c, Applicative m) => Applicative (ChronicleT c m) where
     pure = ChronicleT . pure . pure
     ChronicleT f <*> ChronicleT x = ChronicleT (liftA2 (<*>) f x)
+
+instance (Monoid c, Apply m, Monad m) => Bind (ChronicleT c m) where
+    (>>-) = (>>=)
 
 instance (Monoid c, Monad m) => Monad (ChronicleT c m) where
     return = ChronicleT . return . return
