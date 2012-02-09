@@ -17,7 +17,8 @@ import Control.Applicative (ZipList(..), pure, (<$>))
 import Data.Bifoldable (Bifoldable(..))
 import Data.Bifunctor (Bifunctor(..))
 import Data.Foldable (Foldable)
-import Data.Functor.Identity (Identity(..))
+import Data.Functor.Identity
+import Data.Functor.Product
 import Data.IntMap (IntMap)
 import Data.Map (Map)
 import Data.Sequence (Seq)
@@ -101,6 +102,10 @@ instance Align IntMap where
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align IntMap: merge"
 
+instance (Align f, Align g) => Align (Product f g) where
+    nil = Pair nil nil
+    align (Pair a b) (Pair c d) = Pair (align a c) (align b d)
+
 -- --------------------------------------------------------------------------
 -- | Alignable functors supporting an \"inverse\" to 'align': splitting
 --   a union shape into its component parts.
@@ -139,6 +144,11 @@ instance Unalign [] where
 instance Unalign ZipList where
     unalign (ZipList xs) = (ZipList ys, ZipList zs)
       where (ys, zs) = unalign xs
+
+instance (Unalign f, Unalign g) => Unalign (Product f g) where
+    unalign (Pair a b) = (Pair al bl, Pair ar br)
+      where (al, ar) = unalign a
+            (bl, br) = unalign b
 
 -- --------------------------------------------------------------------------
 -- | Foldable functors supporting traversal through an alignable
