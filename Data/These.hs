@@ -2,7 +2,21 @@
 -- | Module     :  Data.These
 --
 --   The 'These' type, with associated operations.
-module Data.These where
+module Data.These (
+                    These(..)
+                  , these
+                  , fromThese
+                  , justThis
+                  , justThat
+                  , justThese
+                  , isThis
+                  , isThat
+                  , isThese
+                  , mapThese
+                  , mapThis
+                  , mapThat
+                    -- $align
+                  ) where
 
 import Control.Applicative (Applicative(..), (<$>))
 import Data.Foldable
@@ -65,20 +79,10 @@ mapThis f = mapThese f id
 mapThat :: (b -> d) -> These a b -> These a d
 mapThat f = mapThese id f
 
--- | Unzips a list of 'These' values into parallel lists, inserting 'Nothing' 
---   in place of missing values. The resulting lists thus contain the same 
---   information as the original.
-unzipThese :: [These a b] -> ([Maybe a], [Maybe b])
-unzipThese = foldr (these a b ab) ([],[]) 
-  where a  l   ~(ls,rs) = (Just l :ls, Nothing:rs)
-        b    r ~(ls,rs) = (Nothing:ls, Just r :rs)
-        ab l r ~(ls,rs) = (Just l :ls, Just r :rs)
-
--- | Zips two lists, padding to the length of the longer list. 
-zipThese :: [a] -> [b] -> [These a b]
-zipThese xs [] = This <$> xs
-zipThese [] ys = That <$> ys
-zipThese (x:xs) (y:ys) = These x y : zipThese xs ys
+-- $align
+--
+-- For zipping and unzipping of structures with 'These' values, see
+-- "Data.Align".
 
 instance (Semigroup a, Semigroup b) => Semigroup (These a b) where
     This  a   <> This  b   = This  (a <> b)
