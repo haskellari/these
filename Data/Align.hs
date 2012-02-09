@@ -1,8 +1,9 @@
 -----------------------------------------------------------------------------
 -- | Module     :  Data.Align
 --
---   'These'-based zipping and unzipping of structures with
---   non-uniform shapes.
+-- 'These'-based zipping and unzipping of functors with non-uniform
+-- shapes, plus traversal of (bi)foldable (bi)functors through said
+-- functors.
 module Data.Align (
                     Align(..)
                   , Unalign(..)

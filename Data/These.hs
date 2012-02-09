@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 -- | Module     :  Data.These
 --
---   The 'These' type, with associated operations.
+-- The 'These' type, with associated operations.
 module Data.These (
                     These(..)
                   , these
