@@ -41,19 +41,19 @@ oops = error . ("Data.Align: internal error: " ++)
 --   Maybe (These b c) ~ (a -> Maybe b, a -> Maybe c))@. This insight
 --   is due to rwbarton.
 --
---   Minimal definition: @empty@ and either @align@ or @alignWith@.
+--   Minimal definition: @nil@ and either @align@ or @alignWith@.
 --
 --   Laws:
 --
 -- @
--- (\`align` empty) = fmap This
--- (empty \`align`) = fmap That
+-- (\`align` nil) = fmap This
+-- (nil \`align`) = fmap That
 -- join align = fmap (join These)
 -- align (f \<$> x) (g \<$> y) = bimap f g \<$> align x y
 -- alignWith f a b = f \<$> align a b
 -- @
 class (Functor f) => Align f where
-    empty :: f a
+    nil :: f a
 
     align :: f a -> f b -> f (These a b)
     align = alignWith id
@@ -62,25 +62,25 @@ class (Functor f) => Align f where
     alignWith f a b = f <$> align a b
 
 instance Align Maybe where
-    empty = Nothing
+    nil = Nothing
     align Nothing Nothing = Nothing
     align (Just a) Nothing = Just (This a)
     align Nothing (Just b) = Just (That b)
     align (Just a) (Just b) = Just (These a b)
 
 instance Align [] where
-    empty = []
+    nil = []
     align xs [] = This <$> xs
     align [] ys = That <$> ys
     align (x:xs) (y:ys) = These x y : align xs ys
 
 instance Align ZipList where
-    empty = ZipList []
+    nil = ZipList []
     align (ZipList xs) (ZipList ys) = ZipList (align xs ys)
 
 -- could probably be more efficient...
 instance Align Seq where
-    empty = Seq.empty
+    nil = Seq.empty
     align xs ys =
         case Seq.viewl xs of
             Seq.EmptyL   -> That <$> ys
@@ -90,13 +90,13 @@ instance Align Seq where
                     y Seq.:< ys' -> These x y Seq.<| align xs' ys'
 
 instance (Ord k) => Align (Map k) where
-    empty = Map.empty
+    nil = Map.empty
     align m n = Map.unionWith merge (Map.map This m) (Map.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align Map: merge"
 
 instance Align IntMap where
-    empty = IntMap.empty
+    nil = IntMap.empty
     align m n = IntMap.unionWith merge (IntMap.map This m) (IntMap.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align IntMap: merge"
@@ -112,7 +112,7 @@ instance Align IntMap where
 --   Laws:
 --
 -- @
--- unalign empty               = (empty,         empty)
+-- unalign nil                 = (nil,           nil)
 -- unalign (This        \<$> x) = (Just    \<$> x, Nothing \<$  x)
 -- unalign (That        \<$> y) = (Nothing \<$  y, Just    \<$> y)
 -- unalign (join These  \<$> x) = (Just    \<$> x, Just    \<$> x)
@@ -149,7 +149,7 @@ instance Unalign ZipList where
 --   Laws:
 --
 -- @
--- crosswalk (const empty) = const empty
+-- crosswalk (const nil) = const nil
 -- crosswalk f = sequenceL . fmap f
 -- @
 class (Functor t, Foldable t) => Crosswalk t where
@@ -163,16 +163,16 @@ instance Crosswalk Identity where
     crosswalk f (Identity a) = fmap Identity (f a)
 
 instance Crosswalk Maybe where
-    crosswalk _ Nothing = empty
+    crosswalk _ Nothing = nil
     crosswalk f (Just a) = Just <$> f a
 
 instance Crosswalk [] where
-    crosswalk _ [] = empty
+    crosswalk _ [] = nil
     crosswalk f (x:xs) = alignWith cons (f x) (crosswalk f xs)
       where cons = these pure id (:)
 
 instance Crosswalk (These a) where
-    crosswalk _ (This _) = empty
+    crosswalk _ (This _) = nil
     crosswalk f (That x) = That <$> f x
     crosswalk f (These a x) = These a <$> f x
 
@@ -203,4 +203,3 @@ instance Bicrosswalk These where
     bicrosswalk f _ (This x) = This <$> f x
     bicrosswalk _ g (That x) = That <$> g x
     bicrosswalk f g (These x y) = align (f x) (g y)
-    -- bisequenceL = these (fmap This) (fmap That) align
