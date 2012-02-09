@@ -126,7 +126,7 @@ instance Bifunctor These where
 instance Bifoldable These where
     bifold = these id id mappend
     bifoldr f g z = these (`f` z) (`g` z) (\x y -> x `f` (y `g` z))
-    bifoldl f g z = these (z `f`) (z `g`) (\x y -> (z `f` x) `g`  y)
+    bifoldl f g z = these (z `f`) (z `g`) (\x y -> (z `f` x) `g` y)
 
 instance Bifoldable1 These where
     bifold1 = these id id (<>)
