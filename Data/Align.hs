@@ -47,7 +47,7 @@ oops = error . ("Data.Align: internal error: " ++)
 -- @
 -- (\`align` empty) = fmap This
 -- (empty \`align`) = fmap That
--- join align = fmap (join Both)
+-- join align = fmap (join These)
 -- align (f \<$> x) (g \<$> y) = bimap f g \<$> align x y
 -- alignWith f a b = f \<$> align a b
 -- @
