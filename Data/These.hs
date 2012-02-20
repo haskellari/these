@@ -86,6 +86,19 @@ mapThis f = mapThese f id
 mapThat :: (b -> d) -> These a b -> These a d
 mapThat f = mapThese id f
 
+catThese :: [These a a] -> [a]
+catThese (This  x  :xs) = x     : catThese xs
+catThese (That    y:xs) =     y : catThese xs
+catThese (These x y:xs) = x : y : catThese xs
+
+catThis :: [These a b] -> [a]
+catThis (This x:xs) = x : catThis xs
+catThis (_     :xs) =     catThis xs
+
+catThat :: [These a b] -> [b]
+catThat (That x:xs) = x : catThat xs
+catThat (_     :xs) =     catThat xs
+
 -- $align
 --
 -- For zipping and unzipping of structures with 'These' values, see
