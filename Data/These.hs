@@ -18,6 +18,8 @@ module Data.These (
                   , catThese
                   , catThis
                   , catThat
+                  , partitionThese
+                  , mergeThese
                     -- $align
                   ) where
 
@@ -101,6 +103,16 @@ catThis (_     :xs) =     catThis xs
 catThat :: [These a b] -> [b]
 catThat (That x:xs) = x : catThat xs
 catThat (_     :xs) =     catThat xs
+
+partitionThese :: [These a b] -> ( [(a, b)], ([a], [b]) )
+partitionThese (These x y:xs) = first ((x, y):)      $ partitionThese xs
+partitionThese (This  x  :xs) = second (first  (x:)) $ partitionThese xs
+partitionThese (That    y:xs) = second (second (y:)) $ partitionThese xs
+
+mergeThese :: (a -> a -> a) -> These a a -> a
+mergeThese f (These x y) = f x y
+mergeThese f (This x) = x
+mergeThese f (That x) = x
 
 -- $align
 --
