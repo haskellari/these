@@ -15,6 +15,9 @@ module Data.These (
                   , mapThese
                   , mapThis
                   , mapThat
+                  , catThese
+                  , catThis
+                  , catThat
                     -- $align
                   ) where
 
