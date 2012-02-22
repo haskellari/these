@@ -111,8 +111,8 @@ partitionThese (That    y:xs) = second (second (y:)) $ partitionThese xs
 
 mergeThese :: (a -> a -> a) -> These a a -> a
 mergeThese f (These x y) = f x y
-mergeThese f (This x) = x
-mergeThese f (That x) = x
+mergeThese f (This x   ) =   x
+mergeThese f (That    y) =     y
 
 -- $align
 --
