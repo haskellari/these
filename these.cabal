@@ -1,5 +1,5 @@
 Name:                these
-Version:             0.1
+Version:             0.2
 Synopsis:            An either-or-both data type, with corresponding hybrid error/writer monad transformer.
 Homepage:            https://github.com/isomorphism/these
 License:             BSD3
@@ -11,11 +11,17 @@ Build-type:          Simple
 Cabal-version:       >=1.2
 
 Library
-  Exposed-modules:     Data.These, Data.Align, Control.Monad.Chronicle, Control.Monad.Trans.Chronicle
+  Exposed-modules:     Data.These, 
+                       Data.Align, 
+                       Control.Monad.Chronicle, 
+                       Control.Monad.Chronicle.Class, 
+                       Control.Monad.Trans.Chronicle
   Build-depends:       base          >= 3   && < 5,
                        containers    >= 0.4 && < 1.0,
                        mtl           >= 2   && < 3,
                        transformers  >= 0.2 && < 1.0,
                        semigroups    >= 0.8 && < 1.0,
-                       bifunctors    >= 0.1 && < 1.0,
-                       semigroupoids >= 1.0 && < 2.0
+                       bifunctors    >= 0.1 && < 4.0,
+                       semigroupoids >= 1.0 && < 4.0,
+                       profunctors   >= 3   && < 4
+                       

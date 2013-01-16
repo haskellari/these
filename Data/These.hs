@@ -1,17 +1,31 @@
 -----------------------------------------------------------------------------
 -- | Module     :  Data.These
 --
--- The 'These' type, with associated operations.
+-- The 'These' type and associated operations. Now enhanced with @Control.Lens@ magic!
 module Data.These (
                     These(..)
+                    
+                  -- * Functions to get rid of 'These'
                   , these
                   , fromThese
+                  , withThese
+                  
+                  -- * Traversals
+                  , here, there
+                  -- * Prisms
+                  , _This, _That, _These
+                  
+                  -- * Case selections
                   , justThis
                   , justThat
                   , justThese
+                  
+                  -- * Case predicates
                   , isThis
                   , isThat
                   , isThese
+                  
+                  -- * Map operations
                   , mapThese
                   , mapThis
                   , mapThat
@@ -26,6 +40,7 @@ import Data.Bitraversable
 import Data.Foldable
 import Data.Functor.Bind
 import Data.Maybe (isJust)
+import Data.Profunctor
 import Data.Semigroup (Semigroup(..), Monoid(..))
 import Data.Semigroup.Bifoldable
 import Data.Semigroup.Bitraversable
@@ -58,33 +73,83 @@ fromThese _ x (This a   ) = (a, x)
 fromThese a _ (That x   ) = (a, x)
 fromThese _ _ (These a x) = (a, x)
 
+-- | Coalesce with the provided operation.
+withThese :: (a -> a -> a) -> These a a -> a
+withThese = these id id
+
+
+-- | A @Traversal@ of the first half of a 'These', suitable for use with @Control.Lens@.
+here :: (Applicative f) => (a -> f b) -> These a t -> f (These b t)
+here f (This x) = This <$> f x
+here f (These x y) = flip These y <$> f x
+here _ (That x) = pure (That x)
+
+-- | A @Traversal@ of the second half of a 'These', suitable for use with @Control.Lens@.
+there :: (Applicative f) => (a -> f b) -> These t a -> f (These t b)
+there _ (This x) = pure (This x)
+there f (These x y) = These x <$> f y
+there f (That x) = That <$> f x
+
+-- <cmccann> is there a recipe for creating suitable definitions anywhere?
+-- <edwardk> not yet
+-- <edwardk> prism bt seta = dimap seta (either pure (fmap bt)) . right'
+-- (let's all pretend I know how this works ok)
+prism bt seta = dimap seta (either pure (fmap bt)) . right'
+
+
+-- | A 'Prism' selecting the 'This' constructor.
+_This :: (Choice p, Applicative f) => p a (f a) -> p (These a b) (f (These a b))
+_This = prism This (these Right (Left . That) (\x y -> Left $ These x y))
+
+-- | A 'Prism' selecting the 'That' constructor.
+_That :: (Choice p, Applicative f) => p b (f b) -> p (These a b) (f (These a b))
+_That = prism That (these (Left . This) Right (\x y -> Left $ These x y))
+
+-- | A 'Prism' selecting the 'These' constructor. 'These' names are ridiculous!
+_These :: (Choice p, Applicative f) => p (a, b) (f (a, b)) -> p (These a b) (f (These a b))
+_These = prism (uncurry These) (these (Left . This) (Left . That) (\x y -> Right (x, y)))
+
+
+-- | @'justThis' = preview '_This'@
 justThis :: These a b -> Maybe a
 justThis (This a) = Just a
 justThis _        = Nothing
 
+-- | @'justThat' = preview '_That'@
 justThat :: These a b -> Maybe b
 justThat (That x) = Just x
 justThat _        = Nothing
 
+-- | @'justThese' = preview '_These'@
 justThese :: These a b -> Maybe (a, b)
 justThese (These a x) = Just (a, x)
 justThese _           = Nothing
 
+
 isThis, isThat, isThese :: These a b -> Bool
+-- | @'isThis' = 'isJust' . 'justThis'@
 isThis  = isJust . justThis
+
+-- | @'isThat' = 'isJust' . 'justThat'@
 isThat  = isJust . justThat
+
+-- | @'isThese' = 'isJust' . 'justThese'@
 isThese = isJust . justThese
 
+-- | 'Bifunctor' map.
 mapThese :: (a -> c) -> (b -> d) -> These a b -> These c d
 mapThese f _ (This  a  ) = This (f a)
 mapThese _ g (That    x) = That (g x)
 mapThese f g (These a x) = These (f a) (g x)
 
+-- | @'mapThis' = over 'here'@
 mapThis :: (a -> c) -> These a b -> These c b
 mapThis f = mapThese f id
 
+-- | @'mapThat' = over 'there'@
 mapThat :: (b -> d) -> These a b -> These a d
 mapThat f = mapThese id f
+
 
 -- $align
 --

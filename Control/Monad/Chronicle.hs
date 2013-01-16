@@ -5,7 +5,7 @@ module Control.Monad.Chronicle (
                                , ChronicleT(..)
                                -- * Chronicle operations
                                , dictate, confess
-                               , memento, absolve, retcon
+                               , memento, absolve, condemn, retcon
                                , module Data.Semigroup
                                , module Data.Monoid
                                , module Control.Monad

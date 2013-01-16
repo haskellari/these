@@ -6,8 +6,18 @@
 -- functors.
 module Data.Align (
                     Align(..)
+                  -- * Specialized aligns
+                  , malign, padZip, padZipWith
+                  , lpadZip, lpadZipWith
+                  , rpadZip, rpadZipWith
+                  
+                  -- * Unalign
                   , Unalign(..)
+                  
+                  -- * Crosswalk
                   , Crosswalk(..)
+                  
+                  -- * Bicrosswalk
                   , Bicrosswalk(..)
                   ) where
 
@@ -21,11 +31,15 @@ import Data.Functor.Identity
 import Data.Functor.Product
 import Data.IntMap (IntMap)
 import Data.Map (Map)
+import Data.Maybe (catMaybes)
+import Data.Monoid (Monoid(..))
 import Data.Sequence (Seq)
 import Data.These
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
+
+import Prelude
 
 oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)
@@ -106,6 +120,36 @@ instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil
     align (Pair a b) (Pair c d) = Pair (align a c) (align b d)
 
+-- | Align two structures and combine with 'mappend'.
+malign :: (Align f, Monoid a) => f a -> f a -> f a
+malign = alignWith (withThese mappend)
+
+-- | Align two structures as in 'zip', but filling in blanks with 'Nothing'.
+padZip :: (Align f) => f a -> f b -> f (Maybe a, Maybe b)
+padZip = alignWith (fromThese Nothing Nothing . bimap Just Just)
+
+-- | Align two structures as in 'zipWith', but filling in blanks with 'Nothing'.
+padZipWith :: (Align f) => (Maybe a -> Maybe b -> c) -> f a -> f b -> f c
+padZipWith f xs ys = uncurry f <$> padZip xs ys
+
+-- | Left-padded 'zipWith'.
+lpadZipWith :: (Maybe a -> b -> c) -> [a] -> [b] -> [c]
+lpadZipWith f xs ys = catMaybes $ padZipWith (\x y -> f x <$> y) xs ys
+
+-- | Left-padded 'zip'.
+lpadZip :: [a] -> [b] -> [(Maybe a, b)]
+lpadZip = lpadZipWith (,)
+
+-- | Right-padded 'zipWith'.
+rpadZipWith :: (a -> Maybe b -> c) -> [a] -> [b] -> [c]
+rpadZipWith f xs ys = lpadZipWith (flip f) ys xs
+
+-- | Right-padded 'zip'.
+rpadZip :: [a] -> [b] -> [(a, Maybe b)]
+rpadZip = rpadZipWith (,)
+
+
+
 -- --------------------------------------------------------------------------
 -- | Alignable functors supporting an \"inverse\" to 'align': splitting
 --   a union shape into its component parts.
@@ -149,6 +193,7 @@ instance (Unalign f, Unalign g) => Unalign (Product f g) where
     unalign (Pair a b) = (Pair al bl, Pair ar br)
       where (al, ar) = unalign a
             (bl, br) = unalign b
+
 
 -- --------------------------------------------------------------------------
 -- | Foldable functors supporting traversal through an alignable
