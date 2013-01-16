@@ -8,10 +8,11 @@ module Data.These (
                   -- * Functions to get rid of 'These'
                   , these
                   , fromThese
-                  , withThese
+                  , mergeThese
                   
                   -- * Traversals
                   , here, there
+                  
                   -- * Prisms
                   , _This, _That, _These
                   
@@ -20,6 +21,12 @@ module Data.These (
                   , justThat
                   , justThese
                   
+                  , catThis
+                  , catThat
+                  , catThese
+                  
+                  , partitionThese
+                                    
                   -- * Case predicates
                   , isThis
                   , isThat
@@ -29,6 +36,7 @@ module Data.These (
                   , mapThese
                   , mapThis
                   , mapThat
+                  
                     -- $align
                   ) where
 
@@ -39,7 +47,7 @@ import Data.Bifunctor
 import Data.Bitraversable
 import Data.Foldable
 import Data.Functor.Bind
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, mapMaybe)
 import Data.Profunctor
 import Data.Semigroup (Semigroup(..), Monoid(..))
 import Data.Semigroup.Bifoldable
@@ -74,8 +82,8 @@ fromThese a _ (That x   ) = (a, x)
 fromThese _ _ (These a x) = (a, x)
 
 -- | Coalesce with the provided operation.
-withThese :: (a -> a -> a) -> These a a -> a
-withThese = these id id
+mergeThese :: (a -> a -> a) -> These a a -> a
+mergeThese = these id id
 
 
 -- | A @Traversal@ of the first half of a 'These', suitable for use with @Control.Lens@.
@@ -150,6 +158,24 @@ mapThis f = mapThese f id
 mapThat :: (b -> d) -> These a b -> These a d
 mapThat f = mapThese id f
 
+-- | Select all 'This' constructors from a list.
+catThis :: [These a b] -> [a]
+catThis = mapMaybe justThis
+
+-- | Select all 'That' constructors from a list.
+catThat :: [These a b] -> [b]
+catThat = mapMaybe justThat
+
+-- | Select all 'These' constructors from a list.
+catThese :: [These a b] -> [(a, b)]
+catThese = mapMaybe justThese
+
+-- | Select each constructor and partition them into separate lists.
+partitionThese :: [These a b] -> ( [(a, b)], ([a], [b]) )
+partitionThese (These x y:xs) = first ((x, y):)      $ partitionThese xs
+partitionThese (This  x  :xs) = second (first  (x:)) $ partitionThese xs
+partitionThese (That    y:xs) = second (second (y:)) $ partitionThese xs
+
 
 -- $align
 --
@@ -191,7 +217,7 @@ instance Bifunctor These where
 instance Bifoldable These where
     bifold = these id id mappend
     bifoldr f g z = these (`f` z) (`g` z) (\x y -> x `f` (y `g` z))
-    bifoldl f g z = these (z `f`) (z `g`) (\x y -> (z `f` x) `g`  y)
+    bifoldl f g z = these (z `f`) (z `g`) (\x y -> (z `f` x) `g` y)
 
 instance Bifoldable1 These where
     bifold1 = these id id (<>)

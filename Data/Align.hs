@@ -19,6 +19,7 @@ module Data.Align (
                   
                   -- * Bicrosswalk
                   , Bicrosswalk(..)
+                  , alignVectorWith
                   ) where
 
 -- TODO: More instances..
@@ -35,9 +36,13 @@ import Data.Maybe (catMaybes)
 import Data.Monoid (Monoid(..))
 import Data.Sequence (Seq)
 import Data.These
+import Data.Vector.Generic (Vector, unstream, stream)
+import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
+import qualified Data.Vector.Fusion.Stream.Monadic as Stream
+import qualified Data.Vector.Fusion.Stream.Size as Stream
 
 import Prelude
 
@@ -75,6 +80,17 @@ class (Functor f) => Align f where
 
     alignWith :: (These a b -> c) -> f a -> f b -> f c
     alignWith f a b = f <$> align a b
+
+{-# RULES
+
+"align nil nil" align nil nil = nil
+"align x x" forall x. align x x = fmap (\x -> These x x) x
+
+"alignWith f nil nil" forall f. alignWith f nil nil = nil
+"alignWith f x x" forall f x. alignWith f x x = fmap (\x -> f (These x x)) x
+
+  #-}
+
 
 instance Align Maybe where
     nil = Nothing
@@ -120,9 +136,37 @@ instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil
     align (Pair a b) (Pair c d) = Pair (align a c) (align b d)
 
+-- Based on the Data.Vector.Fusion.Stream.Monadic zipWith implementation
+instance Monad m => Align (Stream m) where
+    nil = Stream.empty
+    alignWith  f (Stream stepa sa na) (Stream stepb sb nb)
+      = Stream step (sa, sb, Nothing, False) (Stream.larger na nb)
+      where
+        step (sa, sb, Nothing, False) = do
+            r <- stepa sa
+            return $ case r of
+                Yield x sa' -> Skip (sa', sb, Just x, False)
+                Skip    sa' -> Skip (sa', sb, Nothing, False)
+                Done        -> Skip (sa, sb, Nothing, True)
+
+        step (sa, sb, av, adone) = do
+            r <- stepb sb
+            return $ case r of
+                Yield y sb' -> Yield (f $ maybe (That y) (`These` y) av)
+                                     (sa, sb', Nothing, adone)
+                Skip sb'    -> Skip (sa, sb', av, adone)
+                Done -> case (av, adone) of
+                    (Just x, False) -> Yield (f $ This x) (sa, sb, Nothing, adone)
+                    (_, True)       -> Done
+                    _               -> Skip (sa, sb, Nothing, False)
+
+alignVectorWith :: (Vector v a, Vector v b, Vector v c)
+        => (These a b -> c) -> v a -> v b -> v c
+alignVectorWith f x y = unstream $ alignWith f (stream x) (stream y)
+
 -- | Align two structures and combine with 'mappend'.
 malign :: (Align f, Monoid a) => f a -> f a -> f a
-malign = alignWith (withThese mappend)
+malign = alignWith (mergeThese mappend)
 
 -- | Align two structures as in 'zip', but filling in blanks with 'Nothing'.
 padZip :: (Align f) => f a -> f b -> f (Maybe a, Maybe b)
@@ -147,7 +191,6 @@ rpadZipWith f xs ys = lpadZipWith (flip f) ys xs
 -- | Right-padded 'zip'.
 rpadZip :: [a] -> [b] -> [(a, Maybe b)]
 rpadZip = rpadZipWith (,)
-
 
 
 -- --------------------------------------------------------------------------
@@ -194,6 +237,7 @@ instance (Unalign f, Unalign g) => Unalign (Product f g) where
       where (al, ar) = unalign a
             (bl, br) = unalign b
 
+instance Monad m => Unalign (Stream m)
 
 -- --------------------------------------------------------------------------
 -- | Foldable functors supporting traversal through an alignable
