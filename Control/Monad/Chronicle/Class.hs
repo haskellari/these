@@ -85,7 +85,7 @@ class (Monad m) => MonadChronicle c m | m -> c where
 
 instance (Monoid c) => MonadChronicle c (These c) where
     dictate c = These c ()
-    confess c = This c
+    confess = This
     memento (This c) = That (Left c)
     memento m = mapThat Right m
     absolve x (This _) = That x
@@ -141,20 +141,20 @@ instance (MonadChronicle c m) => MonadChronicle c (ReaderT r m) where
     retcon f (ReaderT m) = ReaderT $ retcon f . m
     chronicle = lift . chronicle
 
-instance (Monoid w, MonadChronicle c m) => MonadChronicle c (LazyState.StateT s m) where
+instance (Monoid s, MonadChronicle c m) => MonadChronicle c (LazyState.StateT s m) where
     dictate = lift . dictate
     confess = lift . confess
-    memento (LazyState.StateT m) = LazyState.StateT $ \s -> do
+    memento (LazyState.StateT m) = LazyState.StateT $ \s ->
         either (\c -> (Left c, s)) (\(a, s') -> (Right a, s')) `liftM` memento (m s)
     absolve x (LazyState.StateT m) = LazyState.StateT $ \s -> absolve (x, s) $ m s
     condemn (LazyState.StateT m) = LazyState.StateT $ condemn . m
     retcon f (LazyState.StateT m) = LazyState.StateT $ retcon f . m
     chronicle = lift . chronicle
 
-instance (Monoid w, MonadChronicle c m) => MonadChronicle c (StrictState.StateT s m) where
+instance (Monoid s, MonadChronicle c m) => MonadChronicle c (StrictState.StateT s m) where
     dictate = lift . dictate
     confess = lift . confess
-    memento (StrictState.StateT m) = StrictState.StateT $ \s -> do
+    memento (StrictState.StateT m) = StrictState.StateT $ \s ->
         either (\c -> (Left c, s)) (\(a, s') -> (Right a, s')) `liftM` memento (m s)
     absolve x (StrictState.StateT m) = StrictState.StateT $ \s -> absolve (x, s) $ m s
     condemn (StrictState.StateT m) = StrictState.StateT $ condemn . m
