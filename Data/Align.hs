@@ -10,6 +10,7 @@ module Data.Align (
                   , malign, padZip, padZipWith
                   , lpadZip, lpadZipWith
                   , rpadZip, rpadZipWith
+                  , alignVectorWith
                   
                   -- * Unalign
                   , Unalign(..)
@@ -19,7 +20,6 @@ module Data.Align (
                   
                   -- * Bicrosswalk
                   , Bicrosswalk(..)
-                  , alignVectorWith
                   ) where
 
 -- TODO: More instances..

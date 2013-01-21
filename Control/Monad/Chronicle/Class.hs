@@ -12,11 +12,14 @@
 -- non-fatal errors.
 --
 -----------------------------------------------------------------------------
-module Control.Monad.Chronicle.Class (MonadChronicle(..)) where
+module Control.Monad.Chronicle.Class (
+    MonadChronicle(..),
+    ChronicleT(..), runChronicle
+    ) where
 
 import Data.These
-import Control.Applicative
-import Control.Monad.Trans.Chronicle (ChronicleT)
+import Control.Applicative (Applicative(..), (<$>))
+import Control.Monad.Trans.Chronicle (ChronicleT, runChronicle)
 import qualified Control.Monad.Trans.Chronicle as Ch
 
 import Control.Monad.Trans.Identity as Identity
@@ -31,12 +34,8 @@ import Control.Monad.Trans.Writer.Lazy as LazyWriter
 import Control.Monad.Trans.Writer.Strict as StrictWriter
 
 import Control.Monad.Trans.Class (lift)
-import Control.Exception (IOException, catch, ioError)
-import Control.Monad
-import Control.Monad.Instances ()
+import Control.Monad (liftM)
 import Data.Monoid
-import Prelude -- (Either(..), (.), IO)
-
 
 
 class (Monad m) => MonadChronicle c m | m -> c where
@@ -141,7 +140,7 @@ instance (MonadChronicle c m) => MonadChronicle c (ReaderT r m) where
     retcon f (ReaderT m) = ReaderT $ retcon f . m
     chronicle = lift . chronicle
 
-instance (Monoid w, MonadChronicle c m) => MonadChronicle c (LazyState.StateT s m) where
+instance (MonadChronicle c m) => MonadChronicle c (LazyState.StateT s m) where
     dictate = lift . dictate
     confess = lift . confess
     memento (LazyState.StateT m) = LazyState.StateT $ \s -> do
@@ -151,7 +150,7 @@ instance (Monoid w, MonadChronicle c m) => MonadChronicle c (LazyState.StateT s 
     retcon f (LazyState.StateT m) = LazyState.StateT $ retcon f . m
     chronicle = lift . chronicle
 
-instance (Monoid w, MonadChronicle c m) => MonadChronicle c (StrictState.StateT s m) where
+instance (MonadChronicle c m) => MonadChronicle c (StrictState.StateT s m) where
     dictate = lift . dictate
     confess = lift . confess
     memento (StrictState.StateT m) = StrictState.StateT $ \s -> do
@@ -179,6 +178,26 @@ instance (Monoid w, MonadChronicle c m) => MonadChronicle c (StrictWriter.Writer
     absolve x (StrictWriter.WriterT m) = StrictWriter.WriterT $ absolve (x, mempty) m
     condemn (StrictWriter.WriterT m) = StrictWriter.WriterT $ condemn m
     retcon f (StrictWriter.WriterT m) = StrictWriter.WriterT $ retcon f m
+    chronicle = lift . chronicle
+
+instance (Monoid w, MonadChronicle c m) => MonadChronicle c (LazyRWS.RWST r w s m) where
+    dictate = lift . dictate
+    confess = lift . confess
+    memento (LazyRWS.RWST m) = LazyRWS.RWST $ \r s ->
+        either (\c -> (Left c, s, mempty)) (\(a, s', w) -> (Right a, s', w)) `liftM` memento (m r s)
+    absolve x (LazyRWS.RWST m) = LazyRWS.RWST $ \r s -> absolve (x, s, mempty) $ m r s
+    condemn (LazyRWS.RWST m) = LazyRWS.RWST $ \r s -> condemn $ m r s
+    retcon f (LazyRWS.RWST m) = LazyRWS.RWST $ \r s -> retcon f $ m r s
+    chronicle = lift . chronicle
+
+instance (Monoid w, MonadChronicle c m) => MonadChronicle c (StrictRWS.RWST r w s m) where
+    dictate = lift . dictate
+    confess = lift . confess
+    memento (StrictRWS.RWST m) = StrictRWS.RWST $ \r s ->
+        either (\c -> (Left c, s, mempty)) (\(a, s', w) -> (Right a, s', w)) `liftM` memento (m r s)
+    absolve x (StrictRWS.RWST m) = StrictRWS.RWST $ \r s -> absolve (x, s, mempty) $ m r s
+    condemn (StrictRWS.RWST m) = StrictRWS.RWST $ \r s -> condemn $ m r s
+    retcon f (StrictRWS.RWST m) = StrictRWS.RWST $ \r s -> retcon f $ m r s
     chronicle = lift . chronicle
 
 
