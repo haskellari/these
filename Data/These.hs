@@ -172,6 +172,7 @@ catThese = mapMaybe justThese
 
 -- | Select each constructor and partition them into separate lists.
 partitionThese :: [These a b] -> ( [(a, b)], ([a], [b]) )
+partitionThese []             = ([], ([], []))
 partitionThese (These x y:xs) = first ((x, y):)      $ partitionThese xs
 partitionThese (This  x  :xs) = second (first  (x:)) $ partitionThese xs
 partitionThese (That    y:xs) = second (second (y:)) $ partitionThese xs
