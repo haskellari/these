@@ -21,8 +21,8 @@ Library
                        mtl           >= 2   && < 3,
                        transformers  >= 0.2 && < 1.0,
                        semigroups    >= 0.8 && < 1.0,
-                       bifunctors    >= 0.1 && < 4.0,
-                       semigroupoids >= 1.0 && < 4.0,
-                       profunctors   >= 3   && < 4,
+                       bifunctors    >= 0.1 && < 5.0,
+                       semigroupoids >= 1.0 && < 5.0,
+                       profunctors   >= 3   && < 5,
                        vector        >= 0.4 && < 1.0
 
