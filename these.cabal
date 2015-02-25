@@ -1,5 +1,5 @@
 Name:                these
-Version:             0.3
+Version:             0.4.2
 Synopsis:            An either-or-both data type, with corresponding hybrid error/writer monad transformer.
 Homepage:            https://github.com/isomorphism/these
 License:             BSD3
@@ -17,12 +17,12 @@ Library
                        Control.Monad.Chronicle.Class, 
                        Control.Monad.Trans.Chronicle
   Build-depends:       base          >= 3   && < 5,
-                       containers    >= 0.4 && < 1.0,
-                       mtl           >= 2   && < 3,
-                       transformers  >= 0.2 && < 1.0,
-                       semigroups    >= 0.8 && < 1.0,
-                       bifunctors    >= 0.1 && < 4.0,
-                       semigroupoids >= 1.0 && < 4.0,
-                       profunctors   >= 3   && < 4,
-                       vector        >= 0.4 && < 1.0
+                       containers    >= 0.4 && < 0.6,
+                       mtl           >= 2   && < 2.2,
+                       transformers  >= 0.2 && < 0.4,
+                       semigroups    >= 0.8 && < 0.14,
+                       bifunctors    >= 0.1 && < 4.2,
+                       semigroupoids >= 1.0 && < 4.1,
+                       profunctors   >= 3   && < 4.1,
+                       vector        >= 0.4 && < 0.11
 
