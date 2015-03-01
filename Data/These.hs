@@ -9,6 +9,7 @@ module Data.These (
                   , these
                   , fromThese
                   , mergeThese
+                  , mergeTheseWith
                   
                   -- * Traversals
                   , here, there
@@ -84,6 +85,10 @@ fromThese _ _ (These a x) = (a, x)
 -- | Coalesce with the provided operation.
 mergeThese :: (a -> a -> a) -> These a a -> a
 mergeThese = these id id
+
+-- | BiMap and coalesce results with the provided operation.
+mergeTheseWith :: (a -> c) -> (b -> c) -> (c -> c -> c) -> These a b -> c
+mergeTheseWith f g op t = mergeThese op $ mapThese f g t
 
 
 -- | A @Traversal@ of the first half of a 'These', suitable for use with @Control.Lens@.
