@@ -107,8 +107,8 @@ there f (That x) = That <$> f x
 -- <edwardk> not yet
 -- <edwardk> prism bt seta = dimap seta (either pure (fmap bt)) . right'
 -- (let's all pretend I know how this works ok)
+prism :: (Choice p, Applicative f) => (b -> t) -> (s -> Either t a) -> p a (f b) -> p s (f t)
 prism bt seta = dimap seta (either pure (fmap bt)) . right'
-
 
 -- | A 'Prism' selecting the 'This' constructor.
 _This :: (Choice p, Applicative f) => p a (f a) -> p (These a b) (f (These a b))
