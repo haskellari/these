@@ -205,7 +205,9 @@ instance Functor (These a) where
     fmap f (These x y) = These x (f y)
 
 instance Foldable (These a) where
-    foldr f z = foldr f z . justThat
+    foldr _ z (This _) = z
+    foldr f z (That x) = f x z
+    foldr f z (These _ x) = f x z
 
 instance Traversable (These a) where
     traverse _ (This a) = pure $ This a
