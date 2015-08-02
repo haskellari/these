@@ -23,6 +23,6 @@ Library
                        semigroups    >= 0.8 && < 0.17,
                        bifunctors    >= 0.1 && < 4.3,
                        semigroupoids >= 1.0 && < 4.4,
-                       profunctors   >= 3   && < 4.4,
+                       profunctors   >= 3   && < 4.5,
                        vector        >= 0.4 && < 0.11
 
