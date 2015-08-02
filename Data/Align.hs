@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -----------------------------------------------------------------------------
 -- | Module     :  Data.Align
 --
@@ -42,7 +43,13 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
+#if MIN_VERSION_vector(0,11,0)
+import Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
+import qualified Data.Vector.Fusion.Bundle.Monadic as Bundle
+import qualified Data.Vector.Fusion.Bundle.Size as Bundle
+#else
 import qualified Data.Vector.Fusion.Stream.Size as Stream
+#endif
 
 import Prelude
 
@@ -139,8 +146,13 @@ instance (Align f, Align g) => Align (Product f g) where
 -- Based on the Data.Vector.Fusion.Stream.Monadic zipWith implementation
 instance Monad m => Align (Stream m) where
     nil = Stream.empty
+#if MIN_VERSION_vector(0,11,0)
+    alignWith  f (Stream stepa sa) (Stream stepb sb)
+      = Stream step (sa, sb, Nothing, False)
+#else
     alignWith  f (Stream stepa sa na) (Stream stepb sb nb)
       = Stream step (sa, sb, Nothing, False) (Stream.larger na nb)
+#endif
       where
         step (sa, sb, Nothing, False) = do
             r <- stepa sa
@@ -159,6 +171,13 @@ instance Monad m => Align (Stream m) where
                     (Just x, False) -> Yield (f $ This x) (sa, sb, Nothing, adone)
                     (_, True)       -> Done
                     _               -> Skip (sa, sb, Nothing, False)
+
+#if MIN_VERSION_vector(0,11,0)
+instance Monad m => Align (Bundle m v) where
+    nil = Bundle.empty
+    alignWith f Bundle{sElems = sa, sSize = na} Bundle{sElems = sb, sSize = nb}
+      = Bundle.fromStream (alignWith f sa sb) (Bundle.smaller na nb)
+#endif
 
 alignVectorWith :: (Vector v a, Vector v b, Vector v c)
         => (These a b -> c) -> v a -> v b -> v c
