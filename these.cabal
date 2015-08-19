@@ -11,18 +11,18 @@ Build-type:          Simple
 Cabal-version:       >=1.2
 
 Library
-  Exposed-modules:     Data.These, 
-                       Data.Align, 
-                       Control.Monad.Chronicle, 
-                       Control.Monad.Chronicle.Class, 
+  Exposed-modules:     Data.These,
+                       Data.Align,
+                       Control.Monad.Chronicle,
+                       Control.Monad.Chronicle.Class,
                        Control.Monad.Trans.Chronicle
   Build-depends:       base          >= 3   && < 5,
                        containers    >= 0.4 && < 0.6,
                        mtl           >= 2   && < 2.3,
                        transformers  >= 0.2 && < 0.5,
                        semigroups    >= 0.8 && < 0.17,
-                       bifunctors    >= 0.1 && < 4.3,
-                       semigroupoids >= 1.0 && < 4.4,
-                       profunctors   >= 3   && < 4.4,
-                       vector        >= 0.4 && < 0.11
+                       bifunctors    >= 0.1 && < 5.1,
+                       semigroupoids >= 1.0 && < 5.1,
+                       profunctors   >= 3   && < 5.2,
+                       vector        >= 0.4 && < 0.12
 
