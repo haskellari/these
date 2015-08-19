@@ -25,6 +25,8 @@ Library
                        semigroupoids >= 1.0 && < 5.1,
                        profunctors   >= 3   && < 5.2,
                        vector        >= 0.4 && < 0.12
+  if impl(ghc <7.5)
+    build-depends:     ghc-prim
   ghc-options:         -Wall
 
 test-suite test

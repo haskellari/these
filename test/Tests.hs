@@ -12,13 +12,15 @@ import Data.Bifunctor
 import Data.Functor.Compose
 import Data.Functor.Identity
 import Data.Monoid
-import Data.Proxy
 import Data.These
 import Data.Traversable
 import qualified Data.Vector as V
 import Test.QuickCheck.Function
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
+
+-- For old GHC to work
+data Proxy (a :: * -> *) = Proxy
 
 main :: IO ()
 main = defaultMain tests
