@@ -25,4 +25,5 @@ Library
                        semigroupoids >= 1.0 && < 5.1,
                        profunctors   >= 3   && < 5.2,
                        vector        >= 0.4 && < 0.12
+  ghc-options:         -Wall
 
