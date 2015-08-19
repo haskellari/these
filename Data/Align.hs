@@ -37,7 +37,8 @@ import Data.Maybe (catMaybes)
 import Data.Monoid (Monoid(..))
 import Data.Sequence (Seq)
 import Data.These
-import Data.Vector.Generic (Vector, unstream, stream)
+import qualified Data.Vector as V
+import Data.Vector.Generic (Vector, unstream, stream, empty)
 import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
@@ -178,6 +179,10 @@ instance Monad m => Align (Bundle m v) where
     alignWith f Bundle{sElems = sa, sSize = na} Bundle{sElems = sb, sSize = nb}
       = Bundle.fromStream (alignWith f sa sb) (Bundle.larger na nb)
 #endif
+
+instance Align V.Vector where
+  nil = Data.Vector.Generic.empty
+  alignWith = alignVectorWith
 
 alignVectorWith :: (Vector v a, Vector v b, Vector v c)
         => (These a b -> c) -> v a -> v b -> v c

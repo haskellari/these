@@ -2,6 +2,8 @@
 -- | Module     :  Data.These
 --
 -- The 'These' type and associated operations. Now enhanced with @Control.Lens@ magic!
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Data.These (
                     These(..)
                     
@@ -54,6 +56,8 @@ import Data.Semigroup (Semigroup(..), Monoid(..))
 import Data.Semigroup.Bifoldable
 import Data.Semigroup.Bitraversable
 import Data.Traversable
+import Data.Data
+import GHC.Generics
 import Prelude hiding (foldr)
 
 -- --------------------------------------------------------------------------
@@ -68,7 +72,7 @@ import Prelude hiding (foldr)
 --   'These' has straightforward instances of 'Functor', 'Monad', &c., and 
 --   behaves like a hybrid error/writer monad, as would be expected.
 data These a b = This a | That b | These a b
-    deriving (Eq, Ord, Read, Show)
+    deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | Case analysis for the 'These' type.
 these :: (a -> c) -> (b -> c) -> (a -> b -> c) -> These a b -> c

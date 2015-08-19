@@ -1,14 +1,21 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE KindSignatures #-}
 module Main (main) where
 
 import Control.Applicative
+import Control.Monad (join)
+import Data.Align
 import Data.Foldable
+import Data.Bifunctor
 import Data.Functor.Compose
 import Data.Functor.Identity
 import Data.Monoid
+import Data.Proxy
 import Data.These
 import Data.Traversable
+import qualified Data.Vector as V
 import Test.QuickCheck.Function
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
@@ -23,13 +30,10 @@ theseProps :: TestTree
 theseProps = testGroup "These"
   [ functorProps
   , traversableProps
+  , dataAlignLaws "[]" (Proxy :: Proxy [])
+  , dataAlignLaws "Maybe" (Proxy :: Proxy Maybe)
+  , dataAlignLaws "Vector" (Proxy :: Proxy V.Vector)
   ]
-
-instance (Arbitrary a, Arbitrary b) => Arbitrary (These a b) where
-  arbitrary = oneof [ This <$> arbitrary
-                    , That <$> arbitrary
-                    , These <$> arbitrary <*> arbitrary
-                    ]
 
 functorIdentityProp :: (Functor f, Eq (f a), Show (f a)) => f a -> Property
 functorIdentityProp x = fmap id x === x
@@ -63,3 +67,66 @@ traversableProps = testGroup "Traversable"
   , QC.testProperty "functor" (traversableFunctorProp :: These Bool Int -> (Fun Int Int) -> Property)
   , QC.testProperty "foldable" (traversableFoldableProp :: These Bool Int -> (Fun Int [Bool]) -> Property)
   ]
+
+-- Data.Align
+
+-- (\`align` nil) = fmap This
+-- (nil \`align`) = fmap That
+-- join align = fmap (join These)
+-- align (f \<$> x) (g \<$> y) = bimap f g \<$> align x y
+-- alignWith f a b = f \<$> align a b
+
+dataAlignLaws :: forall (f :: * -> *). ( Align f
+                                       , Eq (f (These Int Int))
+                                       , Show (f (These Int Int))
+                                       , CoArbitrary (These Int Int)
+                                       , Arbitrary (f Int)
+                                       , Eq (f Int)
+                                       , Show (f Int))
+              => String
+              -> Proxy f
+              -> TestTree
+dataAlignLaws name _ = testGroup ("Data.Align laws: " <> name)
+  [ QC.testProperty "right identity" rightIdentityProp
+  , QC.testProperty "left identity" leftIdentityProp
+  , QC.testProperty "join" joinProp
+  , QC.testProperty "bimap" bimapProp
+  , QC.testProperty "alignWith" alignWithProp
+  ]
+  where rightIdentityProp :: f Int -> Property
+        rightIdentityProp xs = (xs `align` (nil :: f Int)) === fmap This xs
+        leftIdentityProp :: f Int -> Property
+        leftIdentityProp xs = ((nil :: f Int) `align` xs) === fmap That xs
+        joinProp :: f Int -> Property
+        joinProp xs = join align xs === fmap (join These) xs
+        bimapProp :: f Int -> f Int -> Fun Int Int -> Fun Int Int -> Property
+        bimapProp xs ys (Fun _ f) (Fun _ g) =
+          align (f <$> xs) (g <$> ys) === (bimap f g <$> align xs ys)
+        alignWithProp :: f Int -> f Int -> Fun (These Int Int) Int -> Property
+        alignWithProp xs ys (Fun _ f) =
+          alignWith f xs ys === (f <$> align xs ys)
+
+-- Orphan instances
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (These a b) where
+  arbitrary = oneof [ This <$> arbitrary
+                    , That <$> arbitrary
+                    , These <$> arbitrary <*> arbitrary
+                    ]
+
+instance (Function a, Function b) => Function (These a b) where
+  function = functionMap g f
+    where
+      g (This a)    = Left a
+      g (That b)    = Right (Left b)
+      g (These a b) = Right (Right (a, b))
+
+      f (Left a)               = This a
+      f (Right (Left b))       = That b
+      f (Right (Right (a, b))) = These a b
+
+instance (CoArbitrary a, CoArbitrary b) => CoArbitrary (These a b)
+
+instance Arbitrary a => Arbitrary (V.Vector a) where
+  arbitrary = V.fromList <$> arbitrary
+  shrink = fmap V.fromList . shrink . V.toList
