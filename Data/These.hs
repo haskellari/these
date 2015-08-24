@@ -2,6 +2,8 @@
 -- | Module     :  Data.These
 --
 -- The 'These' type and associated operations. Now enhanced with @Control.Lens@ magic!
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Data.These (
                     These(..)
                     
@@ -54,6 +56,8 @@ import Data.Semigroup (Semigroup(..), Monoid(..))
 import Data.Semigroup.Bifoldable
 import Data.Semigroup.Bitraversable
 import Data.Traversable
+import Data.Data
+import GHC.Generics
 import Prelude hiding (foldr)
 
 -- --------------------------------------------------------------------------
@@ -68,7 +72,7 @@ import Prelude hiding (foldr)
 --   'These' has straightforward instances of 'Functor', 'Monad', &c., and 
 --   behaves like a hybrid error/writer monad, as would be expected.
 data These a b = This a | That b | These a b
-    deriving (Eq, Ord, Read, Show)
+    deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | Case analysis for the 'These' type.
 these :: (a -> c) -> (b -> c) -> (a -> b -> c) -> These a b -> c
@@ -107,8 +111,8 @@ there f (That x) = That <$> f x
 -- <edwardk> not yet
 -- <edwardk> prism bt seta = dimap seta (either pure (fmap bt)) . right'
 -- (let's all pretend I know how this works ok)
+prism :: (Choice p, Applicative f) => (b -> t) -> (s -> Either t a) -> p a (f b) -> p s (f t)
 prism bt seta = dimap seta (either pure (fmap bt)) . right'
-
 
 -- | A 'Prism' selecting the 'This' constructor.
 _This :: (Choice p, Applicative f) => p a (f a) -> p (These a b) (f (These a b))
@@ -205,7 +209,9 @@ instance Functor (These a) where
     fmap f (These x y) = These x (f y)
 
 instance Foldable (These a) where
-    foldr f z = foldr f z . justThat
+    foldr _ z (This _) = z
+    foldr f z (That x) = f x z
+    foldr f z (These _ x) = f x z
 
 instance Traversable (These a) where
     traverse _ (This a) = pure $ This a
