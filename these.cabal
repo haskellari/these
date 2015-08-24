@@ -1,5 +1,5 @@
 Name:                these
-Version:             0.5.0.0
+Version:             0.6.0.0
 Synopsis:            An either-or-both data type, with corresponding hybrid error/writer monad transformer.
 Homepage:            https://github.com/isomorphism/these
 License:             BSD3
