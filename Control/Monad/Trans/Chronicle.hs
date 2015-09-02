@@ -30,8 +30,6 @@ import Data.Monoid (Monoid(..))
 import Control.Monad.Error.Class
 import Control.Monad.Reader.Class
 import Control.Monad.RWS.Class
-import Control.Monad.State.Class
-import Control.Monad.Writer.Class
 import Prelude
 import Data.These
 

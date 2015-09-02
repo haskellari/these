@@ -12,5 +12,5 @@ import Data.Monoid (Monoid(..))
 
 import Control.Monad
 import Control.Monad.Trans
-import Control.Monad.Trans.Chronicle (Chronicle, runChronicle, ChronicleT(..))
+import Control.Monad.Trans.Chronicle (Chronicle)
 import Control.Monad.Chronicle.Class
