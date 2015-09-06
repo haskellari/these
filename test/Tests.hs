@@ -130,6 +130,10 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (These a b) where
                     , That <$> arbitrary
                     , These <$> arbitrary <*> arbitrary
                     ]
+  shrink (This x)    = This <$> shrink x
+  shrink (That y)    = That <$> shrink y
+  shrink (These x y) = [This x, That y] ++
+                       [These x' y' | (x', y') <- shrink (x, y)]
 
 instance (Function a, Function b) => Function (These a b) where
   function = functionMap g f
