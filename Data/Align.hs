@@ -25,16 +25,16 @@ module Data.Align (
 
 -- TODO: More instances..
 
-import Control.Applicative (ZipList(..), pure, (<$>))
+import Control.Applicative
 import Data.Bifoldable (Bifoldable(..))
 import Data.Bifunctor (Bifunctor(..))
-import Data.Foldable (Foldable)
+import Data.Foldable
 import Data.Functor.Identity
 import Data.Functor.Product
 import Data.IntMap (IntMap)
 import Data.Map (Map)
 import Data.Maybe (catMaybes)
-import Data.Monoid (Monoid(..))
+import Data.Monoid hiding (Product)
 import Data.Sequence (Seq)
 import Data.These
 import qualified Data.Vector as V
@@ -52,7 +52,7 @@ import qualified Data.Vector.Fusion.Bundle.Size as Bundle
 import qualified Data.Vector.Fusion.Stream.Size as Stream
 #endif
 
-import Prelude
+import Prelude hiding (foldr) -- Fix redundant import warnings
 
 oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)

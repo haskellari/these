@@ -25,7 +25,7 @@ import Control.Monad.Trans
 import Data.Functor.Apply (Apply(..))
 import Data.Functor.Bind (Bind(..))
 import Data.Functor.Identity
-import Data.Monoid (Monoid(..))
+import Data.Monoid
 
 import Control.Monad.Error.Class
 import Control.Monad.Reader.Class

@@ -15,6 +15,7 @@ import Data.Monoid
 import Data.These
 import Data.Traversable
 import qualified Data.Vector as V
+import Prelude -- Fix redundant import warnings
 import Test.QuickCheck.Function
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
