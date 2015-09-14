@@ -43,7 +43,7 @@ module Data.These (
                     -- $align
                   ) where
 
-import Control.Applicative (Applicative(..))
+import Control.Applicative
 import Control.Monad
 import Data.Bifoldable
 import Data.Bifunctor
@@ -52,7 +52,7 @@ import Data.Foldable
 import Data.Functor.Bind
 import Data.Maybe (isJust, mapMaybe)
 import Data.Profunctor
-import Data.Semigroup (Semigroup(..), Monoid(..))
+import Data.Semigroup
 import Data.Semigroup.Bifoldable
 import Data.Semigroup.Bitraversable
 import Data.Traversable

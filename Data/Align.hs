@@ -25,16 +25,16 @@ module Data.Align (
 
 -- TODO: More instances..
 
-import Control.Applicative (ZipList(..), pure, (<$>))
+import Control.Applicative
 import Data.Bifoldable (Bifoldable(..))
 import Data.Bifunctor (Bifunctor(..))
-import Data.Foldable (Foldable)
+import Data.Foldable
 import Data.Functor.Identity
 import Data.Functor.Product
 import Data.IntMap (IntMap)
 import Data.Map (Map)
 import Data.Maybe (catMaybes)
-import Data.Monoid (Monoid(..))
+import Data.Monoid hiding (Product)
 import Data.Sequence (Seq)
 import Data.These
 import qualified Data.Vector as V
@@ -52,7 +52,7 @@ import qualified Data.Vector.Fusion.Bundle.Size as Bundle
 import qualified Data.Vector.Fusion.Stream.Size as Stream
 #endif
 
-import Prelude
+import Prelude hiding (foldr) -- Fix redundant import warnings
 
 oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)
@@ -92,10 +92,10 @@ class (Functor f) => Align f where
 {-# RULES
 
 "align nil nil" align nil nil = nil
-"align x x" forall x. align x x = fmap (\x -> These x x) x
+"align x x" forall x. align x x = fmap (\y -> These y y) x
 
 "alignWith f nil nil" forall f. alignWith f nil nil = nil
-"alignWith f x x" forall f x. alignWith f x x = fmap (\x -> f (These x x)) x
+"alignWith f x x" forall f x. alignWith f x x = fmap (\y -> f (These y y)) x
 
   #-}
 
@@ -148,11 +148,11 @@ instance (Align f, Align g) => Align (Product f g) where
 instance Monad m => Align (Stream m) where
     nil = Stream.empty
 #if MIN_VERSION_vector(0,11,0)
-    alignWith  f (Stream stepa sa) (Stream stepb sb)
-      = Stream step (sa, sb, Nothing, False)
+    alignWith  f (Stream stepa ta) (Stream stepb tb)
+      = Stream step (ta, tb, Nothing, False)
 #else
-    alignWith  f (Stream stepa sa na) (Stream stepb sb nb)
-      = Stream step (sa, sb, Nothing, False) (Stream.larger na nb)
+    alignWith  f (Stream stepa ta na) (Stream stepb tb nb)
+      = Stream step (ta, tb, Nothing, False) (Stream.larger na nb)
 #endif
       where
         step (sa, sb, Nothing, False) = do

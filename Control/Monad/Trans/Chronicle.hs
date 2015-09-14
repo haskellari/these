@@ -25,13 +25,11 @@ import Control.Monad.Trans
 import Data.Functor.Apply (Apply(..))
 import Data.Functor.Bind (Bind(..))
 import Data.Functor.Identity
-import Data.Monoid (Monoid(..))
+import Data.Monoid
 
 import Control.Monad.Error.Class
 import Control.Monad.Reader.Class
 import Control.Monad.RWS.Class
-import Control.Monad.State.Class
-import Control.Monad.Writer.Class
 import Prelude
 import Data.These
 

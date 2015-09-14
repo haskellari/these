@@ -18,7 +18,7 @@ module Control.Monad.Chronicle.Class (
     ) where
 
 import Data.These
-import Control.Applicative (Applicative(..), (<$>))
+import Control.Applicative
 import Control.Monad.Trans.Chronicle (ChronicleT, runChronicle)
 import qualified Control.Monad.Trans.Chronicle as Ch
 
@@ -36,6 +36,7 @@ import Control.Monad.Trans.Writer.Strict as StrictWriter
 import Control.Monad.Trans.Class (lift)
 import Control.Monad (liftM)
 import Data.Monoid
+import Prelude -- Fix redundant import warnings
 
 
 class (Monad m) => MonadChronicle c m | m -> c where
