@@ -12,13 +12,13 @@ module Data.Align (
                   , lpadZip, lpadZipWith
                   , rpadZip, rpadZipWith
                   , alignVectorWith
-                  
+
                   -- * Unalign
                   , Unalign(..)
-                  
+
                   -- * Crosswalk
                   , Crosswalk(..)
-                  
+
                   -- * Bicrosswalk
                   , Bicrosswalk(..)
                   ) where
@@ -247,7 +247,7 @@ class (Align f) => Unalign f where
 instance Unalign Maybe
 
 instance Unalign [] where
-    unalign = foldr (these a b ab) ([],[]) 
+    unalign = foldr (these a b ab) ([],[])
       where a  l   ~(ls,rs) = (Just l :ls, Nothing:rs)
             b    r ~(ls,rs) = (Nothing:ls, Just r :rs)
             ab l r ~(ls,rs) = (Just l :ls, Just r :rs)
