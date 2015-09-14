@@ -40,5 +40,7 @@ test-suite test
                        transformers      >= 0.2  && < 0.5,
                        vector            >= 0.4 && < 0.12,
                        bifunctors        >= 0.1 && < 5.1,
+                       containers,
                        these,
-                       QuickCheck
+                       QuickCheck,
+                       quickcheck-instances

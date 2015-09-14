@@ -11,12 +11,17 @@ import Data.Foldable
 import Data.Bifunctor
 import Data.Functor.Compose
 import Data.Functor.Identity
+import qualified Data.Functor.Product as P
+import Data.IntMap (IntMap)
+import Data.Map (Map)
+import Data.Sequence (Seq)
 import Data.Monoid
 import Data.These
 import Data.Traversable
 import qualified Data.Vector as V
 import Prelude -- Fix redundant import warnings
 import Test.QuickCheck.Function
+import Test.QuickCheck.Instances ()
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
 
@@ -34,8 +39,13 @@ theseProps = testGroup "These"
   [ functorProps
   , traversableProps
   , dataAlignLaws "[]" (Proxy :: Proxy [])
+  , dataAlignLaws "IntMap" (Proxy :: Proxy IntMap)
+  , dataAlignLaws "Map Char" (Proxy :: Proxy (Map Char))
   , dataAlignLaws "Maybe" (Proxy :: Proxy Maybe)
+  , dataAlignLaws "Product [] Maybe" (Proxy :: Proxy (P.Product [] Maybe))
+  , dataAlignLaws "Seq" (Proxy :: Proxy Seq)
   , dataAlignLaws "Vector" (Proxy :: Proxy V.Vector)
+  , dataAlignLaws "ZipList" (Proxy :: Proxy ZipList)
   ]
 
 functorIdentityProp :: (Functor f, Eq (f a), Show (f a)) => f a -> Property
@@ -111,11 +121,20 @@ dataAlignLaws name _ = testGroup ("Data.Align laws: " <> name)
 
 -- Orphan instances
 
+instance (Arbitrary a, Arbitrary (f a), Arbitrary (g a))
+    => Arbitrary (P.Product f g a) where
+  arbitrary = P.Pair <$> arbitrary <*> arbitrary
+  shrink (P.Pair x y) = [P.Pair x' y' | (x', y') <- shrink (x, y)]
+
 instance (Arbitrary a, Arbitrary b) => Arbitrary (These a b) where
   arbitrary = oneof [ This <$> arbitrary
                     , That <$> arbitrary
                     , These <$> arbitrary <*> arbitrary
                     ]
+  shrink (This x)    = This <$> shrink x
+  shrink (That y)    = That <$> shrink y
+  shrink (These x y) = [This x, That y] ++
+                       [These x' y' | (x', y') <- shrink (x, y)]
 
 instance (Function a, Function b) => Function (These a b) where
   function = functionMap g f
@@ -133,3 +152,7 @@ instance (CoArbitrary a, CoArbitrary b) => CoArbitrary (These a b)
 instance Arbitrary a => Arbitrary (V.Vector a) where
   arbitrary = V.fromList <$> arbitrary
   shrink = fmap V.fromList . shrink . V.toList
+
+instance Arbitrary a => Arbitrary (ZipList a) where
+  arbitrary = ZipList <$> arbitrary
+  shrink = fmap ZipList . shrink . getZipList
