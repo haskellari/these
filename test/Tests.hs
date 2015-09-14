@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE TupleSections #-}
 module Main (main) where
 
 import Control.Applicative
@@ -13,7 +14,9 @@ import Data.Functor.Compose
 import Data.Functor.Identity
 import qualified Data.Functor.Product as P
 import Data.IntMap (IntMap)
+import Data.List as L
 import Data.Map (Map)
+import qualified Data.Map.Lazy as Map
 import Data.Sequence (Seq)
 import Data.Monoid
 import Data.These
@@ -46,7 +49,16 @@ theseProps = testGroup "These"
   , dataAlignLaws "Seq" (Proxy :: Proxy Seq)
   , dataAlignLaws "Vector" (Proxy :: Proxy V.Vector)
   , dataAlignLaws "ZipList" (Proxy :: Proxy ZipList)
+  , testProperty "Map value laziness property" mapStrictnessProp
   ]
+
+-- Even the `align` is defined using strict combinators, this will still work:
+mapStrictnessProp :: [Int] -> [Int] -> Bool
+mapStrictnessProp lkeys rkeys = Prelude.length (nub lkeys) <= Map.size (lhs `align` rhs)
+  where lhs  = Map.fromList $ fmap (,loop) lkeys
+        rhs  = Map.fromList $ fmap (,loop) rkeys
+        loop :: Int
+        loop = loop
 
 functorIdentityProp :: (Functor f, Eq (f a), Show (f a)) => f a -> Property
 functorIdentityProp x = fmap id x === x

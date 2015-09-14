@@ -32,7 +32,7 @@ import Data.Foldable
 import Data.Functor.Identity
 import Data.Functor.Product
 import Data.IntMap (IntMap)
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Data.Maybe (catMaybes)
 import Data.Monoid hiding (Product)
 import Data.Sequence (Seq)
@@ -41,7 +41,7 @@ import qualified Data.Vector as V
 import Data.Vector.Generic (Vector, unstream, stream, empty)
 import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
 import qualified Data.IntMap as IntMap
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
 #if MIN_VERSION_vector(0,11,0)
