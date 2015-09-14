@@ -25,6 +25,7 @@ import qualified Control.Monad.Trans.Chronicle as Ch
 import Control.Monad.Trans.Identity as Identity
 import Control.Monad.Trans.Maybe as Maybe
 import Control.Monad.Trans.Error as Error
+import Control.Monad.Trans.Except as Except
 import Control.Monad.Trans.Reader as Reader
 import Control.Monad.Trans.RWS.Lazy as LazyRWS
 import Control.Monad.Trans.RWS.Strict as StrictRWS
@@ -130,6 +131,15 @@ instance (Error e, MonadChronicle c m) => MonadChronicle c (ErrorT e m) where
     absolve x (ErrorT m) = ErrorT $ absolve (Right x) m
     condemn (ErrorT m) = ErrorT $ condemn m
     retcon f (ErrorT m) = ErrorT $ retcon f m
+    chronicle = lift . chronicle
+
+instance (MonadChronicle c m) => MonadChronicle c (ExceptT e m) where
+    dictate = lift . dictate
+    confess = lift . confess
+    memento (ExceptT m) = ExceptT $ either (Right . Left) (Right <$>) `liftM` memento m
+    absolve x (ExceptT m) = ExceptT $ absolve (Right x) m
+    condemn (ExceptT m) = ExceptT $ condemn m
+    retcon f (ExceptT m) = ExceptT $ retcon f m
     chronicle = lift . chronicle
 
 instance (MonadChronicle c m) => MonadChronicle c (ReaderT r m) where
