@@ -16,7 +16,7 @@ import qualified Data.Functor.Product as P
 import Data.IntMap (IntMap)
 import Data.List as L
 import Data.Map (Map)
-import qualified Data.Map.Lazy as Map
+import qualified Data.Map as Map
 import Data.Sequence (Seq)
 import Data.Monoid
 import Data.These
