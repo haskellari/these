@@ -14,6 +14,7 @@ import Data.Functor.Compose
 import Data.Functor.Identity
 import qualified Data.Functor.Product as P
 import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
 import Data.List as L
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -50,6 +51,7 @@ theseProps = testGroup "These"
   , dataAlignLaws "Vector" (Proxy :: Proxy V.Vector)
   , dataAlignLaws "ZipList" (Proxy :: Proxy ZipList)
   , testProperty "Map value laziness property" mapStrictnessProp
+  , testProperty "IntMap value laziness property" intmapStrictnessProp
   ]
 
 -- Even the `align` is defined using strict combinators, this will still work:
@@ -57,6 +59,13 @@ mapStrictnessProp :: [Int] -> [Int] -> Bool
 mapStrictnessProp lkeys rkeys = Prelude.length (nub lkeys) <= Map.size (lhs `align` rhs)
   where lhs  = Map.fromList $ fmap (,loop) lkeys
         rhs  = Map.fromList $ fmap (,loop) rkeys
+        loop :: Int
+        loop = loop
+
+intmapStrictnessProp :: [Int] -> [Int] -> Bool
+intmapStrictnessProp lkeys rkeys = Prelude.length (nub lkeys) <= IntMap.size (lhs `align` rhs)
+  where lhs  = IntMap.fromList $ fmap (,loop) lkeys
+        rhs  = IntMap.fromList $ fmap (,loop) rkeys
         loop :: Int
         loop = loop
 
