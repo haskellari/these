@@ -43,5 +43,5 @@ test-suite test
                        bifunctors        >= 0.1 && < 5.1,
                        containers,
                        these,
-                       QuickCheck,
+                       QuickCheck        >= 2.8,
                        quickcheck-instances
