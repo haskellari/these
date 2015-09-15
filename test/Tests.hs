@@ -12,6 +12,7 @@ import Data.Bifunctor
 import Data.Functor.Compose
 import Data.Functor.Identity
 import qualified Data.Functor.Product as P
+import Data.HashMap.Strict (HashMap)
 import Data.IntMap (IntMap)
 import Data.Map (Map)
 import Data.Sequence (Seq)
@@ -39,6 +40,7 @@ theseProps = testGroup "These"
   [ functorProps
   , traversableProps
   , dataAlignLaws "[]" (Proxy :: Proxy [])
+  , dataAlignLaws "HashMap String" (Proxy :: Proxy (HashMap String))
   , dataAlignLaws "IntMap" (Proxy :: Proxy IntMap)
   , dataAlignLaws "Map Char" (Proxy :: Proxy (Map Char))
   , dataAlignLaws "Maybe" (Proxy :: Proxy Maybe)
