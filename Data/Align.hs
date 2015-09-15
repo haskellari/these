@@ -31,6 +31,8 @@ import Data.Bifunctor (Bifunctor(..))
 import Data.Foldable
 import Data.Functor.Identity
 import Data.Functor.Product
+import Data.Hashable (Hashable(..))
+import Data.HashMap.Strict (HashMap)
 import Data.IntMap (IntMap)
 import Data.Map (Map)
 import Data.Maybe (catMaybes)
@@ -40,6 +42,7 @@ import Data.These
 import qualified Data.Vector as V
 import Data.Vector.Generic (Vector, unstream, stream, empty)
 import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
+import qualified Data.HashMap.Strict as HashMap
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
@@ -191,6 +194,12 @@ instance Align V.Vector where
 alignVectorWith :: (Vector v a, Vector v b, Vector v c)
         => (These a b -> c) -> v a -> v b -> v c
 alignVectorWith f x y = unstream $ alignWith f (stream x) (stream y)
+
+instance (Eq k, Hashable k) => Align (HashMap k) where
+    nil = HashMap.empty
+    align m n = HashMap.unionWith merge (HashMap.map This m) (HashMap.map That n)
+      where merge (This a) (That b) = These a b
+            merge _ _ = oops "Align HashMap: merge"
 
 -- | Align two structures and combine with 'mappend'.
 malign :: (Align f, Monoid a) => f a -> f a -> f a

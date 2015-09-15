@@ -25,7 +25,9 @@ Library
                        semigroupoids       >= 1.0 && < 5.1,
                        profunctors         >= 3   && < 5.2,
                        vector              >= 0.4 && < 0.12,
-                       transformers-compat >= 0.2 && < 0.5
+                       transformers-compat >= 0.2 && < 0.5,
+                       hashable,
+                       unordered-containers
   if impl(ghc <7.5)
     build-depends:     ghc-prim
   ghc-options:         -Wall
@@ -44,4 +46,6 @@ test-suite test
                        containers,
                        these,
                        QuickCheck,
-                       quickcheck-instances
+                       hashable,
+                       unordered-containers,
+                       quickcheck-instances >= 0.3.6
