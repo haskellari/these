@@ -12,13 +12,13 @@ module Data.Align (
                   , lpadZip, lpadZipWith
                   , rpadZip, rpadZipWith
                   , alignVectorWith
-                  
+
                   -- * Unalign
                   , Unalign(..)
-                  
+
                   -- * Crosswalk
                   , Crosswalk(..)
-                  
+
                   -- * Bicrosswalk
                   , Bicrosswalk(..)
                   ) where
@@ -33,8 +33,6 @@ import Data.Functor.Identity
 import Data.Functor.Product
 import Data.Hashable (Hashable(..))
 import Data.HashMap.Strict (HashMap)
-import Data.IntMap (IntMap)
-import Data.Map (Map)
 import Data.Maybe (catMaybes)
 import Data.Monoid hiding (Product)
 import Data.Sequence (Seq)
@@ -43,16 +41,29 @@ import qualified Data.Vector as V
 import Data.Vector.Generic (Vector, unstream, stream, empty)
 import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
 import qualified Data.HashMap.Strict as HashMap
-import qualified Data.IntMap as IntMap
-import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
+
 #if MIN_VERSION_vector(0,11,0)
 import Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
 import qualified Data.Vector.Fusion.Bundle.Monadic as Bundle
 import qualified Data.Vector.Fusion.Bundle.Size as Bundle
 #else
 import qualified Data.Vector.Fusion.Stream.Size as Stream
+#endif
+
+#if MIN_VERSION_containers(0, 5, 0)
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+
+import Data.IntMap.Strict (IntMap)
+import qualified Data.IntMap.Strict as IntMap
+#else
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
 #endif
 
 import Prelude hiding (foldr) -- Fix redundant import warnings
@@ -260,7 +271,7 @@ class (Align f) => Unalign f where
 instance Unalign Maybe
 
 instance Unalign [] where
-    unalign = foldr (these a b ab) ([],[]) 
+    unalign = foldr (these a b ab) ([],[])
       where a  l   ~(ls,rs) = (Just l :ls, Nothing:rs)
             b    r ~(ls,rs) = (Nothing:ls, Just r :rs)
             ab l r ~(ls,rs) = (Just l :ls, Just r :rs)
