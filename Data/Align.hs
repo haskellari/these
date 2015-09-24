@@ -95,11 +95,17 @@ oops = error . ("Data.Align: internal error: " ++)
 -- alignWith f a b = f \<$> align a b
 -- @
 class (Functor f) => Align f where
+    -- | An empty strucutre. @'align'@ing with @'nil'@ will produce a structure with
+    --   the same shape and elements as the other input, modulo @'This'@ or @'That'@.
     nil :: f a
 
+    -- | Analogous to @'zip'@, combines two structures by taking the union of
+    --   their shapes and using @'These'@ to hold the elements.
     align :: f a -> f b -> f (These a b)
     align = alignWith id
 
+    -- | Analogous to @'zipWith'@, combines two structures by taking the union of
+    --   their shapes and combining the elements with the given function.
     alignWith :: (These a b -> c) -> f a -> f b -> f c
     alignWith f a b = f <$> align a b
 
