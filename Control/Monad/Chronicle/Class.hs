@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-warnings-deprecations #-} -- for the ErrorT instances
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -36,6 +37,7 @@ import Control.Monad.Trans.Writer.Strict as StrictWriter
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad (liftM)
+import Data.Default.Class
 import Data.Monoid
 import Prelude -- Fix redundant import warnings
 
@@ -45,8 +47,17 @@ class (Monad m) => MonadChronicle c m | m -> c where
     --   
     --   Equivalent to 'tell' for the 'Writer' monad.
     dictate :: c -> m ()
+    
+    -- | @'disclose' c@ is an action that records the output @c@ and returns a
+    --   @'Default'@ value.
+    --
+    --   This is a convenience function for reporting non-fatal errors in one
+    --   branch a @case@, or similar scenarios when there is no meaningful 
+    --   result but a placeholder of sorts is needed in order to continue.
+    disclose :: (Default a) => c -> m a
+    disclose c = dictate c >> return def
 
-    -- | @'confess' c@ is an action that ends with a final output @c@.
+    -- | @'confess' c@ is an action that ends with a final record @c@.
     --   
     --   Equivalent to 'throwError' for the 'Error' monad.
     confess :: c -> m a
@@ -80,8 +91,6 @@ class (Monad m) => MonadChronicle c m | m -> c where
     
     -- | @'chronicle' m@ lifts a plain 'These c a' value into a 'MonadChronicle' instance.
     chronicle :: These c a -> m a
-
-
 
 
 instance (Monoid c) => MonadChronicle c (These c) where

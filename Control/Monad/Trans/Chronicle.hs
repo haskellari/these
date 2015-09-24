@@ -2,11 +2,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 -----------------------------------------------------------------------------
--- | Module     :  Control.Monad.Trans.Chronicle
+-- | Module     :  Control.Monad.Chronicle
 --
--- The 'ChronicleT' monad, a hybrid error/writer monad that allows
--- both accumulating outputs and aborting computation with a final
--- output.
+-- Hybrid error/writer monad class that allows both accumulating outputs and 
+-- aborting computation with a final output.
+--
+-- The expected use case is for computations with a notion of fatal vs. 
+-- non-fatal errors.
+
 -----------------------------------------------------------------------------
 module Control.Monad.Trans.Chronicle ( 
                                      -- * The Chronicle monad
@@ -14,7 +17,7 @@ module Control.Monad.Trans.Chronicle (
                                      -- * The ChronicleT monad transformer
                                      , ChronicleT(..)
                                      -- * Chronicle operations
-                                     , dictate, confess
+                                     , dictate, disclose, confess
                                      , memento, absolve, condemn
                                      , retcon
                                      ) where
@@ -22,6 +25,7 @@ module Control.Monad.Trans.Chronicle (
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans
+import Data.Default.Class
 import Data.Functor.Apply (Apply(..))
 import Data.Functor.Bind (Bind(..))
 import Data.Functor.Identity
@@ -136,6 +140,15 @@ instance (Monoid c, MonadWriter w m) => MonadWriter w (ChronicleT c m) where
 --   Equivalent to 'tell' for the 'Writer' monad.
 dictate :: (Monoid c, Monad m) => c -> ChronicleT c m ()
 dictate c = ChronicleT $ return (These c ())
+
+-- | @'disclose' c@ is an action that records the output @c@ and returns a
+--   @'Default'@ value.
+--
+--   This is a convenience function for reporting non-fatal errors in one
+--   branch a @case@, or similar scenarios when there is no meaningful 
+--   result but a placeholder of sorts is needed in order to continue.
+disclose :: (Default a, Monoid c, Monad m) => c -> ChronicleT c m a
+disclose c = dictate c >> return def
 
 -- | @'confess' c@ is an action that ends with a final output @c@.
 --   
