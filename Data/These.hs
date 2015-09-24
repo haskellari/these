@@ -50,6 +50,7 @@ import Data.Bifunctor
 import Data.Bitraversable
 import Data.Foldable
 import Data.Functor.Bind
+import Data.Hashable (Hashable(..))
 import Data.Maybe (isJust, mapMaybe)
 import Data.Profunctor
 import Data.Semigroup
@@ -271,3 +272,5 @@ instance (Monoid a) => Bind (These a) where
 instance (Monoid a) => Monad (These a) where
     return = pure
     (>>=) = (>>-)
+
+instance (Hashable a, Hashable b) => Hashable (These a b)
