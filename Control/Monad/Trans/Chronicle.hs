@@ -24,6 +24,7 @@ module Control.Monad.Trans.Chronicle (
 
 import Control.Applicative
 import Control.Monad
+import Control.Monad.Fix
 import Control.Monad.Trans
 import Data.Default.Class
 import Data.Functor.Apply (Apply(..))
@@ -133,6 +134,11 @@ instance (Monoid c, MonadWriter w m) => MonadWriter w (ChronicleT c m) where
                      (\c (x, f) -> (These c x, f)) `liftM` m
     writer = lift . writer
 
+-- this is basically copied from the instance for Either in transformers
+-- need to test this to make sure it's actually sensible...?
+instance (Monoid c, MonadFix m) => MonadFix (ChronicleT c m) where
+    mfix f = ChronicleT (mfix (runChronicleT . f . these (const bomb) id (flip const)))
+      where bomb = error "mfix (ChronicleT): inner compuation returned This value"
 
 
 -- | @'dictate' c@ is an action that records the output @c@.
