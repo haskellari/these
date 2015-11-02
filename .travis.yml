@@ -4,6 +4,7 @@
 env:
  # we have to use CABALVER=1.16 for GHC<7.6 as well, as there's
  # no package for earlier cabal versions in the PPA
+ - GHCVER=7.2.2 CABALVER=1.18 NOTESTS=YES
  - GHCVER=7.4.2 CABALVER=1.16
  - GHCVER=7.6.3 CABALVER=1.16
  - GHCVER=7.8.4 CABALVER=1.18
@@ -22,22 +23,29 @@ before_install:
  - travis_retry sudo apt-get install cabal-install-$CABALVER ghc-$GHCVER
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
  - cabal --version
+ - if [ "$NOTESTS" = "YES" ]; then
+     export CABALOPTS="";
+     export TESTCMD="true";
+   else
+     export CABALOPTS="--enable-tests";
+     export TESTCMD="cabal test";
+   fi
 
 install:
  - travis_retry cabal update
- - cabal install --only-dependencies --enable-tests
+ - cabal install --only-dependencies $CABALOPTS
 
 # Here starts the actual work to be performed for the package under
 # test; any command which exits with a non-zero exit code causes the
 # build to fail.
 script:
  # -v2 provides useful information for debugging
- - cabal configure -v2 --enable-tests
+ - cabal configure -v2 $CABALOPTS
 
  # this builds all libraries and executables
  # (including tests/benchmarks)
  - cabal build
- - cabal test
+ - $TESTCMD
 
  # tests that a source-distribution can be generated
  - cabal sdist

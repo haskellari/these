@@ -29,7 +29,7 @@ Library
                        Control.Monad.Chronicle,
                        Control.Monad.Chronicle.Class,
                        Control.Monad.Trans.Chronicle
-  Build-depends:       base                     >= 3     && < 5,
+  Build-depends:       base                     >= 4.4   && < 5,
                        containers               >= 0.4   && < 0.6,
                        mtl                      >= 2     && < 2.3,
                        transformers             >= 0.2   && < 0.5,
