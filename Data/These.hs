@@ -239,9 +239,6 @@ instance Bitraversable These where
     bitraverse f _ (This x) = This <$> f x
     bitraverse _ g (That x) = That <$> g x
     bitraverse f g (These x y) = These <$> f x <*> g y
-    bimapM f _ (This x) = liftM This (f x)
-    bimapM _ g (That x) = liftM That (g x)
-    bimapM f g (These x y) = liftM2 These (f x) (g y)
 
 instance Bitraversable1 These where
     bitraverse1 f _ (This x) = This <$> f x
