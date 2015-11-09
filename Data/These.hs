@@ -6,40 +6,40 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Data.These (
                     These(..)
-                    
+
                   -- * Functions to get rid of 'These'
                   , these
                   , fromThese
                   , mergeThese
                   , mergeTheseWith
-                  
+
                   -- * Traversals
                   , here, there
-                  
+
                   -- * Prisms
                   , _This, _That, _These
-                  
+
                   -- * Case selections
                   , justThis
                   , justThat
                   , justThese
-                  
+
                   , catThis
                   , catThat
                   , catThese
-                  
+
                   , partitionThese
-                                    
+
                   -- * Case predicates
                   , isThis
                   , isThat
                   , isThese
-                  
+
                   -- * Map operations
                   , mapThese
                   , mapThis
                   , mapThat
-                  
+
                     -- $align
                   ) where
 
@@ -64,13 +64,13 @@ import Prelude hiding (foldr)
 -- --------------------------------------------------------------------------
 -- | The 'These' type represents values with two non-exclusive possibilities.
 --
---   This can be useful to represent combinations of two values, where the 
---   combination is defined if either input is. Algebraically, the type 
+--   This can be useful to represent combinations of two values, where the
+--   combination is defined if either input is. Algebraically, the type
 --   @These A B@ represents @(A + B + AB)@, which doesn't factor easily into
 --   sums and products--a type like @Either A (B, Maybe A)@ is unclear and
 --   awkward to use.
 --
---   'These' has straightforward instances of 'Functor', 'Monad', &c., and 
+--   'These' has straightforward instances of 'Functor', 'Monad', &c., and
 --   behaves like a hybrid error/writer monad, as would be expected.
 data These a b = This a | That b | These a b
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
