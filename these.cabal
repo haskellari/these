@@ -1,5 +1,5 @@
 Name:                these
-Version:             0.6.1.0
+Version:             0.6.2.0
 Synopsis:            An either-or-both data type & a generalized 'zip with padding' typeclass
 Homepage:            https://github.com/isomorphism/these
 License:             BSD3
@@ -8,7 +8,7 @@ Author:              C. McCann
 Maintainer:          cam@uptoisomorphism.net
 Category:            Data,Control
 Build-type:          Simple
-Extra-source-files:  README.md
+Extra-source-files:  README.md, CHANGELOG.md
 Cabal-version:       >=1.8
 Description:
   This package provides a data type @These a b@ which can hold a value of either
@@ -22,6 +22,10 @@ Description:
   .
   Also included is @ChronicleT@, a monad transformer based on the Monad instance
   for @These a@, along with the usual monad transformer bells and whistles.
+
+source-repository head
+  type: git
+  location: https://github.com/isomorphism/these.git
 
 Library
   Exposed-modules:     Data.These,
