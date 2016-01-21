@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE KindSignatures #-}
@@ -172,9 +173,11 @@ instance (Function a, Function b) => Function (These a b) where
 
 instance (CoArbitrary a, CoArbitrary b) => CoArbitrary (These a b)
 
+#if !MIN_VERSION_quickcheck_instances(0,3,12)
 instance Arbitrary a => Arbitrary (V.Vector a) where
   arbitrary = V.fromList <$> arbitrary
   shrink = fmap V.fromList . shrink . V.toList
+#endif
 
 instance Arbitrary a => Arbitrary (ZipList a) where
   arbitrary = ZipList <$> arbitrary
