@@ -55,12 +55,12 @@ import qualified Data.Vector.Fusion.Stream.Size as Stream
 
 #if MIN_VERSION_containers(0, 5, 0)
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
-import qualified Data.Map.Lazy as LMap
+import qualified Data.Map.Strict as Map hiding (mergeWithKey)
+import qualified Data.Map.Lazy as Map (mergeWithKey)
 
 import Data.IntMap.Strict (IntMap)
-import qualified Data.IntMap.Strict as IntMap
-import qualified Data.IntMap.Lazy as LIntMap
+import qualified Data.IntMap.Strict as IntMap hiding (mergeWithKey)
+import qualified Data.IntMap.Lazy as IntMap (mergeWithKey)
 #else
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -153,18 +153,18 @@ instance Align Seq where
         fc x y = f (These x y)
         in case compare xn yn of
             LT -> case Seq.splitAt xn ys of
-                (ysl, ysr) -> Seq.zipWith fc xs ysl <> fmap (f . That) ysr
+                (ysl, ysr) -> Seq.zipWith fc xs ysl `mappend` fmap (f . That) ysr
             EQ -> Seq.zipWith fc xs ys
             GT -> case Seq.splitAt yn xs of
-                (xsl, xsr) -> Seq.zipWith fc xsl ys <> fmap (f . This) xsr
+                (xsl, xsr) -> Seq.zipWith fc xsl ys `mappend` fmap (f . This) xsr
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
-    alignWith f = LMap.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
+    alignWith f = Map.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
 
 instance Align IntMap where
     nil = IntMap.empty
-    alignWith f = LIntMap.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
+    alignWith f = IntMap.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
 
 instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil
@@ -332,7 +332,7 @@ instance Crosswalk [] where
 
 instance Crosswalk Seq.Seq where
     crosswalk f = foldr (alignWith cons . f) nil where
-        cons = these pure id (Seq.<|)
+        cons = these Seq.singleton id (Seq.<|)
 
 instance Crosswalk (These a) where
     crosswalk _ (This _) = nil
