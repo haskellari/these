@@ -160,11 +160,23 @@ instance Align Seq where
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
+#if MIN_VERSION_containers(0,5,0)
     alignWith f = Map.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
+#else
+    align m n = Map.unionWith merge (Map.map This m) (Map.map That n)
+      where merge (This a) (That b) = These a b
+            merge _ _ = oops "Align Map: merge"
+#endif
 
 instance Align IntMap where
     nil = IntMap.empty
+#if MIN_VERSION_containers(0,5,0)
     alignWith f = IntMap.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
+#else
+    align m n = IntMap.unionWith merge (IntMap.map This m) (IntMap.map That n)
+      where merge (This a) (That b) = These a b
+            merge _ _ = oops "Align IntMap: merge"
+#endif
 
 instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil
