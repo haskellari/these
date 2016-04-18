@@ -1,6 +1,6 @@
 # NB: don't set `language: haskell` here
 
-# See also https://github.com/hvr/multi-ghc-travis for more informatioN
+# See also https://github.com/hvr/multi-ghc-travis for more information
 env:
  # we have to use CABALVER=1.16 for GHC<7.6 as well, as there's
  # no package for earlier cabal versions in the PPA
