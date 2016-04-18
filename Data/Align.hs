@@ -39,6 +39,7 @@ import Data.Sequence (Seq)
 import Data.These
 import qualified Data.Vector as V
 import Data.Vector.Generic (Vector, unstream, stream, empty)
+import qualified Data.Vector.Generic as VG (fromList, foldr)
 import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Sequence as Seq
@@ -54,10 +55,12 @@ import qualified Data.Vector.Fusion.Stream.Size as Stream
 
 #if MIN_VERSION_containers(0, 5, 0)
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict as Map hiding (mergeWithKey)
+import qualified Data.Map.Lazy as Map (mergeWithKey)
 
 import Data.IntMap.Strict (IntMap)
-import qualified Data.IntMap.Strict as IntMap
+import qualified Data.IntMap.Strict as IntMap hiding (mergeWithKey)
+import qualified Data.IntMap.Lazy as IntMap (mergeWithKey)
 #else
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -144,25 +147,36 @@ instance Align ZipList where
 -- could probably be more efficient...
 instance Align Seq where
     nil = Seq.empty
-    align xs ys =
-        case Seq.viewl xs of
-            Seq.EmptyL   -> That <$> ys
-            x Seq.:< xs' ->
-                case Seq.viewl ys of
-                    Seq.EmptyL   -> This <$> xs
-                    y Seq.:< ys' -> These x y Seq.<| align xs' ys'
+    alignWith f xs ys = let
+        xn = Seq.length xs
+        yn = Seq.length ys
+        fc x y = f (These x y)
+        in case compare xn yn of
+            LT -> case Seq.splitAt xn ys of
+                (ysl, ysr) -> Seq.zipWith fc xs ysl `mappend` fmap (f . That) ysr
+            EQ -> Seq.zipWith fc xs ys
+            GT -> case Seq.splitAt yn xs of
+                (xsl, xsr) -> Seq.zipWith fc xsl ys `mappend` fmap (f . This) xsr
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
+#if MIN_VERSION_containers(0,5,0)
+    alignWith f = Map.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
+#else
     align m n = Map.unionWith merge (Map.map This m) (Map.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align Map: merge"
+#endif
 
 instance Align IntMap where
     nil = IntMap.empty
+#if MIN_VERSION_containers(0,5,0)
+    alignWith f = IntMap.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
+#else
     align m n = IntMap.unionWith merge (IntMap.map This m) (IntMap.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align IntMap: merge"
+#endif
 
 instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil
@@ -328,10 +342,22 @@ instance Crosswalk [] where
     crosswalk f (x:xs) = alignWith cons (f x) (crosswalk f xs)
       where cons = these pure id (:)
 
+instance Crosswalk Seq.Seq where
+    crosswalk f = foldr (alignWith cons . f) nil where
+        cons = these Seq.singleton id (Seq.<|)
+
 instance Crosswalk (These a) where
     crosswalk _ (This _) = nil
     crosswalk f (That x) = That <$> f x
     crosswalk f (These a x) = These a <$> f x
+
+crosswalkVector :: (Vector v a, Vector v b, Align f)
+    => (a -> f b) -> v a -> f (v b)
+crosswalkVector f = fmap VG.fromList . VG.foldr (alignWith cons . f) nil where
+    cons = these pure id (:)
+
+instance Crosswalk V.Vector where
+    crosswalk = crosswalkVector
 
 -- --------------------------------------------------------------------------
 -- | Bifoldable bifunctors supporting traversal through an alignable
