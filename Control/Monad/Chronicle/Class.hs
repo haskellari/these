@@ -38,7 +38,7 @@ import Control.Monad.Trans.Writer.Strict as StrictWriter
 import Control.Monad.Trans.Class (lift)
 import Control.Monad (liftM)
 import Data.Default.Class
-import Data.Monoid
+import Data.Semigroup
 import Prelude -- Fix redundant import warnings
 
 
@@ -93,7 +93,7 @@ class (Monad m) => MonadChronicle c m | m -> c where
     chronicle :: These c a -> m a
 
 
-instance (Monoid c) => MonadChronicle c (These c) where
+instance (Semigroup c) => MonadChronicle c (These c) where
     dictate c = These c ()
     confess c = This c
     memento (This c) = That (Left c)
@@ -106,7 +106,7 @@ instance (Monoid c) => MonadChronicle c (These c) where
     retcon = mapThis
     chronicle = id
 
-instance (Monoid c, Monad m) => MonadChronicle c (ChronicleT c m) where
+instance (Semigroup c, Monad m) => MonadChronicle c (ChronicleT c m) where
     dictate = Ch.dictate
     confess = Ch.confess
     memento = Ch.memento
