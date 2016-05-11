@@ -245,28 +245,28 @@ instance Bitraversable1 These where
     bitraverse1 _ g (That x) = That <$> g x
     bitraverse1 f g (These x y) = These <$> f x <.> g y
 
-instance (Monoid a) => Apply (These a) where
+instance (Semigroup a) => Apply (These a) where
     This  a   <.> _         = This a
     That    _ <.> This  b   = This b
     That    f <.> That    x = That (f x)
     That    f <.> These b x = These b (f x)
-    These a _ <.> This  b   = This (mappend a b)
+    These a _ <.> This  b   = This (a <> b)
     These a f <.> That    x = These a (f x)
-    These a f <.> These b x = These (mappend a b) (f x)
+    These a f <.> These b x = These (a <> b) (f x)
 
-instance (Monoid a) => Applicative (These a) where
+instance (Semigroup a) => Applicative (These a) where
     pure = That
     (<*>) = (<.>)
 
-instance (Monoid a) => Bind (These a) where
+instance (Semigroup a) => Bind (These a) where
     This  a   >>- _ = This a
     That    x >>- k = k x
     These a x >>- k = case k x of
-                          This  b   -> This  (mappend a b)
+                          This  b   -> This  (a <> b)
                           That    y -> These a y
-                          These b y -> These (mappend a b) y
+                          These b y -> These (a <> b) y
 
-instance (Monoid a) => Monad (These a) where
+instance (Semigroup a) => Monad (These a) where
     return = pure
     (>>=) = (>>-)
 
