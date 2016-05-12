@@ -30,7 +30,6 @@ import Data.Default.Class
 import Data.Functor.Apply (Apply(..))
 import Data.Functor.Bind (Bind(..))
 import Data.Functor.Identity
-import Data.Monoid hiding ((<>))
 import Data.Semigroup
 
 import Control.Monad.Error.Class
