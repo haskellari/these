@@ -43,6 +43,7 @@ import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Sequence as Seq
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
+import qualified Data.Vector.Generic as VG (fromList, foldr)
 
 #if MIN_VERSION_vector(0,11,0)
 import Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
@@ -328,10 +329,22 @@ instance Crosswalk [] where
     crosswalk f (x:xs) = alignWith cons (f x) (crosswalk f xs)
       where cons = these pure id (:)
 
+instance Crosswalk Seq.Seq where
+    crosswalk f = foldr (alignWith cons . f) nil where
+        cons = these Seq.singleton id (Seq.<|)
+
 instance Crosswalk (These a) where
     crosswalk _ (This _) = nil
     crosswalk f (That x) = That <$> f x
     crosswalk f (These a x) = These a <$> f x
+
+crosswalkVector :: (Vector v a, Vector v b, Align f)
+    => (a -> f b) -> v a -> f (v b)
+crosswalkVector f = fmap VG.fromList . VG.foldr (alignWith cons . f) nil where
+    cons = these pure id (:)
+
+instance Crosswalk V.Vector where
+    crosswalk = crosswalkVector
 
 -- --------------------------------------------------------------------------
 -- | Bifoldable bifunctors supporting traversal through an alignable
