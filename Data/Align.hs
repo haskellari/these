@@ -142,16 +142,30 @@ instance Align ZipList where
     nil = ZipList []
     align (ZipList xs) (ZipList ys) = ZipList (align xs ys)
 
--- could probably be more efficient...
 instance Align Seq where
     nil = Seq.empty
-    align xs ys =
-        case Seq.viewl xs of
-            Seq.EmptyL   -> That <$> ys
-            x Seq.:< xs' ->
-                case Seq.viewl ys of
-                    Seq.EmptyL   -> This <$> xs
-                    y Seq.:< ys' -> These x y Seq.<| align xs' ys'
+
+    align xs ys = case compare xn yn of
+        EQ -> Seq.zipWith fc xs ys
+        LT -> case Seq.splitAt xn ys of
+            (ysl, ysr) -> Seq.zipWith These xs ysl `mappend` fmap That ysr
+        GT -> case Seq.splitAt yn xs of
+            (xsl, xsr) -> Seq.zipWith These xsl ys `mappend` fmap This xsr
+      where
+        xn = Seq.length xs
+        yn = Seq.length ys
+        fc = These
+
+    alignWith f xs ys = case compare xn yn of
+        EQ -> Seq.zipWith fc xs ys
+        LT -> case Seq.splitAt xn ys of
+            (ysl, ysr) -> Seq.zipWith fc xs ysl `mappend` fmap (f . That) ysr
+        GT -> case Seq.splitAt yn xs of
+            (xsl, xsr) -> Seq.zipWith fc xsl ys `mappend` fmap (f . This) xsr
+      where
+        xn = Seq.length xs
+        yn = Seq.length ys
+        fc x y = f (These x y)
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
