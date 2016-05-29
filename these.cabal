@@ -37,7 +37,6 @@ Library
                        containers               >= 0.4   && < 0.6,
                        mtl                      >= 2     && < 2.3,
                        transformers             >= 0.2   && < 0.6,
-                       semigroups               >= 0.8   && < 0.19,
                        bifunctors               >= 0.1   && < 5.4,
                        semigroupoids            >= 1.0   && < 5.1,
                        profunctors              >= 3     && < 5.3,
@@ -48,6 +47,11 @@ Library
                        data-default-class       >= 0.0   && < 0.2
   if impl(ghc <7.5)
     build-depends:     ghc-prim
+
+  if !impl(ghc >= 8.0)
+    build-depends:
+                       semigroups               >= 0.8   && < 0.19
+
   ghc-options:         -Wall
 
 test-suite test
