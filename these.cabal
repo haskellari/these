@@ -1,5 +1,5 @@
 Name:                these
-Version:             0.6.2.1
+Version:             0.7
 Synopsis:            An either-or-both data type & a generalized 'zip with padding' typeclass
 Homepage:            https://github.com/isomorphism/these
 License:             BSD3
