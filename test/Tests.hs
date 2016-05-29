@@ -57,6 +57,8 @@ theseProps = testGroup "These"
   -- , crosswalkLaws "Identity" (Proxy :: Proxy Identity)
   , crosswalkLaws "Maybe" (Proxy :: Proxy Maybe)
   , crosswalkLaws "These" (Proxy :: Proxy (These Int))
+  , crosswalkLaws "Seq" (Proxy :: Proxy Seq)
+  , crosswalkLaws "Vector" (Proxy :: Proxy V.Vector)
   , testProperty "Map value laziness property" mapStrictnessProp
   , testProperty "IntMap value laziness property" intmapStrictnessProp
   ]

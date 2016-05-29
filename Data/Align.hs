@@ -43,6 +43,7 @@ import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Sequence as Seq
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
+import qualified Data.Vector.Generic as VG (fromList, foldr)
 
 #if MIN_VERSION_vector(0,11,0)
 import Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
@@ -141,16 +142,30 @@ instance Align ZipList where
     nil = ZipList []
     align (ZipList xs) (ZipList ys) = ZipList (align xs ys)
 
--- could probably be more efficient...
 instance Align Seq where
     nil = Seq.empty
-    align xs ys =
-        case Seq.viewl xs of
-            Seq.EmptyL   -> That <$> ys
-            x Seq.:< xs' ->
-                case Seq.viewl ys of
-                    Seq.EmptyL   -> This <$> xs
-                    y Seq.:< ys' -> These x y Seq.<| align xs' ys'
+
+    align xs ys = case compare xn yn of
+        EQ -> Seq.zipWith fc xs ys
+        LT -> case Seq.splitAt xn ys of
+            (ysl, ysr) -> Seq.zipWith These xs ysl `mappend` fmap That ysr
+        GT -> case Seq.splitAt yn xs of
+            (xsl, xsr) -> Seq.zipWith These xsl ys `mappend` fmap This xsr
+      where
+        xn = Seq.length xs
+        yn = Seq.length ys
+        fc = These
+
+    alignWith f xs ys = case compare xn yn of
+        EQ -> Seq.zipWith fc xs ys
+        LT -> case Seq.splitAt xn ys of
+            (ysl, ysr) -> Seq.zipWith fc xs ysl `mappend` fmap (f . That) ysr
+        GT -> case Seq.splitAt yn xs of
+            (xsl, xsr) -> Seq.zipWith fc xsl ys `mappend` fmap (f . This) xsr
+      where
+        xn = Seq.length xs
+        yn = Seq.length ys
+        fc x y = f (These x y)
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
@@ -328,10 +343,22 @@ instance Crosswalk [] where
     crosswalk f (x:xs) = alignWith cons (f x) (crosswalk f xs)
       where cons = these pure id (:)
 
+instance Crosswalk Seq.Seq where
+    crosswalk f = foldr (alignWith cons . f) nil where
+        cons = these Seq.singleton id (Seq.<|)
+
 instance Crosswalk (These a) where
     crosswalk _ (This _) = nil
     crosswalk f (That x) = That <$> f x
     crosswalk f (These a x) = These a <$> f x
+
+crosswalkVector :: (Vector v a, Vector v b, Align f)
+    => (a -> f b) -> v a -> f (v b)
+crosswalkVector f = fmap VG.fromList . VG.foldr (alignWith cons . f) nil where
+    cons = these pure id (:)
+
+instance Crosswalk V.Vector where
+    crosswalk = crosswalkVector
 
 -- --------------------------------------------------------------------------
 -- | Bifoldable bifunctors supporting traversal through an alignable
