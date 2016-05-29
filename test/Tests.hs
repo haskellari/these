@@ -53,6 +53,10 @@ theseProps = testGroup "These"
   , dataAlignLaws "Seq" (Proxy :: Proxy Seq)
   , dataAlignLaws "Vector" (Proxy :: Proxy V.Vector)
   , dataAlignLaws "ZipList" (Proxy :: Proxy ZipList)
+  , crosswalkLaws "[]" (Proxy :: Proxy [])
+  -- , crosswalkLaws "Identity" (Proxy :: Proxy Identity)
+  , crosswalkLaws "Maybe" (Proxy :: Proxy Maybe)
+  , crosswalkLaws "These" (Proxy :: Proxy (These Int))
   , testProperty "Map value laziness property" mapStrictnessProp
   , testProperty "IntMap value laziness property" intmapStrictnessProp
   ]
@@ -142,6 +146,44 @@ dataAlignLaws name _ = testGroup ("Data.Align laws: " <> name)
         alignWithProp :: f Int -> f Int -> Fun (These Int Int) Int -> Property
         alignWithProp xs ys (Fun _ f) =
           alignWith f xs ys === (f <$> align xs ys)
+
+data Index = I1 | I2 | I3 | I4
+  deriving (Eq, Ord, Show, Enum, Bounded)
+
+instance Arbitrary Index where
+    arbitrary = elements [minBound .. maxBound]
+    shrink I1 = []
+    shrink I2 = [I1]
+    shrink I3 = [I1, I2]
+    shrink I4 = [I1, I2, I3]
+
+crosswalkLaws
+    :: forall (t :: * -> *).
+       ( Crosswalk t
+       , Arbitrary (t Int)
+       , Eq (t Int), Show (t Int)
+       )
+    => String
+    -> Proxy t
+    -> TestTree
+crosswalkLaws name _ = testGroup ("Data.CrossWalk laws: " <> name)
+  [ QC.testProperty "crosswalk (const nil) = const nil" firstLaw
+  , QC.testProperty "crosswalk f = sequenceL . fmap f" secondLaw
+  ]
+  where
+    -- f = Map Index
+    -- a, b = Int
+    firstLaw :: t Int -> Property
+    firstLaw x = lhs === rhs
+      where
+        lhs = crosswalk (const nil) x
+        rhs = const nil x :: Map Index (t Int)
+
+    secondLaw :: Fun Int (Map Index Int) -> t Int -> Property
+    secondLaw (Fun _ f) x = lhs === rhs
+      where
+        lhs = crosswalk f x
+        rhs = sequenceL . fmap f $ x
 
 -- Orphan instances
 
