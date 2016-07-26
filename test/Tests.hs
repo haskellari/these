@@ -9,6 +9,7 @@ module Main (main) where
 import Control.Applicative
 import Control.Monad (join)
 import Data.Align
+import Data.Align.Key
 import Data.Foldable
 import Data.Bifunctor
 import Data.Functor.Compose
@@ -38,7 +39,7 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [theseProps]
+tests = testGroup "Tests" [theseProps, alignWithKeyProps]
 
 theseProps :: TestTree
 theseProps = testGroup "These"
@@ -62,6 +63,18 @@ theseProps = testGroup "These"
   , testProperty "Map value laziness property" mapStrictnessProp
   , testProperty "IntMap value laziness property" intmapStrictnessProp
   ]
+
+alignWithKeyProps :: TestTree
+alignWithKeyProps = testGroup "AlignWithKey"
+    [ testProperty "example" $ once $ example
+    ]
+  where
+    example = alignWithKey (,) "foo" "quux" ===
+        [ (0, These 'f' 'q')
+        , (1, These 'o' 'u')
+        , (2, These 'o' 'u')
+        , (3, That 'x')
+        ]
 
 -- Even the `align` is defined using strict combinators, this will still work:
 mapStrictnessProp :: [Int] -> [Int] -> Bool
