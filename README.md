@@ -1,4 +1,4 @@
-These -- an either-or-both data type
+These &mdash; an either-or-both data type
 ====================================
 
 [![Build Status](https://secure.travis-ci.org/isomorphism/these.svg)](http://travis-ci.org/isomorphism/these)
@@ -19,7 +19,7 @@ A variety of functions are provided in `Data.These` akin to those in `Data.Eithe
 `here` and `there` are traversals over elements of the same type, suitable for use with `Control.Lens`. This has the dramatic benefit that if you're using `lens` you can ignore the dreadfully bland `mapThis` and `mapThat` functions in favor of saying `over here` and `over there`.
 
 
-Align -- structural unions
+Align &mdash; structural unions
 ==========================
 
 There is a notion of "zippy" `Applicative`s where `liftA2 (,)` behaves like `zip` in the sense that if the `Functor` is regarded as a container with distinct locations, each element of the result is a pair of the values that occupied the same location in the two inputs. For this to be possible, the result can only contain values at locations where both inputs also contained values. In a sense, this is the intersection of the "shapes" of the two inputs.
@@ -55,7 +55,7 @@ Bicrosswalk
 <elliott> cmccann: unfortunately it is too perfect an abstraction to be useful.
 ```
 
-ChronicleT -- a.k.a. These as a monad
+ChronicleT &mdash; a.k.a. These as a monad
 =====================================
 
 `These a` has an obvious `Monad` instance, provided here in monad transformer form.
