@@ -24,6 +24,7 @@ import qualified Data.Map as Map
 import Data.Sequence (Seq)
 import Data.Monoid
 import Data.These
+import Data.Int (Int8)
 import Data.Traversable
 import qualified Data.Vector as V
 import Prelude -- Fix redundant import warnings
@@ -31,6 +32,10 @@ import Test.QuickCheck.Function
 import Test.QuickCheck.Instances ()
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
+
+import qualified Data.Aeson as Aeson
+import qualified Data.Binary as Binary
+import qualified Data.Set as Set
 
 -- For old GHC to work
 data Proxy (a :: * -> *) = Proxy
@@ -62,6 +67,8 @@ theseProps = testGroup "These"
   , crosswalkLaws "Vector" (Proxy :: Proxy V.Vector)
   , testProperty "Map value laziness property" mapStrictnessProp
   , testProperty "IntMap value laziness property" intmapStrictnessProp
+  , aesonProps
+  , binaryProps
   ]
 
 alignWithKeyProps :: TestTree
@@ -200,35 +207,15 @@ crosswalkLaws name _ = testGroup ("Data.CrossWalk laws: " <> name)
         lhs = crosswalk f x
         rhs = sequenceL . fmap f $ x
 
+-------------------------------------------------------------------------------
 -- Orphan instances
+-------------------------------------------------------------------------------
 
 instance (Arbitrary a, Arbitrary (f a), Arbitrary (g a))
     => Arbitrary (P.Product f g a) where
   arbitrary = P.Pair <$> arbitrary <*> arbitrary
   shrink (P.Pair x y) = [P.Pair x' y' | (x', y') <- shrink (x, y)]
 
-instance (Arbitrary a, Arbitrary b) => Arbitrary (These a b) where
-  arbitrary = oneof [ This <$> arbitrary
-                    , That <$> arbitrary
-                    , These <$> arbitrary <*> arbitrary
-                    ]
-  shrink (This x)    = This <$> shrink x
-  shrink (That y)    = That <$> shrink y
-  shrink (These x y) = [This x, That y] ++
-                       [These x' y' | (x', y') <- shrink (x, y)]
-
-instance (Function a, Function b) => Function (These a b) where
-  function = functionMap g f
-    where
-      g (This a)    = Left a
-      g (That b)    = Right (Left b)
-      g (These a b) = Right (Right (a, b))
-
-      f (Left a)               = This a
-      f (Right (Left b))       = That b
-      f (Right (Right (a, b))) = These a b
-
-instance (CoArbitrary a, CoArbitrary b) => CoArbitrary (These a b)
 
 #if !MIN_VERSION_quickcheck_instances(0,3,12)
 instance Arbitrary a => Arbitrary (V.Vector a) where
@@ -239,3 +226,29 @@ instance Arbitrary a => Arbitrary (V.Vector a) where
 instance Arbitrary a => Arbitrary (ZipList a) where
   arbitrary = ZipList <$> arbitrary
   shrink = fmap ZipList . shrink . getZipList
+
+-------------------------------------------------------------------------------
+-- aeson
+-------------------------------------------------------------------------------
+
+aesonProps :: TestTree
+aesonProps = testGroup "aeson"
+    [ testProperty "roundtrip / direct" prop1
+    , testProperty "roundtrip / toJSON" prop2
+    ]
+  where
+    prop1 :: These Int String -> Property
+    prop1 x = Just x === Aeson.decode (Aeson.encode x)
+
+    prop2 :: These Int String -> Property
+    prop2 x = Just x === Aeson.decode (Aeson.encode $ Aeson.toJSON x)
+
+-------------------------------------------------------------------------------
+-- binary
+-------------------------------------------------------------------------------
+
+binaryProps :: TestTree
+binaryProps = testProperty "binary / roundtrip" prop
+  where
+    prop :: These Int String -> Property
+    prop x = x === Binary.decode (Binary.encode x)

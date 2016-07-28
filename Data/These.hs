@@ -2,8 +2,10 @@
 -- | Module     :  Data.These
 --
 -- The 'These' type and associated operations. Now enhanced with @Control.Lens@ magic!
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Data.These (
                     These(..)
 
@@ -60,6 +62,15 @@ import Data.Traversable
 import Data.Data
 import GHC.Generics
 import Prelude hiding (foldr)
+
+import Control.DeepSeq (NFData (..))
+import Data.Aeson (FromJSON (..), ToJSON (..), (.=))
+import Data.Binary (Binary (..))
+import Test.QuickCheck (Arbitrary (..), CoArbitrary (..), oneof)
+import Test.QuickCheck.Function (Function (..), functionMap)
+
+import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson as Aeson
 
 -- --------------------------------------------------------------------------
 -- | The 'These' type represents values with two non-exclusive possibilities.
@@ -271,3 +282,64 @@ instance (Semigroup a) => Monad (These a) where
     (>>=) = (>>-)
 
 instance (Hashable a, Hashable b) => Hashable (These a b)
+
+instance (NFData a, NFData b) => NFData (These a b) where
+    rnf (This a)    = rnf a
+    rnf (That b)    = rnf b
+    rnf (These a b) = rnf a `seq` rnf b
+
+instance (Binary a, Binary b) => Binary (These a b) where
+    put (This a)    = put (0 :: Int) >> put a
+    put (That b)    = put (1 :: Int) >> put b
+    put (These a b) = put (2 :: Int) >> put a >> put b
+
+    get = do
+        i <- get
+        case (i :: Int) of
+            0 -> This <$> get
+            1 -> That <$> get
+            2 -> These <$> get <*> get
+            _ -> fail "Invalid These index"
+
+instance (ToJSON a, ToJSON b) => ToJSON (These a b) where
+    toJSON (This a)    = Aeson.object [ "This" .= a ]
+    toJSON (That b)    = Aeson.object [ "That" .= b ]
+    toJSON (These a b) = Aeson.object [ "This" .= a, "That" .= b ]
+
+#if MIN_VERSION_aeson(0,10,0)
+    toEncoding (This a)    = Aeson.pairs $ "This" .= a
+    toEncoding (That b)    = Aeson.pairs $ "That" .= b
+    toEncoding (These a b) = Aeson.pairs $ "This" .= a <> "That" .= b
+#endif
+
+instance (FromJSON a, FromJSON b) => FromJSON (These a b) where
+    parseJSON = Aeson.withObject "These a b" (p . HM.toList)
+      where
+        p [("This", a), ("That", b)] = These <$> parseJSON a <*> parseJSON b
+        p [("That", b), ("This", a)] = These <$> parseJSON a <*> parseJSON b
+        p [("This", a)] = This <$> parseJSON a
+        p [("That", b)] = That <$> parseJSON b
+        p _  = fail "Expected object with 'This' and 'That' keys only"
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (These a b) where
+  arbitrary = oneof [ This <$> arbitrary
+                    , That <$> arbitrary
+                    , These <$> arbitrary <*> arbitrary
+                    ]
+  shrink (This x)    = This <$> shrink x
+  shrink (That y)    = That <$> shrink y
+  shrink (These x y) = [This x, That y] ++
+                       [These x' y' | (x', y') <- shrink (x, y)]
+
+instance (Function a, Function b) => Function (These a b) where
+  function = functionMap g f
+    where
+      g (This a)    = Left a
+      g (That b)    = Right (Left b)
+      g (These a b) = Right (Right (a, b))
+
+      f (Left a)               = This a
+      f (Right (Left b))       = That b
+      f (Right (Right (a, b))) = These a b
+
+instance (CoArbitrary a, CoArbitrary b) => CoArbitrary (These a b)
