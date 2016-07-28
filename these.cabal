@@ -46,7 +46,7 @@ Library
                        keys                     >= 3.10    && < 3.12,
                        mtl                      >= 2       && < 2.3,
                        profunctors              >= 3       && < 5.3,
-                       QuickCheck               >= 2.8     && < 2.8.3,
+                       QuickCheck               >= 2.8     && < 2.9.2,
                        semigroupoids            >= 1.0     && < 5.2,
                        transformers             >= 0.2     && < 0.6,
                        transformers-compat      >= 0.2     && < 0.6,

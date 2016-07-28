@@ -223,9 +223,11 @@ instance Arbitrary a => Arbitrary (V.Vector a) where
   shrink = fmap V.fromList . shrink . V.toList
 #endif
 
+#if !MIN_VERSION_QuickCheck(2,9,0)
 instance Arbitrary a => Arbitrary (ZipList a) where
   arbitrary = ZipList <$> arbitrary
   shrink = fmap ZipList . shrink . getZipList
+#endif
 
 -------------------------------------------------------------------------------
 -- aeson
