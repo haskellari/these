@@ -1,3 +1,7 @@
+# 0.7.1
+
+- Add `AlignWithKey` in `Data.Align.Key` (added dependency `keys`)
+
 # 0.7
 
 - Breaking change: Generalized `Monad`, `Applicative` instances of `These` and `Chronicle` to require only a `Semigroup` constraint
