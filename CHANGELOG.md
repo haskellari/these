@@ -1,6 +1,11 @@
 # 0.7.1
 
 - Add `AlignWithKey` in `Data.Align.Key` (added dependency `keys`)
+- Add `These` instances for
+    - `binary`: `Binary`
+    - `aeson`: `FromJSON`, `ToJSON`
+    - `QuickCheck`: `Arbitrary`, `CoArbitrary`, `Function`
+    - `deepseq`: `NFData`
 
 # 0.7
 
