@@ -1,3 +1,7 @@
+# 0.7.2
+
+- Support `aeson-1`: add `FromJSON1`, `FromJSON2` `ToJSON1`, and `ToJSON2` `These` instances.
+
 # 0.7.1
 
 - Add `AlignWithKey` in `Data.Align.Key` (added dependency `keys`)
