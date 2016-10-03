@@ -6,7 +6,9 @@
 -- shapes, plus traversal of (bi)foldable (bi)functors through said
 -- functors.
 module Data.Align (
-                    Align(..)
+                    Partitionable(..)
+                  , mapPartitionable
+                  , Align(..)
                   -- * Specialized aligns
                   , malign, padZip, padZipWith
                   , lpadZip, lpadZipWith
@@ -73,12 +75,127 @@ oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)
 
 -- --------------------------------------------------------------------------
+-- | Functors supporting a partition operation that breaks the shape in two.
+--
+--   In terms of category theory,
+--   a partitionable functor is a functor from @Kleisli Maybe@ to @Hask@.
+--
+--   @'partitionMap'@ is similar to @'unzip'@.
+--   It maps each position in the input to one of the ouputs.
+--   Contrastly, @'cover'@ maps each position to one or both of the outputs.
+--   @'fmapMaybe'@ maps only some positions to the output.
+class Functor f => Partitionable f where
+    -- | Break the structure in two.
+    --   The outputs may have overlapping shape,
+    --   but not necessarily the same shape.
+    --
+    --   This is akin to a topological <https://en.wikipedia.org/wiki/Cover_(topology) cover>.
+    cover :: (a -> These b c) -> f a -> (f b, f c)
+    cover f as = ( fmapMaybe (these Just nothing (\a _ -> Just a) . f) as
+                 , fmapMaybe (these nothing Just (\_ b -> Just b) . f) as)
+      where
+        nothing _ = Nothing
+
+    -- | Break the structure into two partitions.
+    --   The outputs should have disjoint shape,
+    --   as determined by which positions returned @'Left'@ vs @'Right'@.
+    partitionMap :: (a -> Either b c) -> f a -> (f b, f c)
+    partitionMap f = cover (either This That . f)
+
+    -- | Remove positions from the structure.
+    --   Positions which return @'Nothing'@ will be removed.
+    fmapMaybe :: (a -> Maybe b) -> f a -> f b
+    fmapMaybe f = fst . partitionMap (maybe (Right ()) Left . f)
+#if __GLASGOW_HASKELL__ >= 707
+    {-# MINIMAL (cover | partitionMap | fmapMaybe) #-}
+#endif
+
+-- | A function suitable for use as the implementation of @'fmap'@.
+mapPartitionable :: Partitionable f => (a -> b) -> f a -> f b
+mapPartitionable f = fmapMaybe (Just . f)
+
+instance Partitionable Maybe where
+    cover _ Nothing = (Nothing, Nothing)
+    cover f (Just a) = case f a of
+        This b -> (Just b, Nothing)
+        That c -> (Nothing, Just c)
+        These b c -> (Just b, Just c)
+
+instance Partitionable [] where
+    cover f = foldr consThese ([], [])
+      where
+        consThese x (as, bs) = case f x of
+            This a -> (a : as, bs)
+            That b -> (as, b : bs)
+            These a b -> (a : as, b : bs)
+
+instance Partitionable ZipList where
+    cover f (ZipList as) = let
+        (bs, cs) = cover f as
+        in (ZipList bs, ZipList cs)
+    partitionMap f (ZipList as) = let
+        (bs, cs) = partitionMap f as
+        in (ZipList bs, ZipList cs)
+    fmapMaybe f (ZipList as) = ZipList (fmapMaybe f as)
+
+instance Partitionable Seq where
+    cover f = foldr consThese (Seq.empty, Seq.empty)
+      where
+        consThese x (as, bs) = case f x of
+            This a -> (a Seq.<| as, bs)
+            That b -> (as, b Seq.<| bs)
+            These a b -> (a Seq.<| as, b Seq.<| bs)
+
+instance (Ord k) => Partitionable (Map k) where
+    cover f = Map.foldrWithKey consThese (Map.empty, Map.empty)
+      where
+        consThese k x (as, bs) = case f x of
+            This a -> (Map.insert k a as, bs)
+            That b -> (as, Map.insert k b bs)
+            These a b -> (Map.insert k a as, Map.insert k b bs)
+
+instance Partitionable IntMap where
+    cover f = IntMap.foldrWithKey consThese (IntMap.empty, IntMap.empty)
+      where
+        consThese k x (as, bs) = case f x of
+            This a -> (IntMap.insert k a as, bs)
+            That b -> (as, IntMap.insert k b bs)
+            These a b -> (IntMap.insert k a as, IntMap.insert k b bs)
+
+instance (Partitionable f, Partitionable g) => Partitionable (Product f g) where
+    cover f (Pair fs gs) = let
+        (afs, bfs) = cover f fs
+        (ags, bgs) = cover f gs
+        in (Pair afs ags, Pair bfs bgs)
+  
+instance Monad m => Partitionable (Stream m) where
+    -- Help?
+
+instance Monad m => Partitionable (Bundle m v) where
+    -- Help?
+
+instance Partitionable V.Vector where
+    cover f = foldr consThese (V.empty, V.empty)
+      where
+        consThese x (as, bs) = case f x of
+            This a -> (a `V.cons` as, bs)
+            That b -> (as, b `V.cons` bs)
+            These a b -> (a `V.cons` as, b `V.cons` bs)
+
+instance (Eq k, Hashable k) => Partitionable (HashMap k) where
+    cover f = HashMap.foldrWithKey consThese (HashMap.empty, HashMap.empty)
+      where
+        consThese k x (as, bs) = case f x of
+            This a -> (HashMap.insert k a as, bs)
+            That b -> (as, HashMap.insert k b bs)
+            These a b -> (HashMap.insert k a as, HashMap.insert k b bs)
+
+-- --------------------------------------------------------------------------
 -- | Functors supporting a zip operation that takes the union of
 --   non-uniform shapes.
 --
---   If your functor is actually a functor from @Kleisli Maybe@ to
---   @Hask@ (so it supports @maybeMap :: (a -> Maybe b) -> f a -> f
---   b@), then an @Align@ instance is making your functor lax monoidal
+--   If your functor is @'Partitionable'@,
+--   then an @Align@ instance is making your functor lax monoidal
 --   w.r.t. the cartesian monoidal structure on @Kleisli Maybe@,
 --   because @These@ is the cartesian product in that category @(a ->
 --   Maybe (These b c) ~ (a -> Maybe b, a -> Maybe c))@. This insight
@@ -95,7 +212,7 @@ oops = error . ("Data.Align: internal error: " ++)
 -- align (f \<$> x) (g \<$> y) = bimap f g \<$> align x y
 -- alignWith f a b = f \<$> align a b
 -- @
-class (Functor f) => Align f where
+class (Partitionable f) => Align f where
     -- | An empty strucutre. @'align'@ing with @'nil'@ will produce a structure with
     --   the same shape and elements as the other input, modulo @'This'@ or @'That'@.
     nil :: f a
