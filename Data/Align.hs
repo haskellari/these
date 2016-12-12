@@ -8,7 +8,7 @@
 module Data.Align (
                     Align(..)
                   -- * Specialized aligns
-                  , malign, padZip, padZipWith
+                  , malign, salign, padZip, padZipWith
                   , lpadZip, lpadZipWith
                   , rpadZip, rpadZipWith
                   , alignVectorWith
@@ -34,7 +34,8 @@ import Data.Functor.Product
 import Data.Hashable (Hashable(..))
 import Data.HashMap.Strict (HashMap)
 import Data.Maybe (catMaybes)
-import Data.Monoid hiding (Product)
+import Data.Monoid hiding (Product, (<>))
+import Data.Semigroup (Semigroup (..))
 import Data.Sequence (Seq)
 import Data.These
 import qualified Data.Vector as V
@@ -234,8 +235,15 @@ instance (Eq k, Hashable k) => Align (HashMap k) where
             merge _ _ = oops "Align HashMap: merge"
 
 -- | Align two structures and combine with 'mappend'.
+--
+-- See `salign`. `malign` will be deprecated after `Semigroup` becomes a super
+-- class of `Monoid`
 malign :: (Align f, Monoid a) => f a -> f a -> f a
 malign = alignWith (mergeThese mappend)
+
+-- | Align two structures and combine with '<>'.
+salign :: (Align f, Semigroup a) => f a -> f a -> f a
+salign = alignWith (mergeThese (<>))
 
 -- | Align two structures as in 'zip', but filling in blanks with 'Nothing'.
 padZip :: (Align f) => f a -> f b -> f (Maybe a, Maybe b)

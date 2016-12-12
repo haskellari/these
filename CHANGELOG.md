@@ -1,3 +1,7 @@
+# 0.7.3
+
+- Add `salign :: (Align f, Semigroup a) => f a -> f a -> f a`
+
 # 0.7.2
 
 - Support `aeson-1`: add `FromJSON1`, `FromJSON2` `ToJSON1`, and `ToJSON2` `These` instances.
