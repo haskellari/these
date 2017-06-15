@@ -66,7 +66,7 @@ import Prelude hiding (foldr)
 import Control.DeepSeq (NFData (..))
 import Data.Aeson (FromJSON (..), ToJSON (..), (.=))
 import Data.Binary (Binary (..))
-import Test.QuickCheck (Arbitrary (..), CoArbitrary (..), oneof)
+import Test.QuickCheck (Arbitrary (..), Arbitrary1 (..), Arbitrary2 (..), CoArbitrary (..), oneof, arbitrary1, shrink1)
 import Test.QuickCheck.Function (Function (..), functionMap)
 
 import qualified Data.HashMap.Strict as HM
@@ -362,15 +362,25 @@ instance FromJSON a => Aeson.FromJSON1 (These a) where
         p _  = fail "Expected object with 'This' and 'That' keys only"
 #endif
 
+instance Arbitrary2 These where
+    liftArbitrary2 arbA arbB = oneof
+        [ This <$> arbA
+        , That <$> arbB
+        , These <$> arbA <*> arbB
+        ]
+
+    liftShrink2  shrA _shrB (This x) = This <$> shrA x
+    liftShrink2 _shrA  shrB (That y) = That <$> shrB y
+    liftShrink2  shrA  shrB (These x y) =
+        [This x, That y] ++ [These x' y' | (x', y') <- liftShrink2 shrA shrB (x, y)]
+
+instance (Arbitrary a) => Arbitrary1 (These a) where
+    liftArbitrary = liftArbitrary2 arbitrary
+    liftShrink = liftShrink2 shrink
+
 instance (Arbitrary a, Arbitrary b) => Arbitrary (These a b) where
-  arbitrary = oneof [ This <$> arbitrary
-                    , That <$> arbitrary
-                    , These <$> arbitrary <*> arbitrary
-                    ]
-  shrink (This x)    = This <$> shrink x
-  shrink (That y)    = That <$> shrink y
-  shrink (These x y) = [This x, That y] ++
-                       [These x' y' | (x', y') <- shrink (x, y)]
+    arbitrary = arbitrary1
+    shrink = shrink1
 
 instance (Function a, Function b) => Function (These a b) where
   function = functionMap g f

@@ -1,3 +1,7 @@
+# 0.7.4
+
+- QuickCheck-2.10 support: Arbitrary1/2 instances
+
 # 0.7.3
 
 - Add `salign :: (Align f, Semigroup a) => f a -> f a -> f a`

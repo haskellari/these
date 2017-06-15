@@ -35,7 +35,6 @@ import Test.Tasty.QuickCheck as QC
 
 import qualified Data.Aeson as Aeson
 import qualified Data.Binary as Binary
-import qualified Data.Set as Set
 
 -- For old GHC to work
 data Proxy (a :: * -> *) = Proxy
@@ -206,28 +205,6 @@ crosswalkLaws name _ = testGroup ("Data.CrossWalk laws: " <> name)
       where
         lhs = crosswalk f x
         rhs = sequenceL . fmap f $ x
-
--------------------------------------------------------------------------------
--- Orphan instances
--------------------------------------------------------------------------------
-
-instance (Arbitrary a, Arbitrary (f a), Arbitrary (g a))
-    => Arbitrary (P.Product f g a) where
-  arbitrary = P.Pair <$> arbitrary <*> arbitrary
-  shrink (P.Pair x y) = [P.Pair x' y' | (x', y') <- shrink (x, y)]
-
-
-#if !MIN_VERSION_quickcheck_instances(0,3,12)
-instance Arbitrary a => Arbitrary (V.Vector a) where
-  arbitrary = V.fromList <$> arbitrary
-  shrink = fmap V.fromList . shrink . V.toList
-#endif
-
-#if !MIN_VERSION_QuickCheck(2,9,0)
-instance Arbitrary a => Arbitrary (ZipList a) where
-  arbitrary = ZipList <$> arbitrary
-  shrink = fmap ZipList . shrink . getZipList
-#endif
 
 -------------------------------------------------------------------------------
 -- aeson
