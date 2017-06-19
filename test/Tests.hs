@@ -48,6 +48,7 @@ theseProps :: TestTree
 theseProps = testGroup "These"
   [ functorProps
   , traversableProps
+  , dataAlignLaws "Const" (Proxy :: Proxy (Const (Sum Int)))
   , dataAlignLaws "[]" (Proxy :: Proxy [])
   , dataAlignLaws "HashMap String" (Proxy :: Proxy (HashMap String))
   , dataAlignLaws "IntMap" (Proxy :: Proxy IntMap)
@@ -189,6 +190,7 @@ crosswalkLaws
 crosswalkLaws name _ = testGroup ("Data.CrossWalk laws: " <> name)
   [ QC.testProperty "crosswalk (const nil) = const nil" firstLaw
   , QC.testProperty "crosswalk f = sequenceL . fmap f" secondLaw
+  , QC.testProperty "foldMap = foldMapCrosswalk" foldMapProp
   ]
   where
     -- f = Map Index
@@ -204,6 +206,12 @@ crosswalkLaws name _ = testGroup ("Data.CrossWalk laws: " <> name)
       where
         lhs = crosswalk f x
         rhs = sequenceL . fmap f $ x
+
+    foldMapProp :: Fun Int [Int] -> t Int -> Property
+    foldMapProp (Fun _ f) xs = lhs === rhs
+      where
+        lhs = foldMap f xs
+        rhs = foldMapCrosswalk f xs
 
 -------------------------------------------------------------------------------
 -- aeson
