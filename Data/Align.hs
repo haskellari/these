@@ -18,6 +18,7 @@ module Data.Align (
 
                   -- * Crosswalk
                   , Crosswalk(..)
+                  , foldMapCrosswalk
 
                   -- * Bicrosswalk
                   , Bicrosswalk(..)
@@ -125,6 +126,9 @@ class (Functor f) => Align f where
 
   #-}
 
+instance Monoid a => Align (Const a) where
+    nil = Const mempty
+    align (Const a) (Const b) = Const (a `mappend` b)
 
 instance Align Maybe where
     nil = Nothing
@@ -338,6 +342,10 @@ class (Functor t, Foldable t) => Crosswalk t where
 #if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL crosswalk | sequenceL #-}
 #endif
+
+-- | Implementation of 'foldMap' using 'Crosswalk'.
+foldMapCrosswalk :: (Crosswalk t, Monoid m) => (a -> m) -> t a -> m
+foldMapCrosswalk f = getConst . crosswalk (Const . f)
 
 instance Crosswalk Identity where
     crosswalk f (Identity a) = fmap Identity (f a)
