@@ -55,13 +55,11 @@ import qualified Data.Vector.Fusion.Stream.Size as Stream
 #endif
 
 #if MIN_VERSION_containers(0,5,0)
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map hiding (mergeWithKey)
-import qualified Data.Map.Lazy as Map (mergeWithKey)
+import Data.Map (Map)
+import qualified Data.Map as Map
 
-import Data.IntMap.Strict (IntMap)
-import qualified Data.IntMap.Strict as IntMap hiding (mergeWithKey)
-import qualified Data.IntMap.Lazy as IntMap (mergeWithKey)
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
 #else
 import Data.Map (Map)
 import qualified Data.Map as Map
