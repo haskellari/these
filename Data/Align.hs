@@ -54,7 +54,7 @@ import qualified Data.Vector.Fusion.Bundle.Size as Bundle
 import qualified Data.Vector.Fusion.Stream.Size as Stream
 #endif
 
-#if MIN_VERSION_containers(0, 5, 0)
+#if MIN_VERSION_containers(0,5,0)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map hiding (mergeWithKey)
 import qualified Data.Map.Lazy as Map (mergeWithKey)
