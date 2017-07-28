@@ -56,9 +56,15 @@ import qualified Data.Vector.Fusion.Stream.Size as Stream
 
 import Data.Map (Map)
 import qualified Data.Map as Map
+#if MIN_VERSION_containers(0,5,9)
+import qualified Data.Map.Merge.Lazy as Map
+#endif
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+#if MIN_VERSION_containers(0,5,9)
+import qualified Data.IntMap.Merge.Lazy as IntMap
+#endif
 
 import Prelude hiding (foldr) -- Fix redundant import warnings
 
@@ -162,7 +168,11 @@ instance Align Seq where
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
-#if MIN_VERSION_containers(0,5,0)
+#if MIN_VERSION_containers(0,5,9)
+    alignWith f = Map.merge (Map.mapMissing (\_ x ->  f (This x)))
+                            (Map.mapMissing (\_ y ->  f (That y)))
+                            (Map.zipWithMatched (\_ x y -> f (These x y)))
+#elif MIN_VERSION_containers(0,5,0)
     alignWith f = Map.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
 #else
     align m n = Map.unionWith merge (Map.map This m) (Map.map That n)
@@ -172,7 +182,11 @@ instance (Ord k) => Align (Map k) where
 
 instance Align IntMap where
     nil = IntMap.empty
-#if MIN_VERSION_containers(0,5,0)
+#if MIN_VERSION_containers(0,5,9)
+    alignWith f = IntMap.merge (IntMap.mapMissing (\_ x ->  f (This x)))
+                               (IntMap.mapMissing (\_ y ->  f (That y)))
+                               (IntMap.zipWithMatched (\_ x y -> f (These x y)))
+#elif MIN_VERSION_containers(0,5,0)
     alignWith f = IntMap.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
 #else
     align m n = IntMap.unionWith merge (IntMap.map This m) (IntMap.map That n)
