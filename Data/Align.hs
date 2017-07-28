@@ -54,19 +54,11 @@ import qualified Data.Vector.Fusion.Bundle.Size as Bundle
 import qualified Data.Vector.Fusion.Stream.Size as Stream
 #endif
 
-#if MIN_VERSION_containers(0,5,0)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
-#else
-import Data.Map (Map)
-import qualified Data.Map as Map
-
-import Data.IntMap (IntMap)
-import qualified Data.IntMap as IntMap
-#endif
 
 import Prelude hiding (foldr) -- Fix redundant import warnings
 
