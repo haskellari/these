@@ -1,6 +1,6 @@
 Name:                these
 Version:             0.7.4
-x-revision:          2
+x-revision:          3
 Synopsis:            An either-or-both data type & a generalized 'zip with padding' typeclass
 Homepage:            https://github.com/isomorphism/these
 License:             BSD3
@@ -55,7 +55,7 @@ Library
                        keys                     >= 3.10    && < 3.12,
                        mtl                      >= 2       && < 2.3,
                        profunctors              >= 3       && < 5.3,
-                       QuickCheck               >= 2.10    && < 2.11,
+                       QuickCheck               >= 2.10    && < 2.12,
                        semigroupoids            >= 1.0     && < 5.3,
                        transformers             >= 0.2     && < 0.6,
                        transformers-compat      >= 0.2     && < 0.6,
