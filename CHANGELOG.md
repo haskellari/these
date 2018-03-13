@@ -1,3 +1,5 @@
+# 0.7.5
+- Add `justHere`, `justThere`, `isHere`, `isThere` and `catHere`, `catThere`
 # 0.7.4
 
 - QuickCheck-2.10 support: Arbitrary1/2 instances

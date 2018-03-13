@@ -25,10 +25,14 @@ module Data.These (
                   , justThis
                   , justThat
                   , justThese
+                  , justHere
+                  , justThere
 
                   , catThis
                   , catThat
                   , catThese
+                  , catHere
+                  , catThere
 
                   , partitionThese
 
@@ -36,6 +40,8 @@ module Data.These (
                   , isThis
                   , isThat
                   , isThese
+                  , isHere
+                  , isThere
 
                   -- * Map operations
                   , mapThese
@@ -158,7 +164,25 @@ justThese (These a x) = Just (a, x)
 justThese _           = Nothing
 
 
-isThis, isThat, isThese :: These a b -> Bool
+-- | Get the first half.
+-- @
+-- justHere That "x"
+-- > "x"
+-- justHere (These "x" "y")
+-- > "y"
+-- @
+justHere :: These a b -> Maybe a
+justHere (This a) = Just a
+justHere (These a _) = Just a
+justHere _ = Nothing
+
+-- | Get the second half.
+justThere :: These a b -> Maybe b
+justThere (That x) = Just x
+justThere (These _ x) = Just x
+justThere _ = Nothing
+
+isThis, isThat, isThese, isHere, isThere  :: These a b -> Bool
 -- | @'isThis' = 'isJust' . 'justThis'@
 isThis  = isJust . justThis
 
@@ -167,6 +191,11 @@ isThat  = isJust . justThat
 
 -- | @'isThese' = 'isJust' . 'justThese'@
 isThese = isJust . justThese
+
+-- | @'isHere' = 'isJust' . 'justHere'@
+isHere = isJust . justHere
+-- | @'isThere' = 'isJust' . 'justThere'@
+isThere = isJust . justThere
 
 -- | 'Bifunctor' map.
 mapThese :: (a -> c) -> (b -> d) -> These a b -> These c d
@@ -193,6 +222,15 @@ catThat = mapMaybe justThat
 -- | Select all 'These' constructors from a list.
 catThese :: [These a b] -> [(a, b)]
 catThese = mapMaybe justThese
+
+
+-- | Select all first halves from a list.
+catHere :: [These a b] -> [a]
+catHere = mapMaybe justHere
+
+-- | Select all second halves from a list.
+catThere :: [These a b] -> [b]
+catThere = mapMaybe justThere
 
 -- | Select each constructor and partition them into separate lists.
 partitionThese :: [These a b] -> ( [(a, b)], ([a], [b]) )
