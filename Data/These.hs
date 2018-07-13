@@ -110,7 +110,7 @@ mergeThese = these id id
 mergeTheseWith :: (a -> c) -> (b -> c) -> (c -> c -> c) -> These a b -> c
 mergeTheseWith f g op t = mergeThese op $ mapThese f g t
 
--- | Construct these inside an Alternative.
+-- | Construct These inside an Alternative.
 fromAlt :: Alternative f => f a -> f b -> f (These a b)
 fromAlt x y = These <$> x <*> y <|> That <$> y <|> This <$> x
 
