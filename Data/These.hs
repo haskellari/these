@@ -17,7 +17,7 @@ module Data.These (
                   , fromAlt
 
                   -- * Traversals
-                  , here, there 
+                  , here, there
 
                   -- * Prisms
                   , _This, _That, _These
