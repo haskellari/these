@@ -41,6 +41,9 @@ module Data.These (
                   , mapThese
                   , mapThis
                   , mapThat
+                  , mapMaybeThis
+                  , mapMaybeThat
+                  , mapMaybeThese
 
                     -- $align
                   ) where
@@ -193,6 +196,30 @@ catThat = mapMaybe justThat
 -- | Select all 'These' constructors from a list.
 catThese :: [These a b] -> [(a, b)]
 catThese = mapMaybe justThese
+
+-- | Maybe map with Either like behavior on the left.
+mapMaybeThis :: Monoid c => (a -> Maybe b) -> These a c -> These b c
+mapMaybeThis f (This a) = maybe (That mempty) This (f a)
+mapMaybeThis f (These a c) = maybe (That c) This (f a)
+mapMaybeThis _ (That c) = That c
+
+-- | Maybe map with Either like behavior on the Right.
+mapMaybeThat :: Monoid c => (a -> Maybe b) -> These c a -> These c b
+mapMaybeThat _ (This c) = This c
+mapMaybeThat f (That a) = maybe (This mempty) That (f a)
+mapMaybeThat f (These c a) = maybe (This c) That (f a)
+
+-- | Maybe map with Either like behavior on both sides.
+mapMaybeThese :: (Monoid c, Monoid d) => (a -> Maybe c) -> (b -> Maybe d) -> These a b -> These c d
+mapMaybeThese f _ (This a) = mapMaybeThis f (This a)
+mapMaybeThese _ g (That b) = mapMaybeThat g (That b)
+mapMaybeThese f g (These a b) = case (f a, g b) of
+  (Just c, Just d) -> These c d 
+  (Just c, _)      -> This c
+  (_, Just d)      -> That d
+  _                -> This mempty
+
+
 
 -- | Select each constructor and partition them into separate lists.
 partitionThese :: [These a b] -> ( [(a, b)], ([a], [b]) )
