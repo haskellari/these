@@ -39,8 +39,13 @@ module Data.These (
 
                   -- * Map operations
                   , mapThese
+                  , mapThese'
                   , mapThis
                   , mapThat
+
+                  -- * Traverse operations
+                  , mapTheseM
+                  , mapTheseM'
 
                     -- $align
                   ) where
@@ -174,6 +179,24 @@ mapThese f _ (This  a  ) = This (f a)
 mapThese _ g (That    x) = That (g x)
 mapThese f g (These a x) = These (f a) (g x)
 
+-- | Case specific map.
+mapThese' :: (a -> c) -> (b -> d) -> (a -> b -> (c,d)) -> These a b -> These c d
+mapThese' f _ _ (This  a  ) = This (f a)
+mapThese' _ g _ (That    b) = That (g b)
+mapThese' _ _ h (These a b) = uncurry These $ h a b
+
+-- | 'Bitraversable` map.
+mapTheseM :: Applicative f => (a -> f c) -> (b -> f d) -> These a b -> f (These c d)
+mapTheseM f _ (This  a  ) = This <$> f a
+mapTheseM _ g (That    b) = That <$> g b
+mapTheseM f g (These a b) = These <$> f a <*> g b
+
+-- | Case specific traverse.
+mapTheseM' :: Functor f => (a -> f c) -> (b -> f d) -> (a -> b -> f (c,d)) -> These a b -> f (These c d)
+mapTheseM' f _ _ (This a)    = This <$> f a
+mapTheseM' _ g _ (That b)    = That <$> g b
+mapTheseM' _ _ h (These a b) = uncurry These <$> h a b
+
 -- | @'mapThis' = over 'here'@
 mapThis :: (a -> c) -> These a b -> These c b
 mapThis f = mapThese f id
@@ -250,9 +273,7 @@ instance Bifoldable1 These where
     bifold1 = these id id (<>)
 
 instance Bitraversable These where
-    bitraverse f _ (This x) = This <$> f x
-    bitraverse _ g (That x) = That <$> g x
-    bitraverse f g (These x y) = These <$> f x <*> g y
+    bitraverse = mapTheseM
 
 instance Bitraversable1 These where
     bitraverse1 f _ (This x) = This <$> f x
