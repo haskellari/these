@@ -44,8 +44,8 @@ module Data.These (
                   , mapThat
 
                   -- * Traverse operations
-                  , mapTheseM
-                  , mapTheseM'
+                  , mapTheseA
+                  , mapTheseF'
 
                     -- $align
                   ) where
@@ -273,7 +273,7 @@ instance Bifoldable1 These where
     bifold1 = these id id (<>)
 
 instance Bitraversable These where
-    bitraverse = mapTheseM
+    bitraverse = mapTheseA
 
 instance Bitraversable1 These where
     bitraverse1 f _ (This x) = This <$> f x
