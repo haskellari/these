@@ -42,6 +42,8 @@ module Data.These (
                   , mapThis
                   , mapThat
 
+                  , bitraverseThese
+
                     -- $align
                   ) where
 
@@ -174,6 +176,12 @@ mapThese f _ (This  a  ) = This (f a)
 mapThese _ g (That    x) = That (g x)
 mapThese f g (These a x) = These (f a) (g x)
 
+-- | 'Bitraversable'.
+bitraverseThese :: Applicative f => (a -> f c) -> (b -> f d) -> These a b -> f (These c d)
+bitraverseThese f _ (This x) = This <$> f x
+bitraverseThese _ g (That x) = That <$> g x
+bitraverseThese f g (These x y) = These <$> f x <*> g y
+
 -- | @'mapThis' = over 'here'@
 mapThis :: (a -> c) -> These a b -> These c b
 mapThis f = mapThese f id
@@ -250,9 +258,7 @@ instance Bifoldable1 These where
     bifold1 = these id id (<>)
 
 instance Bitraversable These where
-    bitraverse f _ (This x) = This <$> f x
-    bitraverse _ g (That x) = That <$> g x
-    bitraverse f g (These x y) = These <$> f x <*> g y
+    bitraverse = bitraverseThese
 
 instance Bitraversable1 These where
     bitraverse1 f _ (This x) = This <$> f x
