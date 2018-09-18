@@ -29,6 +29,7 @@ import Control.Applicative
 import Data.Bifoldable (Bifoldable(..))
 import Data.Bifunctor (Bifunctor(..))
 import Data.Foldable
+import Data.Functor.Compose
 import Data.Functor.Identity
 import Data.Functor.Product
 import Data.Hashable (Hashable(..))
@@ -367,6 +368,18 @@ crosswalkVector f = fmap VG.fromList . VG.foldr (alignWith cons . f) nil where
 
 instance Crosswalk V.Vector where
     crosswalk = crosswalkVector
+
+instance Crosswalk ((,) a) where
+    crosswalk fun (a, x) = fmap ((,) a) (fun x)
+
+-- can't (shouldn't) do longer tuples until there are Functor and Foldable
+-- instances for them
+
+instance (Crosswalk f, Crosswalk g) => Crosswalk (Compose f g) where
+    crosswalk f = id
+        . fmap Compose -- can't coerce: maybe the Align-able thing has role nominal
+        . crosswalk (crosswalk f)
+        . getCompose
 
 -- --------------------------------------------------------------------------
 -- | Bifoldable bifunctors supporting traversal through an alignable
