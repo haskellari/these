@@ -14,6 +14,7 @@ module Data.These (
                   , fromThese
                   , mergeThese
                   , mergeTheseWith
+                  , optionally
 
                   -- * Traversals
                   , here, there
@@ -111,6 +112,10 @@ mergeThese = these id id
 mergeTheseWith :: (a -> c) -> (b -> c) -> (c -> c -> c) -> These a b -> c
 mergeTheseWith f g op t = mergeThese op $ mapThese f g t
 
+-- | Construct These inside an Alternative. 
+-- Consider @Control.Applicative.optional@ for intuition.
+optionally :: Alternative f => f a -> f b -> f (These a b)
+optionally x y = These <$> x <*> y <|> This <$> x <|> That <$> y
 
 -- | A @Traversal@ of the first half of a 'These', suitable for use with @Control.Lens@.
 here :: (Applicative f) => (a -> f b) -> These a t -> f (These b t)
