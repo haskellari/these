@@ -243,6 +243,8 @@ malign :: (Align f, Monoid a) => f a -> f a -> f a
 malign = alignWith (mergeThese mappend)
 
 -- | Align two structures and combine with '<>'.
+--
+-- @since 0.7.3
 salign :: (Align f, Semigroup a) => f a -> f a -> f a
 salign = alignWith (mergeThese (<>))
 
@@ -369,12 +371,14 @@ crosswalkVector f = fmap VG.fromList . VG.foldr (alignWith cons . f) nil where
 instance Crosswalk V.Vector where
     crosswalk = crosswalkVector
 
+-- | @since 0.7.5
 instance Crosswalk ((,) a) where
     crosswalk fun (a, x) = fmap ((,) a) (fun x)
 
 -- can't (shouldn't) do longer tuples until there are Functor and Foldable
 -- instances for them
 
+-- | @since 0.7.5
 instance (Crosswalk f, Crosswalk g) => Crosswalk (Compose f g) where
     crosswalk f = id
         . fmap Compose -- can't coerce: maybe the Align-able thing has role nominal

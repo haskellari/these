@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------------
 -- | Module     :  Data.These
 --
--- The 'These' type and associated operations. Now enhanced with @Control.Lens@ magic!
-{-# LANGUAGE CPP #-}
+-- The 'These' type and associated operations. Now enhanced with "Control.Lens" magic!
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -44,9 +43,13 @@ module Data.These (
 
                   , bitraverseThese
 
-                    -- $align
+                  -- * Associativity and commutativity
+                  , swap
+                  , assoc
+                  , reassoc
                   ) where
 
+import Control.Lens (Prism', prism, Swapped  (..), iso)
 import Control.Applicative
 import Control.Monad
 import Data.Bifoldable
@@ -56,7 +59,6 @@ import Data.Foldable
 import Data.Functor.Bind
 import Data.Hashable (Hashable(..))
 import Data.Maybe (isJust, mapMaybe)
-import Data.Profunctor
 import Data.Semigroup
 import Data.Semigroup.Bifoldable
 import Data.Semigroup.Bitraversable
@@ -73,21 +75,22 @@ import Test.QuickCheck.Function (Function (..), functionMap)
 
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Aeson as Aeson
-#if MIN_VERSION_aeson(1,0,0)
 import qualified Data.Aeson.Encoding as Aeson (pair)
-#endif
 
 -- --------------------------------------------------------------------------
 -- | The 'These' type represents values with two non-exclusive possibilities.
 --
 --   This can be useful to represent combinations of two values, where the
 --   combination is defined if either input is. Algebraically, the type
---   @These A B@ represents @(A + B + AB)@, which doesn't factor easily into
---   sums and products--a type like @Either A (B, Maybe A)@ is unclear and
+--   @'These' A B@ represents @(A + B + AB)@, which doesn't factor easily into
+--   sums and products--a type like @'Either' A (B, 'Maybe' A)@ is unclear and
 --   awkward to use.
 --
 --   'These' has straightforward instances of 'Functor', 'Monad', &c., and
 --   behaves like a hybrid error/writer monad, as would be expected.
+--
+--   For zipping and unzipping of structures with 'These' values, see
+--   "Data.Align".
 data These a b = This a | That b | These a b
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
@@ -111,50 +114,56 @@ mergeThese = these id id
 mergeTheseWith :: (a -> c) -> (b -> c) -> (c -> c -> c) -> These a b -> c
 mergeTheseWith f g op t = mergeThese op $ mapThese f g t
 
-
--- | A @Traversal@ of the first half of a 'These', suitable for use with @Control.Lens@.
+-- | A 'Control.Lens.Traversal' of the first half of a 'These', suitable for use with "Control.Lens".
+--
+-- @
+-- 'here' :: 'Control.Lens.Traversal' ('These' a t) ('These' b t) a b
+-- @
 here :: (Applicative f) => (a -> f b) -> These a t -> f (These b t)
 here f (This x) = This <$> f x
 here f (These x y) = flip These y <$> f x
 here _ (That x) = pure (That x)
 
--- | A @Traversal@ of the second half of a 'These', suitable for use with @Control.Lens@.
+-- | A 'Control.Lens.Traversal' of the second half of a 'These', suitable for use with "Control.Lens".
+--
+-- @
+-- 'there' :: 'Control.Lens.Traversal' ('These' t b) ('These' t b) a b
+-- @
 there :: (Applicative f) => (a -> f b) -> These t a -> f (These t b)
 there _ (This x) = pure (This x)
 there f (These x y) = These x <$> f y
 there f (That x) = That <$> f x
 
--- <cmccann> is there a recipe for creating suitable definitions anywhere?
--- <edwardk> not yet
--- <edwardk> prism bt seta = dimap seta (either pure (fmap bt)) . right'
--- (let's all pretend I know how this works ok)
-prism :: (Choice p, Applicative f) => (b -> t) -> (s -> Either t a) -> p a (f b) -> p s (f t)
-prism bt seta = dimap seta (either pure (fmap bt)) . right'
-
--- | A 'Prism' selecting the 'This' constructor.
-_This :: (Choice p, Applicative f) => p a (f a) -> p (These a b) (f (These a b))
+-- | A 'Control.Lens.Prism'' selecting the 'This' constructor.
+--
+-- /Note:/ cannot change type.
+_This :: Prism' (These a b) a
 _This = prism This (these Right (Left . That) (\x y -> Left $ These x y))
 
--- | A 'Prism' selecting the 'That' constructor.
-_That :: (Choice p, Applicative f) => p b (f b) -> p (These a b) (f (These a b))
+-- | A 'Control.Lens.Prism'' selecting the 'That' constructor.
+--
+-- /Note:/ cannot change type.
+_That :: Prism' (These a b) b
 _That = prism That (these (Left . This) Right (\x y -> Left $ These x y))
 
--- | A 'Prism' selecting the 'These' constructor. 'These' names are ridiculous!
-_These :: (Choice p, Applicative f) => p (a, b) (f (a, b)) -> p (These a b) (f (These a b))
+-- | A 'Control.Lens.Prism'' selecting the 'These' constructor. 'These' names are ridiculous!
+--
+-- /Note:/ cannot change type.
+_These :: Prism' (These a b) (a, b)
 _These = prism (uncurry These) (these (Left . This) (Left . That) (\x y -> Right (x, y)))
 
 
--- | @'justThis' = preview '_This'@
+-- | @'justThis' = 'Control.Lens.preview' '_This'@
 justThis :: These a b -> Maybe a
 justThis (This a) = Just a
 justThis _        = Nothing
 
--- | @'justThat' = preview '_That'@
+-- | @'justThat' = 'Control.Lens.preview' '_That'@
 justThat :: These a b -> Maybe b
 justThat (That x) = Just x
 justThat _        = Nothing
 
--- | @'justThese' = preview '_These'@
+-- | @'justThese' = 'Control.Lens.preview' '_These'@
 justThese :: These a b -> Maybe (a, b)
 justThese (These a x) = Just (a, x)
 justThese _           = Nothing
@@ -177,16 +186,18 @@ mapThese _ g (That    x) = That (g x)
 mapThese f g (These a x) = These (f a) (g x)
 
 -- | 'Bitraversable'.
+--
+-- @since 0.7.5
 bitraverseThese :: Applicative f => (a -> f c) -> (b -> f d) -> These a b -> f (These c d)
 bitraverseThese f _ (This x) = This <$> f x
 bitraverseThese _ g (That x) = That <$> g x
 bitraverseThese f g (These x y) = These <$> f x <*> g y
 
--- | @'mapThis' = over 'here'@
+-- | @'mapThis' = 'Control.Lens.over' 'here'@
 mapThis :: (a -> c) -> These a b -> These c b
 mapThis f = mapThese f id
 
--- | @'mapThat' = over 'there'@
+-- | @'mapThat' = 'Control.Lens.over' 'there'@
 mapThat :: (b -> d) -> These a b -> These a d
 mapThat f = mapThese id f
 
@@ -209,11 +220,50 @@ partitionThese (These x y:xs) = first ((x, y):)      $ partitionThese xs
 partitionThese (This  x  :xs) = second (first  (x:)) $ partitionThese xs
 partitionThese (That    y:xs) = second (second (y:)) $ partitionThese xs
 
-
--- $align
+-- | 'These' is commutative.
 --
--- For zipping and unzipping of structures with 'These' values, see
--- "Data.Align".
+-- @
+-- 'swap' . 'swap' = 'id'
+-- @
+--
+-- @since 0.7.6
+swap :: These a b -> These b a
+swap (This a)    = That a
+swap (That b)    = This b
+swap (These a b) = These b a
+
+-- | 'These' is associative.
+--
+-- @
+-- 'assoc' . 'reassoc' = 'id'
+-- 'reassoc' . 'assoc' = 'id'
+-- @
+--
+-- @since 0.7.6
+assoc :: These a (These b c) -> These (These a b) c
+assoc (This a)              = This (This a)
+assoc (That (This b))       = This (That b)
+assoc (That (That c))       = That c
+assoc (That (These b c))    = These (That b) c
+assoc (These a (This b))    = This (These a b)
+assoc (These a (That c))    = These (This a) c
+assoc (These a (These b c)) = These (These a b) c
+
+-- | 'These is associative. See 'assoc'.
+--
+-- @since 0.7.6
+reassoc :: These (These a b) c -> These a (These b c)
+reassoc (This (This a))       = This a
+reassoc (This (That b))       = That (This b)
+reassoc (That c)              = That (That c)
+reassoc (These (That b) c)    = That (These b c)
+reassoc (This (These a b))    = These a (This b)
+reassoc (These (This a) c)    = These a (That c)
+reassoc (These (These a b) c) = These a (These b c)
+
+-------------------------------------------------------------------------------
+-- Instances
+-------------------------------------------------------------------------------
 
 instance (Semigroup a, Semigroup b) => Semigroup (These a b) where
     This  a   <> This  b   = This  (a <> b)
@@ -265,6 +315,10 @@ instance Bitraversable1 These where
     bitraverse1 _ g (That x) = That <$> g x
     bitraverse1 f g (These x y) = These <$> f x <.> g y
 
+-- | @since 0.7.6
+instance Swapped These where
+    swapped = iso swap swap
+
 instance (Semigroup a) => Apply (These a) where
     This  a   <.> _         = This a
     That    _ <.> This  b   = This b
@@ -292,11 +346,13 @@ instance (Semigroup a) => Monad (These a) where
 
 instance (Hashable a, Hashable b) => Hashable (These a b)
 
+-- | @since 0.7.1
 instance (NFData a, NFData b) => NFData (These a b) where
     rnf (This a)    = rnf a
     rnf (That b)    = rnf b
     rnf (These a b) = rnf a `seq` rnf b
 
+-- | @since 0.7.1
 instance (Binary a, Binary b) => Binary (These a b) where
     put (This a)    = put (0 :: Int) >> put a
     put (That b)    = put (1 :: Int) >> put b
@@ -310,17 +366,17 @@ instance (Binary a, Binary b) => Binary (These a b) where
             2 -> These <$> get <*> get
             _ -> fail "Invalid These index"
 
+-- | @since 0.7.1
 instance (ToJSON a, ToJSON b) => ToJSON (These a b) where
     toJSON (This a)    = Aeson.object [ "This" .= a ]
     toJSON (That b)    = Aeson.object [ "That" .= b ]
     toJSON (These a b) = Aeson.object [ "This" .= a, "That" .= b ]
 
-#if MIN_VERSION_aeson(0,10,0)
     toEncoding (This a)    = Aeson.pairs $ "This" .= a
     toEncoding (That b)    = Aeson.pairs $ "That" .= b
     toEncoding (These a b) = Aeson.pairs $ "This" .= a <> "That" .= b
-#endif
 
+-- | @since 0.7.1
 instance (FromJSON a, FromJSON b) => FromJSON (These a b) where
     parseJSON = Aeson.withObject "These a b" (p . HM.toList)
       where
@@ -330,7 +386,7 @@ instance (FromJSON a, FromJSON b) => FromJSON (These a b) where
         p [("That", b)] = That <$> parseJSON b
         p _  = fail "Expected object with 'This' and 'That' keys only"
 
-#if MIN_VERSION_aeson(1,0,0)
+-- | @since 0.7.2
 instance Aeson.ToJSON2 These where
     liftToJSON2  toa _ _tob _ (This a)    = Aeson.object [ "This" .= toa a ]
     liftToJSON2 _toa _  tob _ (That b)    = Aeson.object [ "That" .= tob b ]
@@ -340,6 +396,7 @@ instance Aeson.ToJSON2 These where
     liftToEncoding2 _toa _  tob _ (That b)    = Aeson.pairs $ Aeson.pair "That" (tob b)
     liftToEncoding2  toa _  tob _ (These a b) = Aeson.pairs $ Aeson.pair "This" (toa a) <> Aeson.pair "That" (tob b)
 
+-- | @since 0.7.2
 instance ToJSON a => Aeson.ToJSON1 (These a) where
     liftToJSON _tob _ (This a)    = Aeson.object [ "This" .= a ]
     liftToJSON  tob _ (That b)    = Aeson.object [ "That" .= tob b ]
@@ -349,6 +406,7 @@ instance ToJSON a => Aeson.ToJSON1 (These a) where
     liftToEncoding  tob _ (That b)    = Aeson.pairs $ Aeson.pair "That" (tob b)
     liftToEncoding  tob _ (These a b) = Aeson.pairs $ "This" .= a <> Aeson.pair "That" (tob b)
 
+-- | @since 0.7.2
 instance Aeson.FromJSON2 These where
     liftParseJSON2 pa _ pb _ = Aeson.withObject "These a b" (p . HM.toList)
       where
@@ -358,6 +416,7 @@ instance Aeson.FromJSON2 These where
         p [("That", b)] = That <$> pb b
         p _  = fail "Expected object with 'This' and 'That' keys only"
 
+-- | @since 0.7.2
 instance FromJSON a => Aeson.FromJSON1 (These a) where
     liftParseJSON pb _ = Aeson.withObject "These a b" (p . HM.toList)
       where
@@ -366,8 +425,8 @@ instance FromJSON a => Aeson.FromJSON1 (These a) where
         p [("This", a)] = This <$> parseJSON a
         p [("That", b)] = That <$> pb b
         p _  = fail "Expected object with 'This' and 'That' keys only"
-#endif
 
+-- | @since 0.7.4
 instance Arbitrary2 These where
     liftArbitrary2 arbA arbB = oneof
         [ This <$> arbA
@@ -380,14 +439,17 @@ instance Arbitrary2 These where
     liftShrink2  shrA  shrB (These x y) =
         [This x, That y] ++ [These x' y' | (x', y') <- liftShrink2 shrA shrB (x, y)]
 
+-- | @since 0.7.4
 instance (Arbitrary a) => Arbitrary1 (These a) where
     liftArbitrary = liftArbitrary2 arbitrary
     liftShrink = liftShrink2 shrink
 
+-- | @since 0.7.1
 instance (Arbitrary a, Arbitrary b) => Arbitrary (These a b) where
     arbitrary = arbitrary1
     shrink = shrink1
 
+-- | @since 0.7.1
 instance (Function a, Function b) => Function (These a b) where
   function = functionMap g f
     where
@@ -399,4 +461,5 @@ instance (Function a, Function b) => Function (These a b) where
       f (Right (Left b))       = That b
       f (Right (Right (a, b))) = These a b
 
+-- | @since 0.7.1
 instance (CoArbitrary a, CoArbitrary b) => CoArbitrary (These a b)

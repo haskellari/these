@@ -2,6 +2,8 @@
 -- | Module     :  Data.Aligned.Key
 --
 -- 'These'-based zipping and unzipping of indexed functors.
+--
+-- @since 0.7.1
 module Data.Align.Key (
     AlignWithKey (..)
     ) where
@@ -22,6 +24,8 @@ import Data.Sequence        (Seq)
 import Data.Vector          (Vector)
 
 -- | Keyed version of 'Align'.
+--
+-- @since 0.7.1
 class (Keyed f, Align f) => AlignWithKey f where
     -- | Analogous to @'alignWith'@, but also provides an index.
     alignWithKey :: (Key f -> These a b -> c) -> f a -> f b -> f c

@@ -1,12 +1,19 @@
+# 0.7.6
+
+- Tigthen lower bounds
+- Add dependency on `lens`
+- Add `assoc`, `reassoc`, `swap` and `Swapped` instance
+- Add since annotations for things added in 0.7.x
+
 # 0.7.5
 
-- Add Compose and (,) Crosswalk instances
+- Add `Compose` and `(,)` `Crosswalk` instances
 - Add `bitraverseThese`
 - GHC-8.6 support
 
 # 0.7.4
 
-- QuickCheck-2.10 support: Arbitrary1/2 instances
+- `QuickCheck-2.10` support: `Arbitrary1/2` instances
 - GHC-8.2 support
 
 # 0.7.3
