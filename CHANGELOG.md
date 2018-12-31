@@ -4,6 +4,8 @@
 - Add dependency on `lens`
 - Add `assoc`, `reassoc`, `swap` and `Swapped` instance
 - Add since annotations for things added in 0.7.x
+- Add `AlignWithKey ZipList` instance
+- Add `Data.Align.Indexed` module.
 
 # 0.7.5
 

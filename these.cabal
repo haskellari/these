@@ -44,6 +44,7 @@ library
     Control.Monad.Trans.Chronicle
     Data.Align
     Data.Align.Key
+    Data.Align.Indexed
     Data.These
 
   -- ghc boot libs
