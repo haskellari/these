@@ -6,6 +6,7 @@
 - Add since annotations for things added in 0.7.x
 - Add `AlignWithKey ZipList` instance
 - Add `Data.Align.Indexed` module.
+- Add `Data.Functor.These` with `These1` data type.
 
 # 0.7.5
 
