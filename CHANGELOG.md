@@ -7,6 +7,8 @@
 - Add `AlignWithKey ZipList` instance
 - Add `Data.Align.Indexed` module.
 - Add `Data.Functor.These` with `These1` data type.
+- Add associativity law
+- Add `toList` property to enforce "align"-feel.
 
 # 0.7.5
 

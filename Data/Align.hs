@@ -78,17 +78,17 @@ oops = error . ("Data.Align: internal error: " ++)
 -- | Functors supporting a zip operation that takes the union of
 --   non-uniform shapes.
 --
---   If your functor is actually a functor from @Kleisli Maybe@ to
---   @Hask@ (so it supports @maybeMap :: (a -> Maybe b) -> f a -> f
---   b@), then an @Align@ instance is making your functor lax monoidal
---   w.r.t. the cartesian monoidal structure on @Kleisli Maybe@,
---   because @These@ is the cartesian product in that category @(a ->
---   Maybe (These b c) ~ (a -> Maybe b, a -> Maybe c))@. This insight
---   is due to rwbarton.
+-- If your functor is actually a functor from @Kleisli Maybe@ to
+-- @Hask@ (so it supports @maybeMap :: (a -> Maybe b) -> f a -> f
+-- b@), then an @Align@ instance is making your functor lax monoidal
+-- w.r.t. the cartesian monoidal structure on @Kleisli Maybe@,
+-- because @These@ is the cartesian product in that category @(a ->
+-- Maybe (These b c) ~ (a -> Maybe b, a -> Maybe c))@. This insight
+-- is due to rwbarton.
 --
---   Minimal definition: @nil@ and either @align@ or @alignWith@.
+-- Minimal definition: @nil@ and either @align@ or @alignWith@.
 --
---   Laws:
+-- == Laws:
 --
 -- @
 -- (\`align` nil) = fmap This
@@ -96,7 +96,18 @@ oops = error . ("Data.Align: internal error: " ++)
 -- join align = fmap (join These)
 -- align (f \<$> x) (g \<$> y) = bimap f g \<$> align x y
 -- alignWith f a b = f \<$> align a b
+-- align (align x y) z = fmap assoc (align x (align y z))
 -- @
+--
+-- And an addition property if @f@ is 'Foldable',
+-- which tries to enforce 'align'-feel:
+-- neither values are duplicated nor lost.
+--
+-- @
+-- toList x = toListOf (folded . here) (align x y)
+--          = mapMaybe (preview here) (toList (align x y))
+-- @
+--
 class (Functor f) => Align f where
     -- | An empty strucutre. @'align'@ing with @'nil'@ will produce a structure with
     --   the same shape and elements as the other input, modulo @'This'@ or @'That'@.
@@ -124,7 +135,7 @@ class (Functor f) => Align f where
 "alignWith f nil nil" forall f. alignWith f nil nil = nil
 "alignWith f x x" forall f x. alignWith f x x = fmap (\y -> f (These y y)) x
 
-  #-}
+ #-}
 
 
 instance Align Maybe where

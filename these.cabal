@@ -94,15 +94,20 @@ test-suite test
   build-depends:
       aeson
     , base
+    , base-compat
     , bifunctors
     , binary
     , containers
     , hashable
+    , lens
     , QuickCheck
     , these
     , transformers
     , unordered-containers
     , vector
+
+  if !impl(ghc >=8.0)
+    build-depends: semigroups
 
   -- additional dependencies
   build-depends:
