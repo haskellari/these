@@ -263,7 +263,8 @@ instance Ord k => Align (WrongMap k) where
 
 -- | Sequence-like __invalid__ 'Align' instance for Map.
 --
--- Doesn't satisfy /assoc/ or /toList/ laws/properties.
+-- Satisfies first five laws;
+-- Doesn't satisfy /assoc/ or /toList/ laws.
 --
 newtype WeirdMap k v = WeirdMap (Map k v)
   deriving (Eq, Ord, Show, Functor, Foldable)
