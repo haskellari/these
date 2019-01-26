@@ -1,5 +1,5 @@
+{-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE FlexibleInstances #-}
 -----------------------------------------------------------------------------
 -- | Module     :  Data.Align.Indexed
 --
@@ -7,23 +7,23 @@
 --
 -- @since 0.7.6
 module Data.Align.Indexed (
-    AlignWithIndex (..)
+    AlignWithIndex (..),
     ) where
 
-import Control.Lens (FunctorWithIndex)
+import Control.Lens          (FunctorWithIndex)
 import Data.Vector.Instances ()
 
 import Data.Align
 import Data.These
 
 -- Instances
-import Control.Applicative  (ZipList)
-import Data.Hashable        (Hashable)
-import Data.HashMap.Strict  (HashMap)
-import Data.IntMap          (IntMap)
-import Data.Map             (Map)
-import Data.Sequence        (Seq)
-import Data.Vector          (Vector)
+import Control.Applicative (ZipList)
+import Data.Hashable       (Hashable)
+import Data.HashMap.Strict (HashMap)
+import Data.IntMap         (IntMap)
+import Data.Map            (Map)
+import Data.Sequence       (Seq)
+import Data.Vector         (Vector)
 
 import qualified Data.Align.Key as Key
 

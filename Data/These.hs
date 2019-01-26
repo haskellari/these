@@ -3,79 +3,85 @@
 --
 -- The 'These' type and associated operations. Now enhanced with "Control.Lens" magic!
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
 module Data.These (
-                    These(..)
+      These(..)
 
-                  -- * Functions to get rid of 'These'
-                  , these
-                  , fromThese
-                  , mergeThese
-                  , mergeTheseWith
+    -- * Functions to get rid of 'These'
+    , these
+    , fromThese
+    , mergeThese
+    , mergeTheseWith
 
-                  -- * Traversals
-                  , here, there
+    -- * Traversals
+    , here, there
 
-                  -- * Prisms
-                  , _This, _That, _These
+    -- * Half selections
+    , justHere
+    , justThere
 
-                  -- * Case selections
-                  , justThis
-                  , justThat
-                  , justThese
+    -- * Prisms
+    , _This, _That, _These
 
-                  , catThis
-                  , catThat
-                  , catThese
+    -- * Case selections
+    , justThis
+    , justThat
+    , justThese
 
-                  , partitionThese
+    , catThis
+    , catThat
+    , catThese
 
-                  -- * Case predicates
-                  , isThis
-                  , isThat
-                  , isThese
+    , partitionThese
 
-                  -- * Map operations
-                  , mapThese
-                  , mapThis
-                  , mapThat
+    -- * Case predicates
+    , isThis
+    , isThat
+    , isThese
 
-                  , bitraverseThese
+    -- * Map operations
+    , mapThese
+    , mapThis
+    , mapThat
 
-                  -- * Associativity and commutativity
-                  , swap
-                  , assoc
-                  , reassoc
-                  ) where
+    , bitraverseThese
 
-import Control.Lens (Prism', prism, Swapped  (..), iso)
-import Control.Applicative
-import Control.Monad
-import Data.Bifoldable
-import Data.Bifunctor
-import Data.Bitraversable
-import Data.Foldable
-import Data.Functor.Bind
-import Data.Hashable (Hashable(..))
-import Data.Maybe (isJust, mapMaybe)
-import Data.Semigroup
-import Data.Semigroup.Bifoldable
-import Data.Semigroup.Bitraversable
-import Data.Traversable
-import Data.Data
-import GHC.Generics
-import Prelude hiding (foldr)
+    -- * Associativity and commutativity
+    , swap
+    , assoc
+    , reassoc
+    ) where
 
-import Control.DeepSeq (NFData (..))
-import Data.Aeson (FromJSON (..), ToJSON (..), (.=))
-import Data.Binary (Binary (..))
-import Test.QuickCheck (Arbitrary (..), Arbitrary1 (..), Arbitrary2 (..), CoArbitrary (..), oneof, arbitrary1, shrink1)
-import Test.QuickCheck.Function (Function (..), functionMap)
+import Prelude ()
+import Prelude.Compat
 
-import qualified Data.HashMap.Strict as HM
-import qualified Data.Aeson as Aeson
+import Control.DeepSeq              (NFData (..))
+import Control.Lens                 (Prism', Swapped (..), iso, prism)
+import Data.Aeson                   (FromJSON (..), ToJSON (..), (.=))
+import Data.Bifoldable              (Bifoldable (..))
+import Data.Bifunctor               (Bifunctor (..))
+import Data.Binary                  (Binary (..))
+import Data.Bitraversable           (Bitraversable (..))
+import Data.Data                    (Data, Typeable)
+import Data.Functor.Bind            (Apply (..), Bind (..))
+import Data.Hashable                (Hashable (..))
+import Data.Maybe                   (isJust, mapMaybe)
+import Data.Semigroup               (Semigroup (..))
+import Data.Semigroup.Bifoldable    (Bifoldable1 (..))
+import Data.Semigroup.Bitraversable (Bitraversable1 (..))
+import GHC.Generics                 (Generic)
+import Test.QuickCheck
+       (Arbitrary (..), Arbitrary1 (..), Arbitrary2 (..), CoArbitrary (..),
+       arbitrary1, oneof, shrink1)
+import Test.QuickCheck.Function     (Function (..), functionMap)
+
+import qualified Data.Aeson          as Aeson
 import qualified Data.Aeson.Encoding as Aeson (pair)
+import qualified Data.HashMap.Strict as HM
+
+-- $setup
+-- >>> import Control.Lens
 
 -- --------------------------------------------------------------------------
 -- | The 'These' type represents values with two non-exclusive possibilities.
@@ -119,6 +125,13 @@ mergeTheseWith f g op t = mergeThese op $ mapThese f g t
 -- @
 -- 'here' :: 'Control.Lens.Traversal' ('These' a t) ('These' b t) a b
 -- @
+--
+-- >>> over here show (That 1)
+-- That 1
+--
+-- >>> over here show (These 'a' 2)
+-- These "'a'" 2
+--
 here :: (Applicative f) => (a -> f b) -> These a t -> f (These b t)
 here f (This x) = This <$> f x
 here f (These x y) = flip These y <$> f x
@@ -129,10 +142,49 @@ here _ (That x) = pure (That x)
 -- @
 -- 'there' :: 'Control.Lens.Traversal' ('These' t b) ('These' t b) a b
 -- @
+--
+-- >>> over there show (That 1)
+-- That "1"
+--
+-- >>> over there show (These 'a' 2)
+-- These 'a' "2"
+--
 there :: (Applicative f) => (a -> f b) -> These t a -> f (These t b)
 there _ (This x) = pure (This x)
 there f (These x y) = These x <$> f y
 there f (That x) = That <$> f x
+
+-- | @'justHere' = 'Control.Lens.preview' 'here'@
+--
+-- >>> justHere (This 'x')
+-- Just 'x'
+--
+-- >>> justHere (That 'y')
+-- Nothing
+--
+-- >>> justHere (These 'x' 'y')
+-- Just 'x'
+--
+justHere :: These a b -> Maybe a
+justHere (This a)    = Just a
+justHere (That _)    = Nothing
+justHere (These a _) = Just a
+
+-- | @'justThere' = 'Control.Lens.preview' 'there'@
+--
+-- >>> justThere (This 'x')
+-- Nothing
+--
+-- >>> justThere (That 'y')
+-- Just 'y'
+--
+-- >>> justThere (These 'x' 'y')
+-- Just 'y'
+--
+justThere :: These a b -> Maybe b
+justThere (This _)    = Nothing
+justThere (That b)    = Just b
+justThere (These _ b) = Just b
 
 -- | A 'Control.Lens.Prism'' selecting the 'This' constructor.
 --

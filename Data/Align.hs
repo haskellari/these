@@ -6,70 +6,71 @@
 -- shapes, plus traversal of (bi)foldable (bi)functors through said
 -- functors.
 module Data.Align (
-                    Align(..)
-                  -- * Specialized aligns
-                  , malign, salign, padZip, padZipWith
-                  , lpadZip, lpadZipWith
-                  , rpadZip, rpadZipWith
-                  , alignVectorWith
+      Align(..)
+    -- * Specialized aligns
+    , malign, salign, padZip, padZipWith
+    , lpadZip, lpadZipWith
+    , rpadZip, rpadZipWith
+    , alignVectorWith
 
-                  -- * Unalign
-                  , Unalign(..)
+    -- * Unalign
+    , Unalign(..)
 
-                  -- * Crosswalk
-                  , Crosswalk(..)
+    -- * Crosswalk
+    , Crosswalk(..)
 
-                  -- * Bicrosswalk
-                  , Bicrosswalk(..)
-                  ) where
+    -- * Bicrosswalk
+    , Bicrosswalk(..)
+    ) where
 
 -- TODO: More instances..
 
-import Control.Applicative
-import Data.Bifoldable (Bifoldable(..))
-import Data.Bifunctor (Bifunctor(..))
-import Data.Foldable
-import Data.Functor.Compose
-import Data.Functor.Identity
-import Data.Functor.Product
-import Data.Hashable (Hashable(..))
-import Data.HashMap.Strict (HashMap)
-import Data.Maybe (catMaybes)
-import Data.Monoid hiding (Product, (<>))
-import Data.Semigroup (Semigroup (..))
-import Data.Sequence (Seq)
-import Data.These
-import qualified Data.Vector as V
-import Data.Vector.Generic (Vector, unstream, stream, empty)
-import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
-import qualified Data.HashMap.Strict as HashMap
-import qualified Data.Sequence as Seq
+import Prelude ()
+import Prelude.Compat
+
+import Control.Applicative               (ZipList (..))
+import Data.Bifoldable                   (Bifoldable (..))
+import Data.Bifunctor                    (Bifunctor (..))
+import Data.Functor.Compose              (Compose (..))
+import Data.Functor.Identity             (Identity (..))
+import Data.Functor.Product              (Product (..))
+import Data.Hashable                     (Hashable (..))
+import Data.HashMap.Strict               (HashMap)
+import Data.Maybe                        (catMaybes)
+import Data.Semigroup                    (Semigroup (..))
+import Data.Sequence                     (Seq)
+import Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
+import Data.Vector.Generic               (Vector, empty, stream, unstream)
+
+import qualified Data.HashMap.Strict               as HashMap
+import qualified Data.Sequence                     as Seq
+import qualified Data.Vector                       as V
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
-import qualified Data.Vector.Generic as VG (fromList, foldr)
+import qualified Data.Vector.Generic               as VG (foldr, fromList)
 
 #if MIN_VERSION_vector(0,11,0)
-import Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
+import           Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
 import qualified Data.Vector.Fusion.Bundle.Monadic as Bundle
-import qualified Data.Vector.Fusion.Bundle.Size as Bundle
+import qualified Data.Vector.Fusion.Bundle.Size    as Bundle
 #else
 import qualified Data.Vector.Fusion.Stream.Size as Stream
 #endif
 
 #if MIN_VERSION_containers(0, 5, 0)
-import Data.Map.Strict (Map)
+import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.IntMap.Strict (IntMap)
+import           Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 #else
-import Data.Map (Map)
+import           Data.Map (Map)
 import qualified Data.Map as Map
 
-import Data.IntMap (IntMap)
+import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 #endif
 
-import Prelude hiding (foldr) -- Fix redundant import warnings
+import Data.These
 
 oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)
@@ -78,17 +79,17 @@ oops = error . ("Data.Align: internal error: " ++)
 -- | Functors supporting a zip operation that takes the union of
 --   non-uniform shapes.
 --
---   If your functor is actually a functor from @Kleisli Maybe@ to
---   @Hask@ (so it supports @maybeMap :: (a -> Maybe b) -> f a -> f
---   b@), then an @Align@ instance is making your functor lax monoidal
---   w.r.t. the cartesian monoidal structure on @Kleisli Maybe@,
---   because @These@ is the cartesian product in that category @(a ->
---   Maybe (These b c) ~ (a -> Maybe b, a -> Maybe c))@. This insight
---   is due to rwbarton.
+-- If your functor is actually a functor from @Kleisli Maybe@ to
+-- @Hask@ (so it supports @maybeMap :: (a -> Maybe b) -> f a -> f
+-- b@), then an @Align@ instance is making your functor lax monoidal
+-- w.r.t. the cartesian monoidal structure on @Kleisli Maybe@,
+-- because @These@ is the cartesian product in that category @(a ->
+-- Maybe (These b c) ~ (a -> Maybe b, a -> Maybe c))@. This insight
+-- is due to rwbarton.
 --
---   Minimal definition: @nil@ and either @align@ or @alignWith@.
+-- Minimal definition: @nil@ and either @align@ or @alignWith@.
 --
---   Laws:
+-- == Laws:
 --
 -- @
 -- (\`align` nil) = fmap This
@@ -96,7 +97,20 @@ oops = error . ("Data.Align: internal error: " ++)
 -- join align = fmap (join These)
 -- align (f \<$> x) (g \<$> y) = bimap f g \<$> align x y
 -- alignWith f a b = f \<$> align a b
+-- align (align x y) z = fmap assoc (align x (align y z))
 -- @
+--
+-- /Note:/ @'join' f x = f x x@
+--
+-- And an addition property if @f@ is 'Foldable',
+-- which tries to enforce 'align'-feel:
+-- neither values are duplicated nor lost.
+--
+-- @
+-- toList x = toListOf (folded . here) (align x y)
+--          = mapMaybe justHere (toList (align x y))
+-- @
+--
 class (Functor f) => Align f where
     -- | An empty strucutre. @'align'@ing with @'nil'@ will produce a structure with
     --   the same shape and elements as the other input, modulo @'This'@ or @'That'@.
@@ -124,7 +138,7 @@ class (Functor f) => Align f where
 "alignWith f nil nil" forall f. alignWith f nil nil = nil
 "alignWith f x x" forall f x. alignWith f x x = fmap (\y -> f (These y y)) x
 
-  #-}
+ #-}
 
 
 instance Align Maybe where

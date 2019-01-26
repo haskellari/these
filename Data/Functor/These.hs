@@ -1,5 +1,5 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP                #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 #if MIN_VERSION_base(4,9,0)
 #define LIFTED_FUNCTOR_CLASSES 1
@@ -14,27 +14,34 @@
 #endif
 
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE DeriveTraversable #-}
-module Data.Functor.These where
+{-# LANGUAGE DeriveFoldable     #-}
+{-# LANGUAGE DeriveFunctor      #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DeriveTraversable  #-}
+module Data.Functor.These (
+    These1 (..),
+    ) where
 
 import Prelude ()
 import Prelude.Compat
 
-import Data.Data (Data)
-import Data.Functor.Classes (Eq1 (..), eq1, Ord1 (..), compare1, Show1 (..), showsPrec1, Read1 (..), readsPrec1)
-import Data.Typeable (Typeable)
-import GHC.Generics (Generic, Generic1)
-import Test.QuickCheck (Arbitrary (..), Arbitrary1 (..), oneof, arbitrary1, shrink1, liftShrink2)
-import Data.Aeson (FromJSON1 (..), ToJSON (..), ToJSON1 (..), FromJSON (..), (.=))
+import Data.Aeson
+       (FromJSON (..), FromJSON1 (..), ToJSON (..), ToJSON1 (..), (.=))
+import Data.Data            (Data)
+import Data.Functor.Classes
+       (Eq1 (..), Ord1 (..), Read1 (..), Show1 (..), compare1, eq1, readsPrec1,
+       showsPrec1)
+import Data.Typeable        (Typeable)
+import GHC.Generics         (Generic, Generic1)
+import Test.QuickCheck
+       (Arbitrary (..), Arbitrary1 (..), arbitrary1, liftShrink2, oneof,
+       shrink1)
 
 #if MIN_VERSION_deepseq(1,4,3)
-import Control.DeepSeq (NFData (..) , NFData1 (..), rnf1)
+import Control.DeepSeq (NFData (..), NFData1 (..), rnf1)
 #endif
 
-import qualified Data.Aeson as Aeson
+import qualified Data.Aeson          as Aeson
 import qualified Data.Aeson.Encoding as Aeson (pair)
 import qualified Data.HashMap.Strict as HM
 

@@ -1,6 +1,6 @@
 cabal-version:      >=1.10
 name:               these
-version:            0.7.5
+version:            0.7.6
 synopsis:
   An either-or-both data type & a generalized 'zip with padding' typeclass
 
@@ -27,6 +27,8 @@ description:
   .
   Also included is @ChronicleT@, a monad transformer based on the Monad instance
   for @These a@, along with the usual monad transformer bells and whistles.
+  .
+  For a dependency light version, check <https://hackage.haskell.org/package/data-or> package.
 
 tested-with:
   ghc ==7.4.2 || ==7.6.3 || ==7.8.4 || ==7.10.3 || ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.3
@@ -94,15 +96,20 @@ test-suite test
   build-depends:
       aeson
     , base
+    , base-compat
     , bifunctors
     , binary
     , containers
     , hashable
+    , lens
     , QuickCheck
     , these
     , transformers
     , unordered-containers
     , vector
+
+  if !impl(ghc >=8.0)
+    build-depends: semigroups
 
   -- additional dependencies
   build-depends:
