@@ -44,6 +44,7 @@ import qualified Test.Tasty.QuickCheck as QC
 
 import Data.Align
 import Data.Align.Key
+import Data.Align.Indexed
 import Data.These
 
 -- For old GHC to work
@@ -97,14 +98,19 @@ alignProps = testGroup "Align"
     -- weird objects:
     -- , dataAlignLaws "Const String" (Proxy :: Proxy (Const String))
     , dataAlignLaws "R" (Proxy :: Proxy R)
+    -- , dataAlignLaws "Weirdmap" (Proxy :: Proxy (WeirdMap Char))
     ]
 
 alignWithKeyProps :: TestTree
-alignWithKeyProps = testGroup "AlignWithKey"
-    [ testProperty "example" $ once $ example
+alignWithKeyProps = testGroup "AlignWithKey / AlignWithIndex"
+    [ testProperty "example" $ once $ exampleK
+    , testProperty "example" $ once $ exampleI
     ]
   where
-    example = alignWithKey (,) "foo" "quux" ===
+    exampleK = alignWithKey (,) "foo" "quux" === exampleV
+    exampleI = ialign (,) "foo" "quux" === exampleV
+
+    exampleV =
         [ (0, These 'f' 'q')
         , (1, These 'o' 'u')
         , (2, These 'o' 'u')
@@ -243,6 +249,31 @@ instance Ord k => Align (WrongMap k) where
        | Map.null y = WM $ This <$> x
        | Map.null x = WM $ That <$> y
        | otherwise  = WM $ Map.intersectionWith These x y
+
+-------------------------------------------------------------------------------
+-- WeirdMap
+-------------------------------------------------------------------------------
+
+-- | Sequence-like __invalid__ 'Align' instance for Map.
+--
+-- Doesn't satisfy /assoc/ or /toList/ laws/properties.
+--
+newtype WeirdMap k v = WeirdMap (Map k v)
+  deriving (Eq, Ord, Show, Functor, Foldable)
+
+instance (Arbitrary k, Arbitrary v, Ord k) => Arbitrary (WeirdMap k v) where
+    arbitrary = WeirdMap <$> arbitrary
+    shrink (WeirdMap m) = WeirdMap <$> shrink m
+
+instance Ord k => Align (WeirdMap k) where
+    nil = WeirdMap Map.empty
+
+    alignWith f (WeirdMap x) (WeirdMap y) = WeirdMap $ Map.fromList $
+        alignWith g (Map.toList x) (Map.toList y)
+      where
+        g (This (k, a))         = (k, f (This a))
+        g (That (k, a))         = (k, f (That a))
+        g (These (k, a) (_, b)) = (k, f (These a b))
 
 -------------------------------------------------------------------------------
 -- Const is invalid Align with Monoid, we need Idemporent monoid!
