@@ -27,6 +27,8 @@ description:
   .
   Also included is @ChronicleT@, a monad transformer based on the Monad instance
   for @These a@, along with the usual monad transformer bells and whistles.
+  .
+  For a dependency light version, check <https://hackage.haskell.org/package/data-or> package.
 
 tested-with:
   ghc ==7.4.2 || ==7.6.3 || ==7.8.4 || ==7.10.3 || ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.3
