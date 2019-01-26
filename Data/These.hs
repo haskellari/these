@@ -17,6 +17,10 @@ module Data.These (
     -- * Traversals
     , here, there
 
+    -- * Half selections
+    , justHere
+    , justThere
+
     -- * Prisms
     , _This, _That, _These
 
@@ -76,6 +80,9 @@ import qualified Data.Aeson          as Aeson
 import qualified Data.Aeson.Encoding as Aeson (pair)
 import qualified Data.HashMap.Strict as HM
 
+-- $setup
+-- >>> import Control.Lens
+
 -- --------------------------------------------------------------------------
 -- | The 'These' type represents values with two non-exclusive possibilities.
 --
@@ -118,6 +125,13 @@ mergeTheseWith f g op t = mergeThese op $ mapThese f g t
 -- @
 -- 'here' :: 'Control.Lens.Traversal' ('These' a t) ('These' b t) a b
 -- @
+--
+-- >>> over here show (That 1)
+-- That 1
+--
+-- >>> over here show (These 'a' 2)
+-- These "'a'" 2
+--
 here :: (Applicative f) => (a -> f b) -> These a t -> f (These b t)
 here f (This x) = This <$> f x
 here f (These x y) = flip These y <$> f x
@@ -128,10 +142,49 @@ here _ (That x) = pure (That x)
 -- @
 -- 'there' :: 'Control.Lens.Traversal' ('These' t b) ('These' t b) a b
 -- @
+--
+-- >>> over there show (That 1)
+-- That "1"
+--
+-- >>> over there show (These 'a' 2)
+-- These 'a' "2"
+--
 there :: (Applicative f) => (a -> f b) -> These t a -> f (These t b)
 there _ (This x) = pure (This x)
 there f (These x y) = These x <$> f y
 there f (That x) = That <$> f x
+
+-- | @'justHere' = 'Control.Lens.preview' 'here'@
+--
+-- >>> justHere (This 'x')
+-- Just 'x'
+--
+-- >>> justHere (That 'y')
+-- Nothing
+--
+-- >>> justHere (These 'x' 'y')
+-- Just 'x'
+--
+justHere :: These a b -> Maybe a
+justHere (This a)    = Just a
+justHere (That _)    = Nothing
+justHere (These a _) = Just a
+
+-- | @'justThere' = 'Control.Lens.preview' 'there'@
+--
+-- >>> justThere (This 'x')
+-- Nothing
+--
+-- >>> justThere (That 'y')
+-- Just 'y'
+--
+-- >>> justThere (These 'x' 'y')
+-- Just 'y'
+--
+justThere :: These a b -> Maybe b
+justThere (This _)    = Nothing
+justThere (That b)    = Just b
+justThere (These _ b) = Just b
 
 -- | A 'Control.Lens.Prism'' selecting the 'This' constructor.
 --

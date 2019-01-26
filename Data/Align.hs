@@ -100,13 +100,15 @@ oops = error . ("Data.Align: internal error: " ++)
 -- align (align x y) z = fmap assoc (align x (align y z))
 -- @
 --
+-- /Note:/ @'join' f x = f x x@
+--
 -- And an addition property if @f@ is 'Foldable',
 -- which tries to enforce 'align'-feel:
 -- neither values are duplicated nor lost.
 --
 -- @
 -- toList x = toListOf (folded . here) (align x y)
---          = mapMaybe (preview here) (toList (align x y))
+--          = mapMaybe justHere (toList (align x y))
 -- @
 --
 class (Functor f) => Align f where

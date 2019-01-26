@@ -12,7 +12,7 @@ import Prelude ()
 import Prelude.Compat
 
 import Control.Applicative       (ZipList (..))
-import Control.Lens              (folded, preview, toListOf)
+import Control.Lens              (folded, toListOf)
 import Control.Monad             (join)
 import Data.Bifunctor            (bimap)
 import Data.Foldable             (toList)
@@ -23,7 +23,7 @@ import Data.IntMap               (IntMap)
 import Data.List                 (nub)
 import Data.Map                  (Map)
 import Data.Maybe                (mapMaybe)
-import Data.Semigroup ((<>))
+import Data.Semigroup            (Semigroup (..))
 import Data.Sequence             (Seq)
 import Data.Traversable          (fmapDefault, foldMapDefault)
 import Test.QuickCheck
@@ -43,8 +43,8 @@ import qualified Data.Vector           as V
 import qualified Test.Tasty.QuickCheck as QC
 
 import Data.Align
-import Data.Align.Key
 import Data.Align.Indexed
+import Data.Align.Key
 import Data.These
 
 -- For old GHC to work
@@ -59,6 +59,11 @@ tests = testGroup "Tests"
     , alignProps
     , alignWithKeyProps
     , crosswalkProps
+    , testGroup "Semigroup"
+        [ semigroupLaws "These" (These "x" "y")
+        , semigroupLaws "SearchResult" (ScannedAndFound "x" "y")
+        , monoidLaws "List" "x" -- to disallow
+        ]
     ]
 
 theseProps :: TestTree
@@ -227,7 +232,7 @@ dataAlignLaws name _ = testGroup ("Data.Align laws: " <> name)
     alignToListProp xs ys =
         toList xs === toListOf (folded . here) xys
         .&&.
-        toList xs === mapMaybe (preview here) (toList xys)
+        toList xs === mapMaybe justHere (toList xys)
         .&&.
         toList ys === toListOf (folded . there) xys
       where
@@ -300,7 +305,7 @@ instance Align R where
         | null ass                = That <$> Nest bss
         | null bss                = This <$> Nest ass
         | shape ass == shape bss  = Nest $ zipWith (zipWith These) ass bss
-        | otherwise               = Nest [align (concat ass) (concat bss)] 
+        | otherwise               = Nest [align (concat ass) (concat bss)]
       where
         shape = fmap (() <$)
 
@@ -375,3 +380,64 @@ binaryProps = testProperty "binary / roundtrip" prop
   where
     prop :: These Int String -> Property
     prop x = x === Binary.decode (Binary.encode x)
+
+-------------------------------------------------------------------------------
+-- SearchResult
+-------------------------------------------------------------------------------
+
+semigroupLaws
+    :: forall a. (Semigroup a, Show a, Eq a, Arbitrary a)
+    => String -> a -> TestTree
+semigroupLaws name _ = testGroup ("Semigroup: " ++ name)
+    [ QC.testProperty "associativity" assocProp
+    ]
+  where
+    assocProp :: a -> a -> a -> Property
+    assocProp x y z = (x <> y) <> z === x <> (y <> z)
+
+monoidLaws
+    :: forall a. (Monoid a, Show a, Eq a, Arbitrary a)
+    => String -> a -> TestTree
+monoidLaws name _ = testGroup ("Monoid: " ++ name)
+    [ QC.testProperty "associativity" assocProp
+    , QC.testProperty "left-identity" idLeftProp
+    , QC.testProperty "right-identity" idRightProp
+    ]
+  where
+    assocProp :: a -> a -> a -> Property
+    assocProp x y z = (x `mappend` y) `mappend` z === x `mappend` (y `mappend` z)
+
+    idLeftProp :: a -> Property
+    idLeftProp x = mappend mempty x === x
+
+    idRightProp :: a -> Property
+    idRightProp x = mappend x mempty === x
+
+-- | Either a, or b, or both a and b
+--
+-- See https://github.com/isomorphism/these/issues/80
+data SearchResult a b = Scanned a | Found b | ScannedAndFound a b
+  deriving (Eq, Ord, Show)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (SearchResult a b) where
+    arbitrary = srFromThese <$> arbitrary
+
+srFromThese :: These a b -> SearchResult a b
+srFromThese (This a)    = Scanned a
+srFromThese (That b)    = Found b
+srFromThese (These a b) = ScannedAndFound a b
+
+-- | Accumulate 'a's from left to right, until one 'b' is found
+instance Semigroup a => Semigroup (SearchResult a b) where
+    ScannedAndFound a b <> _ = ScannedAndFound a b
+    Found b <> _ = Found b
+    Scanned a <> Scanned a' = Scanned (a <> a')
+    Scanned a <> Found b = ScannedAndFound a b
+    Scanned a <> ScannedAndFound a' b = ScannedAndFound (a <> a') b
+
+{-
+-- almost lawful
+instance Monoid a => Monoid (SearchResult a b) where
+    mappend = (<>)
+    mempty = Scanned mempty
+-}
