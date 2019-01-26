@@ -8,7 +8,7 @@ homepage:           https://github.com/isomorphism/these
 license:            BSD3
 license-file:       LICENSE
 author:             C. McCann
-maintainer:         cam@uptoisomorphism.net
+maintainer:         oleg.grenrus@iki.fi
 category:           Data,Control
 build-type:         Simple
 extra-source-files:
