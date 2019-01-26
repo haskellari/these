@@ -5,23 +5,23 @@
 --
 -- @since 0.7.1
 module Data.Align.Key (
-    AlignWithKey (..)
+    AlignWithKey (..),
     ) where
 
-import Data.Key (Key, Keyed (..))
+import Data.Key              (Key, Keyed (..))
 import Data.Vector.Instances ()
 
 import Data.Align
 import Data.These
 
 -- Instances
-import Control.Applicative  (ZipList)
-import Data.Hashable        (Hashable)
-import Data.HashMap.Strict  (HashMap)
-import Data.IntMap          (IntMap)
-import Data.Map             (Map)
-import Data.Sequence        (Seq)
-import Data.Vector          (Vector)
+import Control.Applicative (ZipList)
+import Data.Hashable       (Hashable)
+import Data.HashMap.Strict (HashMap)
+import Data.IntMap         (IntMap)
+import Data.Map            (Map)
+import Data.Sequence       (Seq)
+import Data.Vector         (Vector)
 
 -- | Keyed version of 'Align'.
 --

@@ -6,70 +6,71 @@
 -- shapes, plus traversal of (bi)foldable (bi)functors through said
 -- functors.
 module Data.Align (
-                    Align(..)
-                  -- * Specialized aligns
-                  , malign, salign, padZip, padZipWith
-                  , lpadZip, lpadZipWith
-                  , rpadZip, rpadZipWith
-                  , alignVectorWith
+      Align(..)
+    -- * Specialized aligns
+    , malign, salign, padZip, padZipWith
+    , lpadZip, lpadZipWith
+    , rpadZip, rpadZipWith
+    , alignVectorWith
 
-                  -- * Unalign
-                  , Unalign(..)
+    -- * Unalign
+    , Unalign(..)
 
-                  -- * Crosswalk
-                  , Crosswalk(..)
+    -- * Crosswalk
+    , Crosswalk(..)
 
-                  -- * Bicrosswalk
-                  , Bicrosswalk(..)
-                  ) where
+    -- * Bicrosswalk
+    , Bicrosswalk(..)
+    ) where
 
 -- TODO: More instances..
 
-import Control.Applicative
-import Data.Bifoldable (Bifoldable(..))
-import Data.Bifunctor (Bifunctor(..))
-import Data.Foldable
-import Data.Functor.Compose
-import Data.Functor.Identity
-import Data.Functor.Product
-import Data.Hashable (Hashable(..))
-import Data.HashMap.Strict (HashMap)
-import Data.Maybe (catMaybes)
-import Data.Monoid hiding (Product, (<>))
-import Data.Semigroup (Semigroup (..))
-import Data.Sequence (Seq)
-import Data.These
-import qualified Data.Vector as V
-import Data.Vector.Generic (Vector, unstream, stream, empty)
-import Data.Vector.Fusion.Stream.Monadic (Stream(..), Step(..))
-import qualified Data.HashMap.Strict as HashMap
-import qualified Data.Sequence as Seq
+import Prelude ()
+import Prelude.Compat
+
+import Control.Applicative               (ZipList (..))
+import Data.Bifoldable                   (Bifoldable (..))
+import Data.Bifunctor                    (Bifunctor (..))
+import Data.Functor.Compose              (Compose (..))
+import Data.Functor.Identity             (Identity (..))
+import Data.Functor.Product              (Product (..))
+import Data.Hashable                     (Hashable (..))
+import Data.HashMap.Strict               (HashMap)
+import Data.Maybe                        (catMaybes)
+import Data.Semigroup                    (Semigroup (..))
+import Data.Sequence                     (Seq)
+import Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
+import Data.Vector.Generic               (Vector, empty, stream, unstream)
+
+import qualified Data.HashMap.Strict               as HashMap
+import qualified Data.Sequence                     as Seq
+import qualified Data.Vector                       as V
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
-import qualified Data.Vector.Generic as VG (fromList, foldr)
+import qualified Data.Vector.Generic               as VG (foldr, fromList)
 
 #if MIN_VERSION_vector(0,11,0)
-import Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
+import           Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
 import qualified Data.Vector.Fusion.Bundle.Monadic as Bundle
-import qualified Data.Vector.Fusion.Bundle.Size as Bundle
+import qualified Data.Vector.Fusion.Bundle.Size    as Bundle
 #else
 import qualified Data.Vector.Fusion.Stream.Size as Stream
 #endif
 
 #if MIN_VERSION_containers(0, 5, 0)
-import Data.Map.Strict (Map)
+import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.IntMap.Strict (IntMap)
+import           Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 #else
-import Data.Map (Map)
+import           Data.Map (Map)
 import qualified Data.Map as Map
 
-import Data.IntMap (IntMap)
+import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 #endif
 
-import Prelude hiding (foldr) -- Fix redundant import warnings
+import Data.These
 
 oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)
