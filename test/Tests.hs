@@ -122,20 +122,22 @@ alignWithKeyProps = testGroup "AlignWithKey / AlignWithIndex"
         , (3, That 'x')
         ]
 
--- Even the `align` is defined using strict combinators, this will still work:
+-- Even the `align` is/was defined using strict combinators, this will still work:
 mapStrictnessProp :: [Int] -> [Int] -> Bool
 mapStrictnessProp lkeys rkeys = length (nub lkeys) <= Map.size (lhs `align` rhs)
   where lhs  = Map.fromList $ fmap (,loop) lkeys
         rhs  = Map.fromList $ fmap (,loop) rkeys
+
         loop :: Int
-        loop = loop
+        loop = error "break"
 
 intmapStrictnessProp :: [Int] -> [Int] -> Bool
 intmapStrictnessProp lkeys rkeys = length (nub lkeys) <= IntMap.size (lhs `align` rhs)
   where lhs  = IntMap.fromList $ fmap (,loop) lkeys
         rhs  = IntMap.fromList $ fmap (,loop) rkeys
+
         loop :: Int
-        loop = loop
+        loop = error "break"
 
 functorIdentityProp :: (Functor f, Eq (f a), Show (f a)) => f a -> Property
 functorIdentityProp x = fmap id x === x

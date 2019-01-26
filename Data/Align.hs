@@ -56,12 +56,19 @@ import qualified Data.Vector.Fusion.Bundle.Size    as Bundle
 import qualified Data.Vector.Fusion.Stream.Size as Stream
 #endif
 
-#if MIN_VERSION_containers(0, 5, 0)
-import           Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
+#if MIN_VERSION_containers(0,5,0)
+import           Data.Map.Lazy (Map)
+import qualified Data.Map.Lazy as Map
 
-import           Data.IntMap.Strict (IntMap)
-import qualified Data.IntMap.Strict as IntMap
+import           Data.IntMap.Lazy (IntMap)
+import qualified Data.IntMap.Lazy as IntMap
+
+#if MIN_VERSION_containers(0,5,9)
+import qualified Data.Map.Merge.Lazy as Map
+import qualified Data.IntMap.Merge.Lazy as IntMap
+#endif
+
+-- containers <0.5
 #else
 import           Data.Map (Map)
 import qualified Data.Map as Map
@@ -185,15 +192,31 @@ instance Align Seq where
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
+#if MIN_VERSION_containers(0,5,9)
+    alignWith f = Map.merge (Map.mapMissing (\_ x ->  f (This x)))
+                            (Map.mapMissing (\_ y ->  f (That y)))
+                            (Map.zipWithMatched (\_ x y -> f (These x y)))
+#elif MIN_VERSION_containers(0,5,0)
+    alignWith f = Map.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
+#else
     align m n = Map.unionWith merge (Map.map This m) (Map.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align Map: merge"
+#endif
 
 instance Align IntMap where
     nil = IntMap.empty
+#if MIN_VERSION_containers(0,5,9)
+    alignWith f = IntMap.merge (IntMap.mapMissing (\_ x ->  f (This x)))
+                               (IntMap.mapMissing (\_ y ->  f (That y)))
+                               (IntMap.zipWithMatched (\_ x y -> f (These x y)))
+#elif MIN_VERSION_containers(0,5,0)
+    alignWith f = IntMap.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
+#else
     align m n = IntMap.unionWith merge (IntMap.map This m) (IntMap.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align IntMap: merge"
+#endif
 
 instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil

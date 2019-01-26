@@ -9,6 +9,8 @@
 - Add `Data.Functor.These` with `These1` data type.
 - Add associativity law
 - Add `toList` property to enforce "align"-feel.
+- `Map` and `IntMap` `Align` instances implemented using merge combinators
+  (when available)
 
 # 0.7.5
 
