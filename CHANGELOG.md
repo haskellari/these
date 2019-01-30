@@ -3,6 +3,7 @@
 - Split `align` and `alignWith` into own class: `Semialign`.
 - `ialign` has default implementation
 - Add `Semialign` `NonEmpty` and `Identity` instances
+- Add `Swap` and `Assoc` instances (type classes from `assoc` package)
 
 # 0.7.6
 

@@ -25,8 +25,6 @@ import Data.Map            (Map)
 import Data.Sequence       (Seq)
 import Data.Vector         (Vector)
 
-import qualified Data.Align.Key as Key
-
 -- | Keyed version of 'Align'.
 --
 -- @since 0.7.6

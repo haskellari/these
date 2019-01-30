@@ -48,9 +48,9 @@ module Data.These (
     , bitraverseThese
 
     -- * Associativity and commutativity
-    , swap
-    , assoc
-    , reassoc
+    , swapThese
+    , assocThese
+    , unassocThese
     ) where
 
 import Prelude ()
@@ -61,6 +61,8 @@ import Control.Lens                 (Prism', Swapped (..), iso, prism)
 import Data.Aeson                   (FromJSON (..), ToJSON (..), (.=))
 import Data.Bifoldable              (Bifoldable (..))
 import Data.Bifunctor               (Bifunctor (..))
+import Data.Bifunctor.Swap (Swap (..))
+import Data.Bifunctor.Assoc (Assoc (..))
 import Data.Binary                  (Binary (..))
 import Data.Bitraversable           (Bitraversable (..))
 import Data.Data                    (Data, Typeable)
@@ -275,14 +277,17 @@ partitionThese (That    y:xs) = second (second (y:)) $ partitionThese xs
 -- | 'These' is commutative.
 --
 -- @
--- 'swap' . 'swap' = 'id'
+-- 'swapThese' . 'swapThese' = 'id'
 -- @
 --
--- @since 0.7.6
-swap :: These a b -> These b a
-swap (This a)    = That a
-swap (That b)    = This b
-swap (These a b) = These b a
+-- @since 0.8
+swapThese :: These a b -> These b a
+swapThese (This a)    = That a
+swapThese (That b)    = This b
+swapThese (These a b) = These b a
+
+-- | @since 0.8
+instance Swap These where swap = swapThese
 
 -- | 'These' is associative.
 --
@@ -291,27 +296,32 @@ swap (These a b) = These b a
 -- 'reassoc' . 'assoc' = 'id'
 -- @
 --
--- @since 0.7.6
-assoc :: These a (These b c) -> These (These a b) c
-assoc (This a)              = This (This a)
-assoc (That (This b))       = This (That b)
-assoc (That (That c))       = That c
-assoc (That (These b c))    = These (That b) c
-assoc (These a (This b))    = This (These a b)
-assoc (These a (That c))    = These (This a) c
-assoc (These a (These b c)) = These (These a b) c
+-- @since 0.8
+assocThese :: These (These a b) c -> These a (These b c)
+assocThese (This (This a))       = This a
+assocThese (This (That b))       = That (This b)
+assocThese (That c)              = That (That c)
+assocThese (These (That b) c)    = That (These b c)
+assocThese (This (These a b))    = These a (This b)
+assocThese (These (This a) c)    = These a (That c)
+assocThese (These (These a b) c) = These a (These b c)
 
 -- | 'These is associative. See 'assoc'.
 --
--- @since 0.7.6
-reassoc :: These (These a b) c -> These a (These b c)
-reassoc (This (This a))       = This a
-reassoc (This (That b))       = That (This b)
-reassoc (That c)              = That (That c)
-reassoc (These (That b) c)    = That (These b c)
-reassoc (This (These a b))    = These a (This b)
-reassoc (These (This a) c)    = These a (That c)
-reassoc (These (These a b) c) = These a (These b c)
+-- @since 0.8
+unassocThese :: These a (These b c) -> These (These a b) c
+unassocThese (This a)              = This (This a)
+unassocThese (That (This b))       = This (That b)
+unassocThese (That (That c))       = That c
+unassocThese (That (These b c))    = These (That b) c
+unassocThese (These a (This b))    = This (These a b)
+unassocThese (These a (That c))    = These (This a) c
+unassocThese (These a (These b c)) = These (These a b) c
+
+-- | @since 0.8
+instance Assoc These where
+    assoc = assocThese
+    unassoc = unassocThese
 
 -------------------------------------------------------------------------------
 -- Instances
@@ -369,7 +379,7 @@ instance Bitraversable1 These where
 
 -- | @since 0.7.6
 instance Swapped These where
-    swapped = iso swap swap
+    swapped = iso swapThese swapThese
 
 instance (Semigroup a) => Apply (These a) where
     This  a   <.> _         = This a

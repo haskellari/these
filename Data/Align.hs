@@ -104,7 +104,7 @@ oops = error . ("Data.Align: internal error: " ++)
 -- join align = fmap (join These)
 -- align (f \<$> x) (g \<$> y) = bimap f g \<$> align x y
 -- alignWith f a b = f \<$> align a b
--- align (align x y) z = fmap assoc (align x (align y z))
+-- align x (align y z) = fmap assoc (align (align x y) z)
 -- @
 --
 -- /Note:/ @'join' f x = f x x@

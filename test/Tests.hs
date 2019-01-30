@@ -188,8 +188,8 @@ traversableProps = testGroup "Traversable"
 dataAlignLaws :: forall (f :: * -> *). ( Align f, Foldable f
                                        , Eq (f (These Int Int))
                                        , Show (f (These Int Int))
-                                       , Eq (f (These (These Int Int) Int))
-                                       , Show (f (These (These Int Int) Int))
+                                       , Eq (f (These Int (These Int Int)))
+                                       , Show (f (These Int (These Int Int)))
                                        , CoArbitrary (These Int Int)
                                        , Arbitrary (f Int)
                                        , Eq (f Int)
@@ -225,10 +225,10 @@ dataAlignLaws name _ = testGroup ("Data.Align laws: " <> name)
       alignWith f xs ys === (f <$> align xs ys)
 
     assocProp :: f Int -> f Int -> f Int -> Property
-    assocProp xs ys zs = rhs === lhs
+    assocProp xs ys zs = lhs === fmap assocThese rhs
       where
         rhs = (xs `align` ys) `align` zs
-        lhs = fmap assoc $ xs `align` (ys `align` zs)
+        lhs = xs `align` (ys `align` zs)
 
     alignToListProp :: f Int -> f Int -> Property
     alignToListProp xs ys =
