@@ -1,3 +1,9 @@
+# 0.8.0
+
+- Split `align` and `alignWith` into own class: `Semialign`.
+- `ialign` has default implementation
+- Add `Semialign` `NonEmpty` and `Identity` instances
+
 # 0.7.6
 
 - Tigthen lower bounds

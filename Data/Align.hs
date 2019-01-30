@@ -6,7 +6,8 @@
 -- shapes, plus traversal of (bi)foldable (bi)functors through said
 -- functors.
 module Data.Align (
-      Align(..)
+      Semialign (..)
+    , Align(..)
     -- * Specialized aligns
     , malign, salign, padZip, padZipWith
     , lpadZip, lpadZipWith
@@ -36,6 +37,7 @@ import Data.Functor.Identity             (Identity (..))
 import Data.Functor.Product              (Product (..))
 import Data.Hashable                     (Hashable (..))
 import Data.HashMap.Strict               (HashMap)
+import Data.List.NonEmpty                (NonEmpty (..))
 import Data.Maybe                        (catMaybes)
 import Data.Semigroup                    (Semigroup (..))
 import Data.Sequence                     (Seq)
@@ -64,8 +66,8 @@ import           Data.IntMap.Lazy (IntMap)
 import qualified Data.IntMap.Lazy as IntMap
 
 #if MIN_VERSION_containers(0,5,9)
-import qualified Data.Map.Merge.Lazy as Map
 import qualified Data.IntMap.Merge.Lazy as IntMap
+import qualified Data.Map.Merge.Lazy    as Map
 #endif
 
 -- containers <0.5
@@ -94,13 +96,11 @@ oops = error . ("Data.Align: internal error: " ++)
 -- Maybe (These b c) ~ (a -> Maybe b, a -> Maybe c))@. This insight
 -- is due to rwbarton.
 --
--- Minimal definition: @nil@ and either @align@ or @alignWith@.
+-- Minimal definition: either @align@ or @alignWith@.
 --
 -- == Laws:
 --
 -- @
--- (\`align` nil) = fmap This
--- (nil \`align`) = fmap That
 -- join align = fmap (join These)
 -- align (f \<$> x) (g \<$> y) = bimap f g \<$> align x y
 -- alignWith f a b = f \<$> align a b
@@ -118,11 +118,7 @@ oops = error . ("Data.Align: internal error: " ++)
 --          = mapMaybe justHere (toList (align x y))
 -- @
 --
-class (Functor f) => Align f where
-    -- | An empty structure. @'align'@ing with @'nil'@ will produce a structure with
-    --   the same shape and elements as the other input, modulo @'This'@ or @'That'@.
-    nil :: f a
-
+class Functor f => Semialign f where
     -- | Analogous to @'zip'@, combines two structures by taking the union of
     --   their shapes and using @'These'@ to hold the elements.
     align :: f a -> f b -> f (These a b)
@@ -134,8 +130,22 @@ class (Functor f) => Align f where
     alignWith f a b = f <$> align a b
 
 #if __GLASGOW_HASKELL__ >= 707
-    {-# MINIMAL nil , (align | alignWith) #-}
+    {-# MINIMAL align | alignWith #-}
 #endif
+
+-- | A unit of 'align'.
+--
+-- == Laws:
+--
+-- @
+-- (\`align` nil) = fmap This
+-- (nil \`align`) = fmap That
+-- @
+--
+class Semialign f => Align f where
+    -- | An empty structure. @'align'@ing with @'nil'@ will produce a structure with
+    --   the same shape and elements as the other input, modulo @'This'@ or @'That'@.
+    nil :: f a
 
 {-# RULES
 
@@ -147,9 +157,14 @@ class (Functor f) => Align f where
 
  #-}
 
+-------------------------------------------------------------------------------
+-- Instances
+-------------------------------------------------------------------------------
 
 instance Align Maybe where
     nil = Nothing
+
+instance Semialign Maybe where
     align Nothing Nothing = Nothing
     align (Just a) Nothing = Just (This a)
     align Nothing (Just b) = Just (That b)
@@ -157,17 +172,26 @@ instance Align Maybe where
 
 instance Align [] where
     nil = []
+
+instance Semialign [] where
     align xs [] = This <$> xs
     align [] ys = That <$> ys
     align (x:xs) (y:ys) = These x y : align xs ys
 
+-- @since 0.8
+instance Semialign NonEmpty where
+    align (x :| xs) (y :| ys) = These x y :| align xs ys
+
 instance Align ZipList where
     nil = ZipList []
-    align (ZipList xs) (ZipList ys) = ZipList (align xs ys)
+
+instance Semialign ZipList where
+    alignWith f (ZipList xs) (ZipList ys) = ZipList (alignWith f xs ys)
 
 instance Align Seq where
     nil = Seq.empty
 
+instance Semialign Seq where
     align xs ys = case compare xn yn of
         EQ -> Seq.zipWith fc xs ys
         LT -> case Seq.splitAt xn ys of
@@ -192,6 +216,8 @@ instance Align Seq where
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
+
+instance (Ord k) => Semialign (Map k) where
 #if MIN_VERSION_containers(0,5,9)
     alignWith f = Map.merge (Map.mapMissing (\_ x ->  f (This x)))
                             (Map.mapMissing (\_ y ->  f (That y)))
@@ -206,6 +232,8 @@ instance (Ord k) => Align (Map k) where
 
 instance Align IntMap where
     nil = IntMap.empty
+
+instance Semialign IntMap where
 #if MIN_VERSION_containers(0,5,9)
     alignWith f = IntMap.merge (IntMap.mapMissing (\_ x ->  f (This x)))
                                (IntMap.mapMissing (\_ y ->  f (That y)))
@@ -218,13 +246,22 @@ instance Align IntMap where
             merge _ _ = oops "Align IntMap: merge"
 #endif
 
+-- @since 0.8
+instance Semialign Identity where
+    alignWith f (Identity a) (Identity b) = Identity (f (These a b))
+
 instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil
+
+instance (Semialign f, Semialign g) => Semialign (Product f g) where
     align (Pair a b) (Pair c d) = Pair (align a c) (align b d)
+    alignWith f (Pair a b) (Pair c d) = Pair (alignWith f a c) (alignWith f b d)
 
 -- Based on the Data.Vector.Fusion.Stream.Monadic zipWith implementation
 instance Monad m => Align (Stream m) where
     nil = Stream.empty
+
+instance Monad m => Semialign (Stream m) where
 #if MIN_VERSION_vector(0,11,0)
     alignWith  f (Stream stepa ta) (Stream stepb tb)
       = Stream step (ta, tb, Nothing, False)
@@ -254,12 +291,16 @@ instance Monad m => Align (Stream m) where
 #if MIN_VERSION_vector(0,11,0)
 instance Monad m => Align (Bundle m v) where
     nil = Bundle.empty
+
+instance Monad m => Semialign (Bundle m v) where
     alignWith f Bundle{sElems = sa, sSize = na} Bundle{sElems = sb, sSize = nb}
       = Bundle.fromStream (alignWith f sa sb) (Bundle.larger na nb)
 #endif
 
 instance Align V.Vector where
   nil = Data.Vector.Generic.empty
+
+instance Semialign V.Vector where
   alignWith = alignVectorWith
 
 alignVectorWith :: (Vector v a, Vector v b, Vector v c)
@@ -268,6 +309,8 @@ alignVectorWith f x y = unstream $ alignWith f (stream x) (stream y)
 
 instance (Eq k, Hashable k) => Align (HashMap k) where
     nil = HashMap.empty
+
+instance (Eq k, Hashable k) => Semialign (HashMap k) where
     align m n = HashMap.unionWith merge (HashMap.map This m) (HashMap.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align HashMap: merge"

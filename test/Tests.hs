@@ -252,6 +252,8 @@ instance (Arbitrary k, Arbitrary v, Ord k) => Arbitrary (WrongMap k v) where
 
 instance Ord k => Align (WrongMap k) where
     nil = WM Map.empty
+
+instance Ord k => Semialign (WrongMap k) where
     align (WM x) (WM y)
        | Map.null y = WM $ This <$> x
        | Map.null x = WM $ That <$> y
@@ -276,6 +278,7 @@ instance (Arbitrary k, Arbitrary v, Ord k) => Arbitrary (WeirdMap k v) where
 instance Ord k => Align (WeirdMap k) where
     nil = WeirdMap Map.empty
 
+instance Ord k => Semialign (WeirdMap k) where
     alignWith f (WeirdMap x) (WeirdMap y) = WeirdMap $ Map.fromList $
         alignWith g (Map.toList x) (Map.toList y)
       where
@@ -290,6 +293,8 @@ instance Ord k => Align (WeirdMap k) where
 {-
 instance Monoid a => Align (Const a) where
     nil = Const mempty
+
+instance Monoid a => Semialign (Const a) where
     align (Const a) (Const b) = Const (mappend a b)
 -}
 
@@ -304,6 +309,7 @@ newtype R a = Nest [[a]]
 instance Align R where
     nil = Nest []
 
+instance Semialign R where
     align (Nest ass) (Nest bss)
         | null ass                = That <$> Nest bss
         | null bss                = This <$> Nest ass
