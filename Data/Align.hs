@@ -119,7 +119,7 @@ oops = error . ("Data.Align: internal error: " ++)
 -- @
 --
 class (Functor f) => Align f where
-    -- | An empty strucutre. @'align'@ing with @'nil'@ will produce a structure with
+    -- | An empty structure. @'align'@ing with @'nil'@ will produce a structure with
     --   the same shape and elements as the other input, modulo @'This'@ or @'That'@.
     nil :: f a
 
