@@ -37,6 +37,7 @@ import Control.Monad.Reader.Class
 import Control.Monad.RWS.Class
 import Prelude
 import Data.These
+import Data.These.Combinators (mapHere)
 
 -- --------------------------------------------------------------------------
 -- | A chronicle monad parameterized by the output type @c@.
@@ -208,5 +209,5 @@ condemn (ChronicleT m) = ChronicleT $ do
 --   
 --   Equivalent to 'censor' for the 'Writer' monad.
 retcon :: (Semigroup c, Monad m) => (c -> c) -> ChronicleT c m a -> ChronicleT c m a
-retcon f m = ChronicleT $ mapThis f `liftM` runChronicleT m
+retcon f m = ChronicleT $ mapHere f `liftM` runChronicleT m
 

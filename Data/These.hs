@@ -14,61 +14,25 @@ module Data.These (
     , mergeThese
     , mergeTheseWith
 
-    -- * Traversals
-    , here, there
-
-    -- * Half selections
-    , justHere
-    , justThere
-
-    -- * Prisms
-    , _This, _That, _These
-
-    -- * Case selections
-    , justThis
-    , justThat
-    , justThese
-
-    , catThis
-    , catThat
-    , catThese
-
+    -- * Partition
     , partitionThese
-
-    -- * Case predicates
-    , isThis
-    , isThat
-    , isThese
-
-    -- * Map operations
-    , mapThese
-    , mapThis
-    , mapThat
-
-    , bitraverseThese
-
-    -- * Associativity and commutativity
-    , swapThese
-    , assocThese
-    , unassocThese
     ) where
 
 import Prelude ()
 import Prelude.Compat
 
 import Control.DeepSeq              (NFData (..))
-import Control.Lens                 (Prism', Swapped (..), iso, prism)
+import Control.Lens                 (Swapped (..), iso)
 import Data.Aeson                   (FromJSON (..), ToJSON (..), (.=))
 import Data.Bifoldable              (Bifoldable (..))
 import Data.Bifunctor               (Bifunctor (..))
-import Data.Bifunctor.Swap (Swap (..))
-import Data.Bifunctor.Assoc (Assoc (..))
+import Data.Bifunctor.Assoc         (Assoc (..))
+import Data.Bifunctor.Swap          (Swap (..))
 import Data.Binary                  (Binary (..))
 import Data.Bitraversable           (Bitraversable (..))
 import Data.Data                    (Data, Typeable)
 import Data.Functor.Bind            (Apply (..), Bind (..))
 import Data.Hashable                (Hashable (..))
-import Data.Maybe                   (isJust, mapMaybe)
 import Data.Semigroup               (Semigroup (..))
 import Data.Semigroup.Bifoldable    (Bifoldable1 (..))
 import Data.Semigroup.Bitraversable (Bitraversable1 (..))
@@ -118,154 +82,9 @@ fromThese _ _ (These a x) = (a, x)
 mergeThese :: (a -> a -> a) -> These a a -> a
 mergeThese = these id id
 
--- | BiMap and coalesce results with the provided operation.
+-- | 'bimap' and coalesce results with the provided operation.
 mergeTheseWith :: (a -> c) -> (b -> c) -> (c -> c -> c) -> These a b -> c
-mergeTheseWith f g op t = mergeThese op $ mapThese f g t
-
--- | A 'Control.Lens.Traversal' of the first half of a 'These', suitable for use with "Control.Lens".
---
--- @
--- 'here' :: 'Control.Lens.Traversal' ('These' a t) ('These' b t) a b
--- @
---
--- >>> over here show (That 1)
--- That 1
---
--- >>> over here show (These 'a' 2)
--- These "'a'" 2
---
-here :: (Applicative f) => (a -> f b) -> These a t -> f (These b t)
-here f (This x) = This <$> f x
-here f (These x y) = flip These y <$> f x
-here _ (That x) = pure (That x)
-
--- | A 'Control.Lens.Traversal' of the second half of a 'These', suitable for use with "Control.Lens".
---
--- @
--- 'there' :: 'Control.Lens.Traversal' ('These' t b) ('These' t b) a b
--- @
---
--- >>> over there show (That 1)
--- That "1"
---
--- >>> over there show (These 'a' 2)
--- These 'a' "2"
---
-there :: (Applicative f) => (a -> f b) -> These t a -> f (These t b)
-there _ (This x) = pure (This x)
-there f (These x y) = These x <$> f y
-there f (That x) = That <$> f x
-
--- | @'justHere' = 'Control.Lens.preview' 'here'@
---
--- >>> justHere (This 'x')
--- Just 'x'
---
--- >>> justHere (That 'y')
--- Nothing
---
--- >>> justHere (These 'x' 'y')
--- Just 'x'
---
-justHere :: These a b -> Maybe a
-justHere (This a)    = Just a
-justHere (That _)    = Nothing
-justHere (These a _) = Just a
-
--- | @'justThere' = 'Control.Lens.preview' 'there'@
---
--- >>> justThere (This 'x')
--- Nothing
---
--- >>> justThere (That 'y')
--- Just 'y'
---
--- >>> justThere (These 'x' 'y')
--- Just 'y'
---
-justThere :: These a b -> Maybe b
-justThere (This _)    = Nothing
-justThere (That b)    = Just b
-justThere (These _ b) = Just b
-
--- | A 'Control.Lens.Prism'' selecting the 'This' constructor.
---
--- /Note:/ cannot change type.
-_This :: Prism' (These a b) a
-_This = prism This (these Right (Left . That) (\x y -> Left $ These x y))
-
--- | A 'Control.Lens.Prism'' selecting the 'That' constructor.
---
--- /Note:/ cannot change type.
-_That :: Prism' (These a b) b
-_That = prism That (these (Left . This) Right (\x y -> Left $ These x y))
-
--- | A 'Control.Lens.Prism'' selecting the 'These' constructor. 'These' names are ridiculous!
---
--- /Note:/ cannot change type.
-_These :: Prism' (These a b) (a, b)
-_These = prism (uncurry These) (these (Left . This) (Left . That) (\x y -> Right (x, y)))
-
-
--- | @'justThis' = 'Control.Lens.preview' '_This'@
-justThis :: These a b -> Maybe a
-justThis (This a) = Just a
-justThis _        = Nothing
-
--- | @'justThat' = 'Control.Lens.preview' '_That'@
-justThat :: These a b -> Maybe b
-justThat (That x) = Just x
-justThat _        = Nothing
-
--- | @'justThese' = 'Control.Lens.preview' '_These'@
-justThese :: These a b -> Maybe (a, b)
-justThese (These a x) = Just (a, x)
-justThese _           = Nothing
-
-
-isThis, isThat, isThese :: These a b -> Bool
--- | @'isThis' = 'isJust' . 'justThis'@
-isThis  = isJust . justThis
-
--- | @'isThat' = 'isJust' . 'justThat'@
-isThat  = isJust . justThat
-
--- | @'isThese' = 'isJust' . 'justThese'@
-isThese = isJust . justThese
-
--- | 'Bifunctor' map.
-mapThese :: (a -> c) -> (b -> d) -> These a b -> These c d
-mapThese f _ (This  a  ) = This (f a)
-mapThese _ g (That    x) = That (g x)
-mapThese f g (These a x) = These (f a) (g x)
-
--- | 'Bitraversable'.
---
--- @since 0.7.5
-bitraverseThese :: Applicative f => (a -> f c) -> (b -> f d) -> These a b -> f (These c d)
-bitraverseThese f _ (This x) = This <$> f x
-bitraverseThese _ g (That x) = That <$> g x
-bitraverseThese f g (These x y) = These <$> f x <*> g y
-
--- | @'mapThis' = 'Control.Lens.over' 'here'@
-mapThis :: (a -> c) -> These a b -> These c b
-mapThis f = mapThese f id
-
--- | @'mapThat' = 'Control.Lens.over' 'there'@
-mapThat :: (b -> d) -> These a b -> These a d
-mapThat f = mapThese id f
-
--- | Select all 'This' constructors from a list.
-catThis :: [These a b] -> [a]
-catThis = mapMaybe justThis
-
--- | Select all 'That' constructors from a list.
-catThat :: [These a b] -> [b]
-catThat = mapMaybe justThat
-
--- | Select all 'These' constructors from a list.
-catThese :: [These a b] -> [(a, b)]
-catThese = mapMaybe justThese
+mergeTheseWith f g op t = mergeThese op $ bimap f g t
 
 -- | Select each constructor and partition them into separate lists.
 partitionThese :: [These a b] -> ( [(a, b)], ([a], [b]) )
@@ -274,58 +93,33 @@ partitionThese (These x y:xs) = first ((x, y):)      $ partitionThese xs
 partitionThese (This  x  :xs) = second (first  (x:)) $ partitionThese xs
 partitionThese (That    y:xs) = second (second (y:)) $ partitionThese xs
 
--- | 'These' is commutative.
---
--- @
--- 'swapThese' . 'swapThese' = 'id'
--- @
---
--- @since 0.8
-swapThese :: These a b -> These b a
-swapThese (This a)    = That a
-swapThese (That b)    = This b
-swapThese (These a b) = These b a
-
--- | @since 0.8
-instance Swap These where swap = swapThese
-
--- | 'These' is associative.
---
--- @
--- 'assoc' . 'reassoc' = 'id'
--- 'reassoc' . 'assoc' = 'id'
--- @
---
--- @since 0.8
-assocThese :: These (These a b) c -> These a (These b c)
-assocThese (This (This a))       = This a
-assocThese (This (That b))       = That (This b)
-assocThese (That c)              = That (That c)
-assocThese (These (That b) c)    = That (These b c)
-assocThese (This (These a b))    = These a (This b)
-assocThese (These (This a) c)    = These a (That c)
-assocThese (These (These a b) c) = These a (These b c)
-
--- | 'These is associative. See 'assoc'.
---
--- @since 0.8
-unassocThese :: These a (These b c) -> These (These a b) c
-unassocThese (This a)              = This (This a)
-unassocThese (That (This b))       = This (That b)
-unassocThese (That (That c))       = That c
-unassocThese (That (These b c))    = These (That b) c
-unassocThese (These a (This b))    = This (These a b)
-unassocThese (These a (That c))    = These (This a) c
-unassocThese (These a (These b c)) = These (These a b) c
-
--- | @since 0.8
-instance Assoc These where
-    assoc = assocThese
-    unassoc = unassocThese
-
 -------------------------------------------------------------------------------
 -- Instances
 -------------------------------------------------------------------------------
+
+-- | @since 0.8
+instance Swap These where
+    swap (This a)    = That a
+    swap (That b)    = This b
+    swap (These a b) = These b a
+
+-- | @since 0.8
+instance Assoc These where
+    assoc (This (This a))       = This a
+    assoc (This (That b))       = That (This b)
+    assoc (That c)              = That (That c)
+    assoc (These (That b) c)    = That (These b c)
+    assoc (This (These a b))    = These a (This b)
+    assoc (These (This a) c)    = These a (That c)
+    assoc (These (These a b) c) = These a (These b c)
+
+    unassoc (This a)              = This (This a)
+    unassoc (That (This b))       = This (That b)
+    unassoc (That (That c))       = That c
+    unassoc (That (These b c))    = These (That b) c
+    unassoc (These a (This b))    = This (These a b)
+    unassoc (These a (That c))    = These (This a) c
+    unassoc (These a (These b c)) = These (These a b) c
 
 instance (Semigroup a, Semigroup b) => Semigroup (These a b) where
     This  a   <> This  b   = This  (a <> b)
@@ -357,9 +151,9 @@ instance Traversable (These a) where
     sequenceA (These a x) = These a <$> x
 
 instance Bifunctor These where
-    bimap = mapThese
-    first = mapThis
-    second = mapThat
+    bimap f _ (This  a  ) = This (f a)
+    bimap _ g (That    x) = That (g x)
+    bimap f g (These a x) = These (f a) (g x)
 
 instance Bifoldable These where
     bifold = these id id mappend
@@ -370,7 +164,9 @@ instance Bifoldable1 These where
     bifold1 = these id id (<>)
 
 instance Bitraversable These where
-    bitraverse = bitraverseThese
+    bitraverse f _ (This x) = This <$> f x
+    bitraverse _ g (That x) = That <$> g x
+    bitraverse f g (These x y) = These <$> f x <*> g y
 
 instance Bitraversable1 These where
     bitraverse1 f _ (This x) = This <$> f x
@@ -379,7 +175,7 @@ instance Bitraversable1 These where
 
 -- | @since 0.7.6
 instance Swapped These where
-    swapped = iso swapThese swapThese
+    swapped = iso swap swap
 
 instance (Semigroup a) => Apply (These a) where
     This  a   <.> _         = This a

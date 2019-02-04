@@ -49,6 +49,8 @@ library
     Data.Align.Key
     Data.Functor.These
     Data.These
+    Data.These.Lens
+    Data.These.Combinators
 
   -- ghc boot libs
   build-depends:

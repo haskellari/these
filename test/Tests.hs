@@ -46,6 +46,8 @@ import Data.Align
 import Data.Align.Indexed
 import Data.Align.Key
 import Data.These
+import Data.These.Combinators
+import Data.These.Lens
 
 -- For old GHC to work
 data Proxy (a :: * -> *) = Proxy
