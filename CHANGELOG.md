@@ -8,6 +8,8 @@
   and and some combinators `Data.These.Combinators`.
   Also some combinators are renamed, so naming is now consistent.
   As the result `Data.These` has very minimal exports.
+- Change type of `partitionThese` (nested pairs to triple)
+- Add `partitionHereThere :: [These a b] -> ([a],[b])`
 
 # 0.7.6
 

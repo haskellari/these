@@ -16,6 +16,7 @@ module Data.These (
 
     -- * Partition
     , partitionThese
+    , partitionHereThere
     ) where
 
 import Prelude ()
@@ -66,6 +67,10 @@ import qualified Data.HashMap.Strict as HM
 data These a b = This a | That b | These a b
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
+-------------------------------------------------------------------------------
+-- Eliminators
+-------------------------------------------------------------------------------
+
 -- | Case analysis for the 'These' type.
 these :: (a -> c) -> (b -> c) -> (a -> b -> c) -> These a b -> c
 these l _ _ (This a) = l a
@@ -74,9 +79,8 @@ these _ _ lr (These a x) = lr a x
 
 -- | Takes two default values and produces a tuple.
 fromThese :: a -> b -> These a b -> (a, b)
-fromThese _ x (This a   ) = (a, x)
-fromThese a _ (That x   ) = (a, x)
-fromThese _ _ (These a x) = (a, x)
+fromThese x y = these (`pair` y) (x `pair`) pair where
+    pair = (,)
 
 -- | Coalesce with the provided operation.
 mergeThese :: (a -> a -> a) -> These a a -> a
@@ -86,12 +90,31 @@ mergeThese = these id id
 mergeTheseWith :: (a -> c) -> (b -> c) -> (c -> c -> c) -> These a b -> c
 mergeTheseWith f g op t = mergeThese op $ bimap f g t
 
+-------------------------------------------------------------------------------
+-- Partitioning
+-------------------------------------------------------------------------------
+
 -- | Select each constructor and partition them into separate lists.
-partitionThese :: [These a b] -> ( [(a, b)], ([a], [b]) )
-partitionThese []             = ([], ([], []))
-partitionThese (These x y:xs) = first ((x, y):)      $ partitionThese xs
-partitionThese (This  x  :xs) = second (first  (x:)) $ partitionThese xs
-partitionThese (That    y:xs) = second (second (y:)) $ partitionThese xs
+partitionThese :: [These a b] -> ([a], [b], [(a, b)])
+partitionThese []     = ([], [], [])
+partitionThese (t:ts) = case t of
+    This x    -> (x : xs,     ys,         xys)
+    That y    -> (    xs, y : ys,         xys)
+    These x y -> (    xs,     ys, (x,y) : xys)
+  where
+    ~(xs,ys,xys) = partitionThese ts
+
+-- | Select 'here' and 'there' elements and partition them into separate lists.
+--
+-- @since 0.8
+partitionHereThere :: [These a b] -> ([a], [b])
+partitionHereThere []     = ([], [])
+partitionHereThere (t:ts) = case t of
+    This x     -> (x : xs,     ys)
+    That y     -> (    xs, y : ys)
+    These x  y -> (x : xs, y : ys)
+  where
+    ~(xs,ys) = partitionHereThere ts
 
 -------------------------------------------------------------------------------
 -- Instances
