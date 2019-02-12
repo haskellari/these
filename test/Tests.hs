@@ -2,9 +2,11 @@
 {-# LANGUAGE DeriveFoldable      #-}
 {-# LANGUAGE DeriveFunctor       #-}
 {-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE MonoLocalBinds      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving  #-}
 {-# LANGUAGE TupleSections       #-}
 module Main (main) where
 
@@ -63,6 +65,7 @@ tests = testGroup "Tests"
         [ semigroupLaws "These" (These "x" "y")
         , semigroupLaws "SearchResult" (ScannedAndFound "x" "y")
         , monoidLaws "List" "x" -- to disallow
+        , monoidLaws "Salign" (Salign ["x"])
         ]
     ]
 
@@ -444,3 +447,7 @@ instance Monoid a => Monoid (SearchResult a b) where
     mappend = (<>)
     mempty = Scanned mempty
 -}
+
+deriving instance Eq (f a) => Eq (Salign f a)
+deriving instance Show (f a) => Show (Salign f a)
+deriving instance Arbitrary (f a) => Arbitrary (Salign f a)
