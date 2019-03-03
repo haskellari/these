@@ -26,7 +26,7 @@ import Data.Vector         (Vector)
 -- | Keyed version of 'Align'.
 --
 -- @since 0.7.1
-class (Keyed f, Align f) => AlignWithKey f where
+class (Keyed f, Semialign f) => AlignWithKey f where
     -- | Analogous to @'alignWith'@, but also provides an index.
     alignWithKey :: (Key f -> These a b -> c) -> f a -> f b -> f c
     alignWithKey f a b = mapWithKey f (align a b)

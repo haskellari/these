@@ -19,6 +19,7 @@ module Control.Monad.Chronicle.Class (
     ) where
 
 import Data.These
+import Data.These.Combinators
 import Control.Applicative
 import Control.Monad.Trans.Chronicle (ChronicleT, runChronicle)
 import qualified Control.Monad.Trans.Chronicle as Ch
@@ -97,13 +98,13 @@ instance (Semigroup c) => MonadChronicle c (These c) where
     dictate c = These c ()
     confess c = This c
     memento (This c) = That (Left c)
-    memento m = mapThat Right m
+    memento m = mapThere Right m
     absolve x (This _) = That x
     absolve _ (That x) = That x
     absolve _ (These _ x) = That x
     condemn (These c _) = This c
     condemn m = m
-    retcon = mapThis
+    retcon = mapHere
     chronicle = id
 
 instance (Semigroup c, Monad m) => MonadChronicle c (ChronicleT c m) where

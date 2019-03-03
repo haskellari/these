@@ -46,6 +46,8 @@ import Data.Align
 import Data.Align.Indexed
 import Data.Align.Key
 import Data.These
+import Data.These.Combinators
+import Data.These.Lens
 
 -- For old GHC to work
 data Proxy (a :: * -> *) = Proxy
@@ -188,8 +190,8 @@ traversableProps = testGroup "Traversable"
 dataAlignLaws :: forall (f :: * -> *). ( Align f, Foldable f
                                        , Eq (f (These Int Int))
                                        , Show (f (These Int Int))
-                                       , Eq (f (These (These Int Int) Int))
-                                       , Show (f (These (These Int Int) Int))
+                                       , Eq (f (These Int (These Int Int)))
+                                       , Show (f (These Int (These Int Int)))
                                        , CoArbitrary (These Int Int)
                                        , Arbitrary (f Int)
                                        , Eq (f Int)
@@ -225,10 +227,10 @@ dataAlignLaws name _ = testGroup ("Data.Align laws: " <> name)
       alignWith f xs ys === (f <$> align xs ys)
 
     assocProp :: f Int -> f Int -> f Int -> Property
-    assocProp xs ys zs = rhs === lhs
+    assocProp xs ys zs = lhs === fmap assocThese rhs
       where
         rhs = (xs `align` ys) `align` zs
-        lhs = fmap assoc $ xs `align` (ys `align` zs)
+        lhs = xs `align` (ys `align` zs)
 
     alignToListProp :: f Int -> f Int -> Property
     alignToListProp xs ys =
@@ -252,6 +254,8 @@ instance (Arbitrary k, Arbitrary v, Ord k) => Arbitrary (WrongMap k v) where
 
 instance Ord k => Align (WrongMap k) where
     nil = WM Map.empty
+
+instance Ord k => Semialign (WrongMap k) where
     align (WM x) (WM y)
        | Map.null y = WM $ This <$> x
        | Map.null x = WM $ That <$> y
@@ -276,6 +280,7 @@ instance (Arbitrary k, Arbitrary v, Ord k) => Arbitrary (WeirdMap k v) where
 instance Ord k => Align (WeirdMap k) where
     nil = WeirdMap Map.empty
 
+instance Ord k => Semialign (WeirdMap k) where
     alignWith f (WeirdMap x) (WeirdMap y) = WeirdMap $ Map.fromList $
         alignWith g (Map.toList x) (Map.toList y)
       where
@@ -290,6 +295,8 @@ instance Ord k => Align (WeirdMap k) where
 {-
 instance Monoid a => Align (Const a) where
     nil = Const mempty
+
+instance Monoid a => Semialign (Const a) where
     align (Const a) (Const b) = Const (mappend a b)
 -}
 
@@ -304,6 +311,7 @@ newtype R a = Nest [[a]]
 instance Align R where
     nil = Nest []
 
+instance Semialign R where
     align (Nest ass) (Nest bss)
         | null ass                = That <$> Nest bss
         | null bss                = This <$> Nest ass

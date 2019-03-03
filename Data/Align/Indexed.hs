@@ -10,7 +10,7 @@ module Data.Align.Indexed (
     AlignWithIndex (..),
     ) where
 
-import Control.Lens          (FunctorWithIndex)
+import Control.Lens          (FunctorWithIndex (imap))
 import Data.Vector.Instances ()
 
 import Data.Align
@@ -25,20 +25,19 @@ import Data.Map            (Map)
 import Data.Sequence       (Seq)
 import Data.Vector         (Vector)
 
-import qualified Data.Align.Key as Key
-
 -- | Keyed version of 'Align'.
 --
 -- @since 0.7.6
-class (FunctorWithIndex i f, Align f) => AlignWithIndex i f | f -> i where
+class (FunctorWithIndex i f, Semialign f) => AlignWithIndex i f | f -> i where
     -- | Analogous to @'alignWith'@, but also provides an index.
     ialign :: (i -> These a b -> c) -> f a -> f b -> f c
+    ialign f a b = imap f (align a b)
 
-instance AlignWithIndex () Maybe where ialign = Key.alignWithKey
-instance AlignWithIndex Int [] where ialign = Key.alignWithKey
-instance AlignWithIndex Int ZipList where ialign = Key.alignWithKey
-instance AlignWithIndex Int Seq where ialign = Key.alignWithKey
-instance AlignWithIndex Int IntMap where ialign = Key.alignWithKey
-instance Ord k => AlignWithIndex k (Map k) where ialign = Key.alignWithKey
-instance (Eq k, Hashable k) => AlignWithIndex k (HashMap k) where ialign = Key.alignWithKey
-instance AlignWithIndex Int Vector where ialign = Key.alignWithKey
+instance AlignWithIndex () Maybe
+instance AlignWithIndex Int []
+instance AlignWithIndex Int ZipList
+instance AlignWithIndex Int Seq
+instance AlignWithIndex Int IntMap
+instance Ord k => AlignWithIndex k (Map k)
+instance (Eq k, Hashable k) => AlignWithIndex k (HashMap k)
+instance AlignWithIndex Int Vector

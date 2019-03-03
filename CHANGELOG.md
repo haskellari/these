@@ -1,3 +1,16 @@
+# 0.8.0
+
+- Split `align` and `alignWith` into own class: `Semialign`.
+- `ialign` has default implementation
+- Add `Semialign` `NonEmpty` and `Identity` instances
+- Add `Swap` and `Assoc` instances (type classes from `assoc` package)
+- Move optics into `Data.These.Lens` module,
+  and and some combinators `Data.These.Combinators`.
+  Also some combinators are renamed, so naming is now consistent.
+  As the result `Data.These` has very minimal exports.
+- Change type of `partitionThese` (nested pairs to triple)
+- Add `partitionHereThere :: [These a b] -> ([a],[b])`
+
 # 0.7.6
 
 - Tigthen lower bounds
