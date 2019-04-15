@@ -96,7 +96,7 @@ import Data.These
 bimapThese :: (a -> c) -> (b -> d) -> These a b -> These c d
 bimapThese = bimap
 
--- | @'mapThis' = 'Control.Lens.over' 'here'@
+-- | @'mapHere' = 'Control.Lens.over' 'here'@
 mapHere :: (a -> c) -> These a b -> These c b
 mapHere = first
 
@@ -133,7 +133,7 @@ swapThese = swap
 assocThese :: These (These a b) c -> These a (These b c)
 assocThese = assoc
 
--- | 'These is associative. See 'assocThese'.
+-- | 'These' is associative. See 'assocThese'.
 --
 -- @since 0.8
 unassocThese :: These a (These b c) -> These (These a b) c
@@ -227,7 +227,7 @@ hasHere, hasThere :: These a b -> Bool
 -- | @'hasHere' = 'isJust' . 'justHere'@
 hasHere = isJust . justHere
 
--- | @'hasThere' = 'isJust' . 'jusThere'@
+-- | @'hasThere' = 'isJust' . 'justThere'@
 hasThere = isJust . justThere
 
 -------------------------------------------------------------------------------
