@@ -1,7 +1,6 @@
 cabal-version:      >=1.10
 name:               these
-version:            0.8
-x-revision:         1
+version:            0.8.1
 synopsis:
   An either-or-both data type & a generalized 'zip with padding' typeclass
 

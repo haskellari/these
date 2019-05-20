@@ -1,6 +1,7 @@
 # 0.8.1
 
 - Add `Semialign` `Tree`, `Tagged`, `(->) e`; `Align` `Compose` and `Proxy` instances
+- Allow `semigroups-0.19` and `hashable-1.3`
 
 # 0.8.0
 
