@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP                 #-}
 {-# LANGUAGE DeriveFoldable      #-}
 {-# LANGUAGE DeriveFunctor       #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE MonoLocalBinds      #-}
@@ -21,6 +22,7 @@ import Data.Functor.Identity     (Identity (..))
 import Data.HashMap.Strict       (HashMap)
 import Data.IntMap               (IntMap)
 import Data.List                 (nub)
+import Data.List.NonEmpty        (NonEmpty)
 import Data.Map                  (Map)
 import Data.Maybe                (mapMaybe)
 import Data.Semigroup            (Semigroup (..))
@@ -39,6 +41,7 @@ import qualified Data.Binary           as Binary
 import qualified Data.Functor.Product  as P
 import qualified Data.IntMap           as IntMap
 import qualified Data.Map              as Map
+import qualified Data.Tree             as T
 import qualified Data.Vector           as V
 import qualified Test.Tasty.QuickCheck as QC
 
@@ -92,20 +95,24 @@ crosswalkProps = testGroup "Crosswalk"
 
 alignProps :: TestTree
 alignProps = testGroup "Align"
-    [ dataAlignLaws "[]" (Proxy :: Proxy [])
-    , dataAlignLaws "HashMap String" (Proxy :: Proxy (HashMap String))
-    , dataAlignLaws "IntMap" (Proxy :: Proxy IntMap)
-    , dataAlignLaws "Map Char" (Proxy :: Proxy (Map Char))
-    , dataAlignLaws "Maybe" (Proxy :: Proxy Maybe)
-    , dataAlignLaws "Product [] Maybe" (Proxy :: Proxy (P.Product [] Maybe))
-    , dataAlignLaws "Seq" (Proxy :: Proxy Seq)
-    , dataAlignLaws "Vector" (Proxy :: Proxy V.Vector)
-    , dataAlignLaws "ZipList" (Proxy :: Proxy ZipList)
-    -- , dataAlignLaws "WrongMap" (Proxy :: Proxy (WrongMap Char))
+    [ dataAlignLaws "[]"               (CAlign :: C [])
+    , dataAlignLaws "HashMap String"   (CAlign :: C (HashMap String))
+    , dataAlignLaws "IntMap"           (CAlign :: C IntMap)
+    , dataAlignLaws "Map Char"         (CAlign :: C (Map Char))
+    , dataAlignLaws "Maybe"            (CAlign :: C Maybe)
+    , dataAlignLaws "Product [] Maybe" (CAlign :: C (P.Product [] Maybe))
+    , dataAlignLaws "Compose [] Maybe" (CAlign :: C (Compose [] Maybe))
+    , dataAlignLaws "Seq"              (CAlign :: C Seq)
+    , dataAlignLaws "Vector"           (CAlign :: C V.Vector)
+    , dataAlignLaws "ZipList"          (CAlign :: C ZipList)
+    , dataAlignLaws "Tree"             (CSemialign :: C T.Tree)
+    , dataAlignLaws "NonEmpty"         (CSemialign :: C NonEmpty)
+
+    -- , dataAlignLaws "WrongMap" (CAlign :: C (WrongMap Char))
     -- weird objects:
-    -- , dataAlignLaws "Const String" (Proxy :: Proxy (Const String))
-    , dataAlignLaws "R" (Proxy :: Proxy R)
-    -- , dataAlignLaws "Weirdmap" (Proxy :: Proxy (WeirdMap Char))
+    -- , dataAlignLaws "Const String" (CAlign :: C (Const String))
+    , dataAlignLaws "R" (CAlign :: C R)
+    -- , dataAlignLaws "Weirdmap" (CAlign :: C (WeirdMap Char))
     ]
 
 alignWithKeyProps :: TestTree
@@ -180,6 +187,10 @@ traversableProps = testGroup "Traversable"
 
 -- Data.Align
 
+data C f where
+    CSemialign :: Semialign f => C f
+    CAlign     :: Align f     => C f
+
 -- (\`align` nil) = fmap This
 -- (nil \`align`) = fmap That
 -- join align = fmap (join These)
@@ -187,52 +198,67 @@ traversableProps = testGroup "Traversable"
 -- alignWith f a b = f \<$> align a b
 --
 -- We also require a sixth property, when f is Foldable.
-dataAlignLaws :: forall (f :: * -> *). ( Align f, Foldable f
-                                       , Eq (f (These Int Int))
-                                       , Show (f (These Int Int))
-                                       , Eq (f (These Int (These Int Int)))
-                                       , Show (f (These Int (These Int Int)))
-                                       , CoArbitrary (These Int Int)
-                                       , Arbitrary (f Int)
-                                       , Eq (f Int)
-                                       , Show (f Int))
-              => String
-              -> Proxy f
-              -> TestTree
-dataAlignLaws name _ = testGroup ("Data.Align laws: " <> name)
-    [ QC.testProperty "right identity" rightIdentityProp
-    , QC.testProperty "left identity" leftIdentityProp
-    , QC.testProperty "join" joinProp
-    , QC.testProperty "bimap" bimapProp
-    , QC.testProperty "alignWith" alignWithProp
-    , QC.testProperty "assoc" assocProp
-    , QC.testProperty "alignToList" alignToListProp
-    ]
+dataAlignLaws
+    :: forall (f :: * -> *).
+       ( Foldable f
+       , Eq (f (These Int Int))
+       , Show (f (These Int Int))
+       , Eq (f (These Int (These Int Int)))
+       , Show (f (These Int (These Int Int)))
+       , CoArbitrary (These Int Int)
+       , Arbitrary (f Int)
+       , Eq (f Int)
+       , Show (f Int)
+       )
+    => String
+    -> C f
+    -> TestTree
+dataAlignLaws name p =
+    testGroup ("Data.Align laws: " <> name) props
   where
-    rightIdentityProp :: f Int -> Property
+    props = case p of
+        CSemialign -> semialignProps
+        CAlign     -> semialignProps ++ alignLaws
+
+    semialignProps :: Semialign f => [TestTree]
+    semialignProps =
+        [ QC.testProperty "join" joinProp
+        , QC.testProperty "bimap" bimapProp
+        , QC.testProperty "alignWith" alignWithProp
+        , QC.testProperty "assoc" assocProp
+        , QC.testProperty "alignToList" alignToListProp
+        ]
+
+    alignLaws :: Align f => [TestTree]
+    alignLaws =
+        [ QC.testProperty "right identity" rightIdentityProp
+        , QC.testProperty "left identity" leftIdentityProp
+        ]
+
+    rightIdentityProp :: Align f => f Int -> Property
     rightIdentityProp xs = (xs `align` (nil :: f Int)) === fmap This xs
 
-    leftIdentityProp :: f Int -> Property
+    leftIdentityProp :: Align f => f Int -> Property
     leftIdentityProp xs = ((nil :: f Int) `align` xs) === fmap That xs
 
-    joinProp :: f Int -> Property
+    joinProp :: Semialign f => f Int -> Property
     joinProp xs = join align xs === fmap (join These) xs
 
-    bimapProp :: f Int -> f Int -> Fun Int Int -> Fun Int Int -> Property
+    bimapProp :: Semialign f => f Int -> f Int -> Fun Int Int -> Fun Int Int -> Property
     bimapProp xs ys (Fun _ f) (Fun _ g) =
       align (f <$> xs) (g <$> ys) === (bimap f g <$> align xs ys)
 
-    alignWithProp :: f Int -> f Int -> Fun (These Int Int) Int -> Property
+    alignWithProp :: Semialign f => f Int -> f Int -> Fun (These Int Int) Int -> Property
     alignWithProp xs ys (Fun _ f) =
       alignWith f xs ys === (f <$> align xs ys)
 
-    assocProp :: f Int -> f Int -> f Int -> Property
+    assocProp :: Semialign f => f Int -> f Int -> f Int -> Property
     assocProp xs ys zs = lhs === fmap assocThese rhs
       where
         rhs = (xs `align` ys) `align` zs
         lhs = xs `align` (ys `align` zs)
 
-    alignToListProp :: f Int -> f Int -> Property
+    alignToListProp :: Semialign f => f Int -> f Int -> Property
     alignToListProp xs ys =
         toList xs === toListOf (folded . here) xys
         .&&.

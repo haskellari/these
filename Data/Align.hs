@@ -39,13 +39,16 @@ import Data.Hashable                     (Hashable (..))
 import Data.HashMap.Strict               (HashMap)
 import Data.List.NonEmpty                (NonEmpty (..))
 import Data.Maybe                        (catMaybes)
+import Data.Proxy                        (Proxy (..))
 import Data.Semigroup                    (Semigroup (..))
 import Data.Sequence                     (Seq)
+import Data.Tagged                       (Tagged (..))
 import Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
 import Data.Vector.Generic               (Vector, empty, stream, unstream)
 
 import qualified Data.HashMap.Strict               as HashMap
 import qualified Data.Sequence                     as Seq
+import qualified Data.Tree                         as T
 import qualified Data.Vector                       as V
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
 import qualified Data.Vector.Generic               as VG (foldr, fromList)
@@ -161,6 +164,11 @@ class Semialign f => Align f where
 -- Instances
 -------------------------------------------------------------------------------
 
+-- | @since 0.8.1
+instance Semialign ((->) e) where
+    align f g x = These (f x) (g x)
+    alignWith h f g x = h (These (f x) (g x))
+
 instance Align Maybe where
     nil = Nothing
 
@@ -214,6 +222,10 @@ instance Semialign Seq where
         yn = Seq.length ys
         fc x y = f (These x y)
 
+-- | @since 0.8.1
+instance Semialign T.Tree where
+    align (T.Node x xs) (T.Node y ys) = T.Node (These x y) (alignWith (these (fmap This) (fmap That) align) xs ys)
+
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
 
@@ -256,6 +268,14 @@ instance (Align f, Align g) => Align (Product f g) where
 instance (Semialign f, Semialign g) => Semialign (Product f g) where
     align (Pair a b) (Pair c d) = Pair (align a c) (align b d)
     alignWith f (Pair a b) (Pair c d) = Pair (alignWith f a c) (alignWith f b d)
+
+-- | @since 0.8.1
+instance (Align f, Semialign g) => Align (Compose f g) where
+    nil = Compose nil
+
+-- | @since 0.8.1
+instance (Semialign f, Semialign g) => Semialign (Compose f g) where
+    align (Compose x) (Compose y) = Compose (alignWith (these (fmap This) (fmap That) align) x y)
 
 -- Based on the Data.Vector.Fusion.Stream.Monadic zipWith implementation
 instance Monad m => Align (Stream m) where
@@ -314,6 +334,19 @@ instance (Eq k, Hashable k) => Semialign (HashMap k) where
     align m n = HashMap.unionWith merge (HashMap.map This m) (HashMap.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align HashMap: merge"
+
+-- | @since 0.8.1
+instance Semialign (Tagged b) where
+    alignWith f (Tagged x) (Tagged y) = Tagged (f (These x y))
+
+-- | @since 0.8.1
+instance Semialign Proxy where
+    alignWith _ _ _ = Proxy
+    align _ _       = Proxy
+
+-- | @since 0.8.1
+instance Align Proxy where
+    nil = Proxy
 
 -- | Align two structures and combine with 'mappend'.
 --
