@@ -1,3 +1,7 @@
+# 0.8.1
+
+- Add `Semialign` `Tree`, `Tagged`, `(->) e`; `Align` `Compose` and `Proxy` instances
+
 # 0.8.0
 
 - Split `align` and `alignWith` into own class: `Semialign`.
