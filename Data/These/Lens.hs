@@ -12,6 +12,9 @@ import Prelude.Compat
 import Control.Lens                 (Prism', prism)
 import Data.These
 
+-- $setup
+-- >>> import Control.Lens
+
 -------------------------------------------------------------------------------
 -- Traversals
 -------------------------------------------------------------------------------

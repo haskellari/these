@@ -31,7 +31,7 @@ description:
   For a dependency light version, check <https://hackage.haskell.org/package/data-or> package.
 
 tested-with:
-  ghc ==7.4.2 || ==7.6.3 || ==7.8.4 || ==7.10.3 || ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.4
+  GHC ==7.4.2 || ==7.6.3 || ==7.8.4 || ==7.10.3 || ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.4
 
 source-repository head
   type:     git
@@ -47,10 +47,15 @@ library
     Data.Align
     Data.Align.Indexed
     Data.Align.Key
+    Data.Crosswalk
     Data.Functor.These
+    Data.Semialign
     Data.These
-    Data.These.Lens
     Data.These.Combinators
+    Data.These.Lens
+    Data.Zip
+
+  other-modules:    Data.Semialign.Internal
 
   -- ghc boot libs
   build-depends:
@@ -71,9 +76,9 @@ library
     , hashable              >=1.2.7.0  && <1.4
     , keys                  >=3.12.1   && <3.13
     , lens                  >=4.17     && <4.18
-    , tagged                >=0.8.6    && <0.9
     , QuickCheck            >=2.12.6.1 && <2.14
     , semigroupoids         >=5.3.1    && <5.4
+    , tagged                >=0.8.6    && <0.9
     , transformers-compat   >=0.6.2    && <0.7
     , unordered-containers  >=0.2.8.0  && <0.3
     , vector                >=0.12.0.2 && <0.13
@@ -92,13 +97,20 @@ library
 test-suite test
   default-language: Haskell2010
   type:             exitcode-stdio-1.0
-  main-is:          Tests.hs
   hs-source-dirs:   test
   ghc-options:      -Wall
+  main-is:          Tests.hs
+  other-modules:
+    Tests.Align
+    Tests.AlignWithKey
+    Tests.AlignWrong
+    Tests.Crosswalk
+    Tests.These
 
   -- library constrained dependencies
   build-depends:
       aeson
+    , assoc
     , base
     , base-compat
     , bifunctors
@@ -107,6 +119,7 @@ test-suite test
     , hashable
     , lens
     , QuickCheck
+    , tagged
     , these
     , transformers
     , unordered-containers
@@ -120,3 +133,4 @@ test-suite test
       quickcheck-instances  >=0.3.15 && <0.4
     , tasty                 >=1.2    && <1.3
     , tasty-quickcheck      >=0.10   && <0.11
+    , transformers-compat   >=0.6.5  && <0.7
