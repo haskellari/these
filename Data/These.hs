@@ -17,6 +17,14 @@ module Data.These (
     -- * Partition
     , partitionThese
     , partitionHereThere
+
+    -- * Distributivity
+    --
+    -- | This distributivity combinators aren't isomorphisms!
+    , distrThesePair
+    , undistrThesePair
+    , distrPairThese
+    , undistrPairThese
     ) where
 
 import Prelude ()
@@ -115,6 +123,37 @@ partitionHereThere (t:ts) = case t of
     These x  y -> (x : xs, y : ys)
   where
     ~(xs,ys) = partitionHereThere ts
+
+-------------------------------------------------------------------------------
+-- Distributivity
+-------------------------------------------------------------------------------
+
+distrThesePair :: These (a, b) c -> (These a c, These b c)
+distrThesePair (This (a, b))    = (This a, This b)
+distrThesePair (That c)         = (That c, That c)
+distrThesePair (These (a, b) c) = (These a c, These b c)
+
+undistrThesePair :: (These a c, These b c) -> These (a, b) c
+undistrThesePair (This a,    This b)    = This (a, b)
+undistrThesePair (That c,    That _)    = That c
+undistrThesePair (These a c, These b _) = These (a, b) c
+undistrThesePair (This _,    That c)    = That c
+undistrThesePair (This a,    These b c) = These (a, b) c
+undistrThesePair (That c,    This _)    = That c
+undistrThesePair (That c,    These _ _) = That c
+undistrThesePair (These a c, This b)    = These (a, b) c
+undistrThesePair (These _ c, That _)    = That c
+
+
+distrPairThese :: (These a b, c) -> These (a, c) (b, c)
+distrPairThese (This a,    c) = This (a, c)
+distrPairThese (That b,    c) = That (b, c)
+distrPairThese (These a b, c) = These (a, c) (b, c)
+
+undistrPairThese :: These (a, c) (b, c) -> (These a b, c)
+undistrPairThese (This (a, c))         = (This a, c)
+undistrPairThese (That (b, c))         = (That b, c)
+undistrPairThese (These (a, c) (b, _)) = (These a b, c)
 
 -------------------------------------------------------------------------------
 -- Instances

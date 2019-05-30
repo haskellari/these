@@ -1,12 +1,11 @@
--- | 'These'-based aligning and unaligning of functors with non-uniform
--- shapes.
---
--- For a traversals traversal of (bi)foldable (bi)functors through said
--- functors see "Data.Crosswalk".
-module Data.Align (
+-- | Zipping and aligning of functors with non-uniform shapes.
+module Data.Semialign (
     Semialign (..),
     Align (..),
     Unalign (..),
+    Zip (..),
+    Unzip (..),
+    unzipDefault,
     -- * Specialized aligns
     malign, salign, padZip, padZipWith,
     lpadZip, lpadZipWith,
