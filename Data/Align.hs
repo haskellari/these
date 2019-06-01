@@ -352,21 +352,21 @@ instance Align Proxy where
 --
 -- See `salign`. `malign` will be deprecated after `Semigroup` becomes a super
 -- class of `Monoid`
-malign :: (Align f, Monoid a) => f a -> f a -> f a
+malign :: (Semialign f, Monoid a) => f a -> f a -> f a
 malign = alignWith (mergeThese mappend)
 
 -- | Align two structures and combine with '<>'.
 --
 -- @since 0.7.3
-salign :: (Align f, Semigroup a) => f a -> f a -> f a
+salign :: (Semialign f, Semigroup a) => f a -> f a -> f a
 salign = alignWith (mergeThese (<>))
 
 -- | Align two structures as in 'zip', but filling in blanks with 'Nothing'.
-padZip :: (Align f) => f a -> f b -> f (Maybe a, Maybe b)
+padZip :: (Semialign f) => f a -> f b -> f (Maybe a, Maybe b)
 padZip = alignWith (fromThese Nothing Nothing . bimap Just Just)
 
 -- | Align two structures as in 'zipWith', but filling in blanks with 'Nothing'.
-padZipWith :: (Align f) => (Maybe a -> Maybe b -> c) -> f a -> f b -> f c
+padZipWith :: (Semialign f) => (Maybe a -> Maybe b -> c) -> f a -> f b -> f c
 padZipWith f xs ys = uncurry f <$> padZip xs ys
 
 -- | Left-padded 'zipWith'.
