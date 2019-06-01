@@ -9,7 +9,7 @@ module Data.Align (
       Semialign (..)
     , Align(..)
     -- * Specialized aligns
-    , malign, salign, padZip, padZipWith
+    , malign, salign, Salign (..), padZip, padZipWith
     , lpadZip, lpadZipWith
     , rpadZip, rpadZipWith
     , alignVectorWith
@@ -360,6 +360,16 @@ malign = alignWith (mergeThese mappend)
 -- @since 0.7.3
 salign :: (Semialign f, Semigroup a) => f a -> f a -> f a
 salign = alignWith (mergeThese (<>))
+
+-- | Monoid under 'salign' and 'nil'.
+newtype Salign f a = Salign (f a)
+
+instance (Align f, Semigroup a) => Semigroup (Salign f a) where
+    Salign x <> Salign y = Salign (salign x y)
+
+instance (Align f, Semigroup a) => Monoid (Salign f a) where
+    mappend = (<>)
+    mempty = Salign nil
 
 -- | Align two structures as in 'zip', but filling in blanks with 'Nothing'.
 padZip :: (Semialign f) => f a -> f b -> f (Maybe a, Maybe b)
