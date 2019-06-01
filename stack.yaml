@@ -1,0 +1,11 @@
+resolver: lts-13.23
+packages:
+- these
+- these-lens
+- semialign
+- semialign-indexed
+- monad-chronicle
+- these-tests
+
+extra-deps:
+- assoc-1

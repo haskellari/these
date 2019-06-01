@@ -1,0 +1,4 @@
+packages: .
+packages: ../these
+tests: False
+benchmarks: False
