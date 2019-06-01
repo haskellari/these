@@ -1,3 +1,16 @@
-packages: .
+packages: these
+packages: these-lens
+packages: semialign
+packages: semialign-indexed
+packages: monad-chronicle
+packages: these-tests
+
 tests: true
 -- constraints: transformers installed
+
+-- constraints: these -assoc
+-- constraints: these -semigroupoids
+-- constraints: these -aeson
+-- constraints: these -QuickCheck
+-- constraints: monad-chronicle -semigroupoids
+-- constraints: semialign -semigroupoids

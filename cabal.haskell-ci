@@ -1,0 +1,19 @@
+branches: master
+
+constraint-set light
+  constraints: these -semigroupoids
+  constraints: these -aeson
+  constraints: these -QuickCheck
+  constraints: monad-chronicle -semigroupoids
+  constraints: semialign -semigroupoids
+
+constraint-set no-semigroupoids
+  constraints: these -semigroupoids
+  constraints: monad-chronicle -semigroupoids
+  constraints: semialign -semigroupoids
+
+constraint-set no-aeson
+  constraints: these -aeson
+
+constraint-set no-QuickCheck
+  constraints: these -QuickCheck
