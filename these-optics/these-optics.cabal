@@ -1,0 +1,38 @@
+cabal-version:      >=1.10
+name:               these-optics
+version:            1
+synopsis:           Optics for These
+homepage:           https://github.com/isomorphism/these
+license:            BSD3
+license-file:       LICENSE
+author:             C. McCann, Oleg Grenrus
+maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>
+category:           Data, These, Optics
+build-type:         Simple
+extra-source-files: CHANGELOG.md
+description:        This package provides Prism and Traversals for @These@.
+tested-with:        GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.1
+
+source-repository head
+  type:     git
+  location: https://github.com/isomorphism/these.git
+
+library
+  default-language: Haskell2010
+  ghc-options:      -Wall
+
+  if impl(ghc >=8.0)
+    ghc-options: -Wno-trustworthy-safe
+
+  hs-source-dirs:   src
+  exposed-modules:  Data.These.Optics
+
+  -- ghc boot libs
+  build-depends:    base >=4.9 && <4.13
+
+  -- these
+  build-depends:    these >=1 && <1.1
+
+  -- other dependencies
+  build-depends:
+    optics-core      >=0.1    && <0.2
