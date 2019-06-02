@@ -3,7 +3,7 @@
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Tests.Semialign (alignProps) where
+module Tests.Semialign (alignProps, semialignLaws) where
 
 import Prelude ()
 import Prelude.Compat hiding (unzip, zip, zipWith)
@@ -119,6 +119,12 @@ semialignLaws p = testGroup name $ case p of
     CUnAll     -> [semialignLaws' p, unzipLaws' p, unalignLaws' p, alignLaws' p, zipLaws' p]
   where
     name = show (typeOf1 (undefined :: f ()))
+
+{-# NOINLINE semialignLaws' #-}
+{-# NOINLINE unzipLaws' #-}
+{-# NOINLINE alignLaws' #-}
+{-# NOINLINE zipLaws' #-}
+{-# NOINLINE unalignLaws' #-}
 
 semialignLaws'
     :: forall f proxy. (Semialign f, Foldable f
