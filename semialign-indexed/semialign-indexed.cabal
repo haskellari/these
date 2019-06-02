@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               semialign-indexed 
 version:            1
-synopsis:           SemialignWithIndex, i.e. izip and ialign
+synopsis:           SemialignWithIndex, i.e. izipWith and ialignWith
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
 license-file:       LICENSE
