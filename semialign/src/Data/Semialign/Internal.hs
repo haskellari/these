@@ -22,6 +22,7 @@ import Data.Sequence                     (Seq)
 import Data.Tagged                       (Tagged (..))
 import Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
 import Data.Vector.Generic               (Vector, empty, stream, unstream)
+import Data.Witherable                   (Filterable, mapMaybe)
 
 import qualified Data.HashMap.Strict               as HashMap
 import qualified Data.List.NonEmpty                as NE
@@ -64,6 +65,9 @@ import Data.These.Combinators
 
 oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)
+
+-- $setup
+-- >>> import Data.Map ((!), fromList)
 
 -- --------------------------------------------------------------------------
 -- | Functors supporting a 'zip' and 'align' operations that takes the
@@ -268,14 +272,14 @@ class Semialign f => Zip f where
 class Semialign f => Unzip f where
     unzipWith :: (c -> (a, b)) -> f c -> (f a, f b)
     unzipWith f = unzip . fmap f
-    
+
     unzip :: f (a, b) -> (f a, f b)
     unzip = unzipWith id
 
 #if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL unzipWith | unzip #-}
 #endif
-    
+
 unzipDefault :: Functor f => f (a, b) -> (f a, f b)
 unzipDefault x = (fst <$> x, snd <$> x)
 
@@ -446,7 +450,7 @@ instance (Ord k) => Align (Map k) where
 
 instance Ord k => Unalign (Map k) where
     unalign xs = (Map.mapMaybe justHere xs, Map.mapMaybe justThere xs)
-    
+
 instance Ord k => Unzip (Map k) where unzip = unzipDefault
 
 instance Semialign IntMap where
@@ -690,3 +694,58 @@ rpadZipWith f xs ys = lpadZipWith (flip f) ys xs
 -- | Right-padded 'zip'.
 rpadZip :: [a] -> [b] -> [(a, Maybe b)]
 rpadZip = rpadZipWith (,)
+
+-------------------------------------------------------------------------------
+-- diffing/patching
+-------------------------------------------------------------------------------
+
+-- | Diff two structures. This is most useful if your @f@ is
+-- explicitly-indexed ('Map'-like):
+--
+-- >>> diff (fromList [("Alice", 1), ("Bob", 2)]) (fromList [("Alice", 3), ("Carol", 4)])
+-- fromList [("Alice",Just 3),("Bob",Nothing),("Carol",Just 4)]
+--
+-- If your structure is indexed, but the index is implicit in the
+-- structure (e.g., lists), this probably won't do what you
+-- expect. Consider 'Data.Semialign.Indexed.idiff' instead:
+--
+-- >>> diff [1, 2, 3, 4, 5] [1, 3, 3, 4]
+-- [Just 3,Nothing]
+diff
+  :: (Semialign f, Filterable f, Eq a) => f a -> f a -> f (Maybe a)
+diff olds news = flip mapMaybe (align olds news) $ \x -> case x of
+  This _ -> Just Nothing
+  That new -> Just $ Just new
+  These old new
+    | old == new -> Nothing
+    | otherwise -> Just $ Just new
+
+-- | Diff two structures without requiring an 'Eq' instance. Instead,
+-- always assume a new value wherever the structures align:
+--
+-- >>> ($ 3) <$> diffNoEq (fromList [(1, (+ 1))]) (fromList [(1, (* 2))]) ! 1
+-- Just 6
+--
+-- The same caveats for implicitly-indexed structures apply here just as
+-- they did for 'diff'. Consider 'Data.Semialign.Indexed.idiffNoEq'
+-- instead.
+diffNoEq :: (Semialign f, Filterable f) => f a -> f a -> f (Maybe a)
+diffNoEq olds news = flip mapMaybe (align olds news) $ \x -> case x of
+  This _ -> Just Nothing
+  That new -> Just $ Just new
+  These _ new -> Just $ Just new
+
+-- | Apply a patch to a structure.
+--
+-- >>> patch (fromList [(0, Just 0), (1, Just 3), (2, Nothing)]) (fromList [(0, 1), (2, 3)])
+-- fromList [(0,0),(1,3)]
+--
+-- For explicitly-indexed structures, 'patch' undoes 'diff' / 'diffNoEq':
+--
+-- prop> \old new -> let typeOld = old :: Map Int Int in (patch (diff old new) old) == new
+-- prop> \old new -> let typeOld = old :: Map Int Int in (patch (diffNoEq old new) old) == new
+patch :: (Semialign f, Filterable f) => f (Maybe a) -> f a -> f a
+patch updates olds = flip mapMaybe (align updates olds) $ \x -> case x of
+  This mnew -> mnew
+  That old -> Just old
+  These mnew _ -> mnew

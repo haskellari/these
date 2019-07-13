@@ -64,6 +64,7 @@ library
     , tagged                >=0.8.6    && <0.9
     , unordered-containers  >=0.2.8.0  && <0.3
     , vector                >=0.12.0.2 && <0.13
+    , witherable            >=0.2      && <0.4
 
   -- base shims
   if !impl(ghc >=8.2)

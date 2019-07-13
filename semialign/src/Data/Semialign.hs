@@ -12,6 +12,8 @@ module Data.Semialign (
     lpadZip, lpadZipWith,
     rpadZip, rpadZipWith,
     alignVectorWith,
+    -- * Diffing/patching
+    diff, diffNoEq, patch
     ) where
 
 import Data.Semialign.Internal

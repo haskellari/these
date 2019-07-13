@@ -1,5 +1,5 @@
 cabal-version:      >=1.10
-name:               semialign-indexed 
+name:               semialign-indexed
 version:            1
 synopsis:           SemialignWithIndex, i.e. izipWith and ialignWith
 homepage:           https://github.com/isomorphism/these
@@ -53,6 +53,7 @@ library
     , lens                  >=4.17     && <4.18
     , unordered-containers  >=0.2.8.0  && <0.3
     , vector                >=0.12.0.2 && <0.13
+    , witherable            >=0.2      && <0.4
 
   -- base shims
   if !impl(ghc >=8.0)
