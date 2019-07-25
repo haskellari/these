@@ -1,3 +1,7 @@
+# 1.0.1
+
+- add `partitionEithersNE :: NonEmpty (Either a b) -> These (NonEmpty a) (NonEmpty b)`
+
 # 1
 
 This is major package reogranisation. Old `these` were split into
