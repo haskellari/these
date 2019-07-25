@@ -16,6 +16,7 @@ module Data.These (
     -- * Partition
     , partitionThese
     , partitionHereThere
+    , partitionEithersNE
 
     -- * Distributivity
     --
@@ -35,7 +36,9 @@ import Data.Bifunctor     (Bifunctor (..))
 import Data.Binary        (Binary (..))
 import Data.Bitraversable (Bitraversable (..))
 import Data.Data          (Data, Typeable)
+import Data.Either        (partitionEithers)
 import Data.Hashable      (Hashable (..))
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Semigroup     (Semigroup (..))
 import GHC.Generics       (Generic)
 
@@ -142,6 +145,32 @@ partitionHereThere (t:ts) = case t of
     These x  y -> (x : xs, y : ys)
   where
     ~(xs,ys) = partitionHereThere ts
+
+-- | Like 'partitionEithers' but for 'NonEmpty' types.
+--
+-- * either all are 'Left'
+-- * either all are 'Right'
+-- * or there is both 'Left' and 'Right' stuff
+--
+-- /Note:/ this is not online algorithm. In the worst case it will traverse
+-- the whole list before deciding the result constructor.
+--
+-- >>> partitionEithersNE $ Left 'x' :| [Right 'y']
+-- These ('x' :| "") ('y' :| "")
+--
+-- >>> partitionEithersNE $ Left 'x' :| map Left "yz"
+-- This ('x' :| "yz")
+--
+-- @since 1.0.1
+partitionEithersNE :: NonEmpty (Either a b) -> These (NonEmpty a) (NonEmpty b)
+partitionEithersNE (x :| xs) = case (x, ls, rs) of
+    (Left y,  ys,     [])     -> This (y :| ys)
+    (Left y,  ys,     (z:zs)) -> These (y :| ys) (z :| zs)
+    (Right z, [],     zs)     -> That (z :| zs)
+    (Right z, (y:ys), zs)     -> These (y :| ys) (z :| zs)
+  where
+    (ls, rs) = partitionEithers xs
+
 
 -------------------------------------------------------------------------------
 -- Distributivity
