@@ -18,3 +18,5 @@ constraint-set no-aeson
 
 constraint-set no-QuickCheck
   constraints: these -QuickCheck
+
+head-hackage: >= 8.8
