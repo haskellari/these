@@ -1,6 +1,7 @@
 cabal-version:      >=1.10
 name:               monad-chronicle
 version:            1
+x-revision:         1
 synopsis:           These as a transformer, ChronicleT
 homepage:           https://github.com/isomorphism/these
 license:            BSD3

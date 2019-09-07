@@ -1,6 +1,7 @@
 cabal-version:      >=1.10
 name:               these
 version:            1.0.1
+x-revision:         1
 synopsis:           An either-or-both data type.
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
@@ -78,7 +79,7 @@ library
 
   -- other dependencies
   build-depends:
-      base-compat  >=0.10.5  && <0.11
+      base-compat  >=0.10.5  && <0.12
     , hashable     >=1.2.7.0 && <1.4
 
   if impl(ghc <7.5)

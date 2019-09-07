@@ -1,6 +1,7 @@
 cabal-version:      >=1.10
 name:               these-optics
 version:            1
+x-revision:         1
 synopsis:           Optics for These
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
@@ -28,7 +29,7 @@ library
   exposed-modules:  Data.These.Optics
 
   -- ghc boot libs
-  build-depends:    base >=4.9 && <4.13
+  build-depends:    base >=4.9 && <4.14
 
   -- these
   build-depends:    these >=1 && <1.1
