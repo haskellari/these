@@ -270,14 +270,14 @@ class Semialign f => Zip f where
 class Semialign f => Unzip f where
     unzipWith :: (c -> (a, b)) -> f c -> (f a, f b)
     unzipWith f = unzip . fmap f
-    
+
     unzip :: f (a, b) -> (f a, f b)
     unzip = unzipWith id
 
 #if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL unzipWith | unzip #-}
 #endif
-    
+
 unzipDefault :: Functor f => f (a, b) -> (f a, f b)
 unzipDefault x = (fst <$> x, snd <$> x)
 
@@ -453,7 +453,7 @@ instance (Ord k) => Align (Map k) where
 
 instance Ord k => Unalign (Map k) where
     unalign xs = (Map.mapMaybe justHere xs, Map.mapMaybe justThere xs)
-    
+
 instance Ord k => Unzip (Map k) where unzip = unzipDefault
 
 instance Semialign IntMap where
