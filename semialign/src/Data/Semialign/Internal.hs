@@ -1,7 +1,7 @@
-{-# LANGUAGE Trustworthy        #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE Trustworthy #-}
 module Data.Semialign.Internal where
 
 import Prelude ()
