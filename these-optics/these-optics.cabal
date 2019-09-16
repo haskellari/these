@@ -12,7 +12,9 @@ category:           Data, These, Optics
 build-type:         Simple
 extra-source-files: CHANGELOG.md
 description:        This package provides Prism and Traversals for @These@.
-tested-with:        GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.1
+tested-with:
+    GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.1
+  , GHCJS ==8.4
 
 source-repository head
   type:     git
@@ -35,5 +37,4 @@ library
   build-depends:    these >=1 && <1.1
 
   -- other dependencies
-  build-depends:
-    optics-core      >=0.1    && <0.2
+  build-depends:    optics-core ==0.1.*
