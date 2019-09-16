@@ -4,7 +4,7 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.5.20190908
+# version: 0.5.20190916
 #
 language: c
 dist: xenial
@@ -145,6 +145,7 @@ install:
   - cat $CABALHOME/config
   - rm -fv cabal.project cabal.project.local cabal.project.freeze
   - travis_retry ${CABAL} v2-update -v
+  - if $GHCJS ; then (cd /tmp && ${CABAL} v2-install -w ghc-8.4.4 cabal-plan --constraint='cabal-plan ^>=0.6.0.0' --constraint='cabal-plan +exe' | color_cabal_output) ; fi
   # Generate cabal.project
   - rm -rf cabal.project cabal.project.local cabal.project.freeze
   - touch cabal.project
@@ -203,6 +204,18 @@ script:
   - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|these|these-lens|these-optics|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
+  - |
+    pkgdir() {
+      case $1 in
+        these) echo ${PKGDIR_these} ;;
+        these-lens) echo ${PKGDIR_these_lens} ;;
+        these-optics) echo ${PKGDIR_these_optics} ;;
+        semialign) echo ${PKGDIR_semialign} ;;
+        semialign-indexed) echo ${PKGDIR_semialign_indexed} ;;
+        monad-chronicle) echo ${PKGDIR_monad_chronicle} ;;
+        these-tests) echo ${PKGDIR_these_tests} ;;
+      esac
+    }
   # Building...
   # this builds all libraries and executables (without tests/benchmarks)
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks all | color_cabal_output
@@ -211,6 +224,7 @@ script:
   - ${CABAL} v2-build $WITHCOMPILER ${TEST} ${BENCH} all | color_cabal_output
   # Testing...
   - if ! $GHCJS ; then ${CABAL} v2-test $WITHCOMPILER ${TEST} ${BENCH} all | color_cabal_output ; fi
+  - if $GHCJS ; then cabal-plan list-bins '*:test:*' | while read -r line; do testpkg=$(echo "$line" | perl -pe 's/:.*//'); testexe=$(echo "$line" | awk '{ print $2 }'); echo "testing $textexe in package $textpkg"; (cd "$(pkgdir $testpkg)" && nodejs "$testexe".jsexe/all.js); done ; fi
   # cabal check...
   - (cd ${PKGDIR_these} && ${CABAL} -vnormal check)
   - (cd ${PKGDIR_these_lens} && ${CABAL} -vnormal check)

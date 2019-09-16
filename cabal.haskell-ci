@@ -1,5 +1,6 @@
 branches: master
 jobs-selection: any
+ghcjs-tests: True
 
 constraint-set light
   constraints: these -semigroupoids
