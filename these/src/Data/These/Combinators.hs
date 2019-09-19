@@ -1,5 +1,5 @@
+{-# LANGUAGE CPP         #-}
 {-# LANGUAGE Trustworthy #-}
-{-# LANGUAGE CPP #-}
 -- | This module provides
 --
 -- * specialised versions of class members e.g. 'bitraverseThese'
@@ -83,9 +83,9 @@ module Data.These.Combinators (
 import Prelude ()
 import Prelude.Compat
 
-import Data.Bifunctor       (bimap, first, second)
-import Data.Bitraversable   (bitraverse)
-import Data.Maybe           (isJust, mapMaybe)
+import Data.Bifunctor     (bimap, first, second)
+import Data.Bitraversable (bitraverse)
+import Data.Maybe         (isJust, mapMaybe)
 import Data.These
 
 #ifdef MIN_VERSION_assoc

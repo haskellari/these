@@ -1,4 +1,4 @@
-{-# LANGUAGE Trustworthy        #-}
+{-# LANGUAGE Trustworthy #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Data.These.Lens (
     -- * Traversals
@@ -11,7 +11,7 @@ module Data.These.Lens (
 import Prelude ()
 import Prelude.Compat
 
-import Control.Lens        (Prism', Traversal, Swapped (..), iso, prism)
+import Control.Lens           (Prism', Swapped (..), Traversal, iso, prism)
 import Data.These
 import Data.These.Combinators (swapThese)
 

@@ -1,5 +1,5 @@
-{-# LANGUAGE Trustworthy        #-}
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP         #-}
+{-# LANGUAGE Trustworthy #-}
 module Data.Semialign.Internal where
 
 import Prelude ()
@@ -23,7 +23,7 @@ import Data.Tagged                       (Tagged (..))
 import Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
 import Data.Vector.Generic               (Vector, empty, stream, unstream)
 
-import qualified Data.HashMap.Strict               as HashMap
+import qualified Data.HashMap.Strict               as HM
 import qualified Data.List.NonEmpty                as NE
 import qualified Data.Sequence                     as Seq
 import qualified Data.Tree                         as T
@@ -268,14 +268,14 @@ class Semialign f => Zip f where
 class Semialign f => Unzip f where
     unzipWith :: (c -> (a, b)) -> f c -> (f a, f b)
     unzipWith f = unzip . fmap f
-    
+
     unzip :: f (a, b) -> (f a, f b)
     unzip = unzipWith id
 
 #if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL unzipWith | unzip #-}
 #endif
-    
+
 unzipDefault :: Functor f => f (a, b) -> (f a, f b)
 unzipDefault x = (fst <$> x, snd <$> x)
 
@@ -446,7 +446,7 @@ instance (Ord k) => Align (Map k) where
 
 instance Ord k => Unalign (Map k) where
     unalign xs = (Map.mapMaybe justHere xs, Map.mapMaybe justThere xs)
-    
+
 instance Ord k => Unzip (Map k) where unzip = unzipDefault
 
 instance Semialign IntMap where
@@ -603,19 +603,19 @@ alignVectorWith f x y = unstream $ alignWith f (stream x) (stream y)
 -------------------------------------------------------------------------------
 
 instance (Eq k, Hashable k) => Align (HashMap k) where
-    nil = HashMap.empty
+    nil = HM.empty
 
 instance (Eq k, Hashable k) => Semialign (HashMap k) where
-    align m n = HashMap.unionWith merge (HashMap.map This m) (HashMap.map That n)
+    align m n = HM.unionWith merge (HM.map This m) (HM.map That n)
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align HashMap: merge"
 
-    zipWith = HashMap.intersectionWith
+    zipWith = HM.intersectionWith
 
 instance (Eq k, Hashable k) => Unzip   (HashMap k) where unzip = unzipDefault
 
 instance (Eq k, Hashable k) => Unalign (HashMap k) where
-    unalign xs = (HashMap.mapMaybe justHere xs, HashMap.mapMaybe justThere xs)
+    unalign xs = (HM.mapMaybe justHere xs, HM.mapMaybe justThere xs)
 
 -------------------------------------------------------------------------------
 -- tagged
