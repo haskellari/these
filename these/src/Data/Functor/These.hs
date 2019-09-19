@@ -46,8 +46,9 @@ import Data.Typeable (Typeable)
 #endif
 
 #ifdef MIN_VERSION_aeson
-import Data.Aeson
-       (FromJSON (..), FromJSON1 (..), ToJSON (..), ToJSON1 (..), (.=))
+import           Data.Aeson
+                 (FromJSON (..), FromJSON1 (..), ToJSON (..), ToJSON1 (..),
+                 (.=))
 import qualified Data.Aeson          as Aeson
 import qualified Data.Aeson.Encoding as Aeson (pair)
 import qualified Data.HashMap.Strict as HM

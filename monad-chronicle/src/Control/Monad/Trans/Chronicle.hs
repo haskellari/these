@@ -1,19 +1,19 @@
-{-# LANGUAGE Trustworthy            #-}
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Trustworthy           #-}
+{-# LANGUAGE UndecidableInstances  #-}
 -----------------------------------------------------------------------------
 -- | Module     :  Control.Monad.Chronicle
 --
--- Hybrid error/writer monad class that allows both accumulating outputs and 
+-- Hybrid error/writer monad class that allows both accumulating outputs and
 -- aborting computation with a final output.
 --
--- The expected use case is for computations with a notion of fatal vs. 
+-- The expected use case is for computations with a notion of fatal vs.
 -- non-fatal errors.
 
 -----------------------------------------------------------------------------
-module Control.Monad.Trans.Chronicle ( 
+module Control.Monad.Trans.Chronicle (
     -- * The Chronicle monad
     Chronicle, chronicle, runChronicle,
     -- * The ChronicleT monad transformer
@@ -35,13 +35,13 @@ import Data.Semigroup
 import Control.Monad.Error.Class
 import Control.Monad.Reader.Class
 import Control.Monad.RWS.Class
-import Prelude
 import Data.These
-import Data.These.Combinators (mapHere)
+import Data.These.Combinators     (mapHere)
+import Prelude
 
 #ifdef MIN_VERSION_semigroupoids
-import Data.Functor.Apply (Apply(..))
-import Data.Functor.Bind (Bind(..))
+import Data.Functor.Apply (Apply (..))
+import Data.Functor.Bind  (Bind (..))
 #endif
 
 -- --------------------------------------------------------------------------
@@ -52,7 +52,7 @@ import Data.Functor.Bind (Bind(..))
 type Chronicle c = ChronicleT c Identity
 
 chronicle :: Monad m => These c a -> ChronicleT c m a
-chronicle = ChronicleT . return 
+chronicle = ChronicleT . return
 
 runChronicle :: Chronicle c a -> These c a
 runChronicle = runIdentity . runChronicleT
@@ -81,9 +81,9 @@ instance (Semigroup c, Applicative m) => Applicative (ChronicleT c m) where
 
 instance (Semigroup c, Monad m) => Monad (ChronicleT c m) where
     return = ChronicleT . return . return
-    m >>= k = ChronicleT $ 
+    m >>= k = ChronicleT $
         do cx <- runChronicleT m
-           case cx of 
+           case cx of
                This  a   -> return (This a)
                That    x -> runChronicleT (k x)
                These a x -> do cy <- runChronicleT (k x)
@@ -137,8 +137,8 @@ instance (Semigroup c, MonadWriter w m) => MonadWriter w (ChronicleT c m) where
                      That    x -> That (x, w)
                      These c x -> These c (x, w)
     pass (ChronicleT m) = ChronicleT $ do
-        pass $ these (\c -> (This c, id)) 
-                     (\(x, f) -> (That x, f)) 
+        pass $ these (\c -> (This c, id))
+                     (\(x, f) -> (That x, f))
                      (\c (x, f) -> (These c x, f)) `liftM` m
     writer = lift . writer
 
@@ -150,7 +150,7 @@ instance (Semigroup c, MonadFix m) => MonadFix (ChronicleT c m) where
 
 
 -- | @'dictate' c@ is an action that records the output @c@.
---   
+--
 --   Equivalent to 'tell' for the 'Writer' monad.
 dictate :: (Semigroup c, Monad m) => c -> ChronicleT c m ()
 dictate c = ChronicleT $ return (These c ())
@@ -159,13 +159,13 @@ dictate c = ChronicleT $ return (These c ())
 --   @'Default'@ value.
 --
 --   This is a convenience function for reporting non-fatal errors in one
---   branch a @case@, or similar scenarios when there is no meaningful 
+--   branch a @case@, or similar scenarios when there is no meaningful
 --   result but a placeholder of sorts is needed in order to continue.
 disclose :: (Default a, Semigroup c, Monad m) => c -> ChronicleT c m a
 disclose c = dictate c >> return def
 
 -- | @'confess' c@ is an action that ends with a final output @c@.
---   
+--
 --   Equivalent to 'throwError' for the 'Error' monad.
 confess :: (Semigroup c, Monad m) => c -> ChronicleT c m a
 confess c = ChronicleT $ return (This c)
@@ -174,11 +174,11 @@ confess c = ChronicleT $ return (This c)
 --   its record if it ended with 'confess', or its final value otherwise, with
 --   any record added to the current record.
 --
---   Similar to 'catchError' in the 'Error' monad, but with a notion of 
+--   Similar to 'catchError' in the 'Error' monad, but with a notion of
 --   non-fatal errors (which are accumulated) vs. fatal errors (which are caught
 --   without accumulating).
 memento :: (Semigroup c, Monad m) => ChronicleT c m a -> ChronicleT c m (Either c a)
-memento m = ChronicleT $ 
+memento m = ChronicleT $
     do cx <- runChronicleT m
        return $ case cx of
                     This  a   -> That (Left a)
@@ -186,10 +186,10 @@ memento m = ChronicleT $
                     These a x -> These a (Right x)
 
 -- | @'absolve' x m@ is an action that executes the action @m@ and discards any
---   record it had. The default value @x@ will be used if @m@ ended via 
+--   record it had. The default value @x@ will be used if @m@ ended via
 --   'confess'.
 absolve :: (Semigroup c, Monad m) => a -> ChronicleT c m a -> ChronicleT c m a
-absolve x m = ChronicleT $ 
+absolve x m = ChronicleT $
     do cy <- runChronicleT m
        return $ case cy of
                     This  _   -> That x
@@ -203,7 +203,7 @@ absolve x m = ChronicleT $
 --
 --   This can be seen as converting non-fatal errors into fatal ones.
 condemn :: (Semigroup c, Monad m) => ChronicleT c m a -> ChronicleT c m a
-condemn (ChronicleT m) = ChronicleT $ do 
+condemn (ChronicleT m) = ChronicleT $ do
     m' <- m
     return $ case m' of
         This  x   -> This x
@@ -213,7 +213,7 @@ condemn (ChronicleT m) = ChronicleT $ do
 
 -- | @'retcon' f m@ is an action that executes the action @m@ and applies the
 --   function @f@ to its output, leaving the return value unchanged.
---   
+--
 --   Equivalent to 'censor' for the 'Writer' monad.
 retcon :: (Semigroup c, Monad m) => (c -> c) -> ChronicleT c m a -> ChronicleT c m a
 retcon f m = ChronicleT $ mapHere f `liftM` runChronicleT m

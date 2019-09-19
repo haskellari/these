@@ -164,10 +164,10 @@ partitionHereThere (t:ts) = case t of
 -- @since 1.0.1
 partitionEithersNE :: NonEmpty (Either a b) -> These (NonEmpty a) (NonEmpty b)
 partitionEithersNE (x :| xs) = case (x, ls, rs) of
-    (Left y,  ys,     [])     -> This (y :| ys)
-    (Left y,  ys,     (z:zs)) -> These (y :| ys) (z :| zs)
-    (Right z, [],     zs)     -> That (z :| zs)
-    (Right z, (y:ys), zs)     -> These (y :| ys) (z :| zs)
+    (Left y,  ys,   [])   -> This (y :| ys)
+    (Left y,  ys,   z:zs) -> These (y :| ys) (z :| zs)
+    (Right z, [],   zs)   -> That (z :| zs)
+    (Right z, y:ys, zs)   -> These (y :| ys) (z :| zs)
   where
     (ls, rs) = partitionEithers xs
 

@@ -14,4 +14,4 @@ module Control.Monad.Chronicle (
     ) where
 
 import Control.Monad.Chronicle.Class
-import Control.Monad.Trans.Chronicle (Chronicle, runChronicle, ChronicleT (..))
+import Control.Monad.Trans.Chronicle (Chronicle, ChronicleT (..), runChronicle)

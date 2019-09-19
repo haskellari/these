@@ -1,6 +1,6 @@
-{-# LANGUAGE Trustworthy            #-}
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE Trustworthy            #-}
 {-# LANGUAGE UndecidableInstances   #-}
 {-# OPTIONS_GHC -fno-warn-warnings-deprecations #-} -- for the ErrorT instances
 -----------------------------------------------------------------------------
