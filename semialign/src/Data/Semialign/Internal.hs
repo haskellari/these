@@ -243,7 +243,7 @@ class Semialign f => Unalign f where
 -- @
 --
 class Semialign f => Zip f where
-    -- | A /full/ strucutre.
+    -- | A /full/ structure.
     full :: a -> f a
 
 -- | Right inverse of 'zip'.
