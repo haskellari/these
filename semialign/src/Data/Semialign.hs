@@ -4,6 +4,7 @@ module Data.Semialign (
     Semialign (..),
     Align (..),
     Unalign (..),
+    Semizip (..),
     Zip (..),
     Unzip (..),
     unzipDefault,

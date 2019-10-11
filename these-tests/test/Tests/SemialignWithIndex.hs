@@ -67,7 +67,7 @@ alignWithKeyProps = testGroup "AlignWithIndex"
 data P (f :: * -> *) = P
 
 semialignIndexedLaws
-    :: forall f i. (SemialignWithIndex i f, Typeable1 f
+    :: forall f i. (SemizipWithIndex i f, Typeable1 f
        , Function i, CoArbitrary i, Show i
        , Eq (f A), Show (f A), Arbitrary (f A)
        , Eq (f B), Show (f B), Arbitrary (f B)

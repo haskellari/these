@@ -66,10 +66,10 @@ oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)
 
 -- --------------------------------------------------------------------------
--- | Functors supporting a 'zip' and 'align' operations that takes the
--- intersection and union of non-uniform shapes.
+-- | Functors supporting an 'align' operation that takes the union of
+-- non-uniform shapes.
 --
--- Minimal definition: either 'align' or 'alignWith' and either 'zip' or 'zipWith'.
+-- Minimal definition: either 'align' or 'alignWith'.
 --
 -- == Laws
 --
@@ -87,54 +87,30 @@ oops = error . ("Data.Align: internal error: " ++)
 --
 -- @
 -- join align ≡ fmap (join These)
--- join zip   ≡ fmap (join (,))
 -- @
 --
 -- /Commutativity/
 --
 -- @
 -- align x y ≡ swap \<$> align y x
---   zip x y ≡ swap \<$> zip y x
 -- @
 --
 -- /Associativity/
 --
 -- @
 -- align x (align y z) ≡ assoc \<$> align (align x y) z
---     zip x (zip y z) ≡ assoc \<$> zip (zip x y) z
--- @
---
--- /Absorption/
---
--- @
--- fst    \<$> zip xs (align xs ys) ≡ xs
--- toThis \<$> align xs (zip xs ys) ≡ This \<$> xs
---   where
---     toThis (This a)    = This a
---     toThis (These a _) = This a
---     toThis (That b)    = That b
 -- @
 --
 -- /With/
 --
 -- @
 -- alignWith f a b ≡ f \<$> align a b
---   zipWith f a b ≡ f \<$> zip a b
 -- @
 --
 -- /Functoriality/
 --
 -- @
 -- align (f \<$> x) (g \<$> y) ≡ bimap f g \<$> align x y
---   zip (f \<$> x) (g \<$> y) ≡ bimap f g \<$> zip x y
--- @
---
--- /Zippyness/
---
--- @
--- fmap fst (zip x x) ≡ x
--- fmap snd (zip x x) ≡ x
--- zip (fmap fst x) (fmap snd x) ≡ x
 -- @
 --
 -- /Alignedness/, if @f@ is 'Foldable'
@@ -144,24 +120,15 @@ oops = error . ("Data.Align: internal error: " ++)
 --          ≡ mapMaybe justHere (toList (align x y))
 -- @
 --
--- /Distributivity/
+--
+-- And an addition property if @f@ is 'Foldable',
+-- which tries to enforce 'align'-feel:
+-- neither values are duplicated nor lost.
 --
 -- @
---                    align (zip xs ys) zs ≡ undistrThesePair \<$> zip (align xs zs) (align ys zs)
--- distrPairThese \<$> zip (align xs ys) zs ≡                      align (zip xs zs) (zip ys zs)
---                    zip (align xs ys) zs ≡ undistrPairThese \<$> align (zip xs zs) (zip ys zs)
+-- toList x = toListOf (folded . here) (align x y)
+--          = mapMaybe justHere (toList (align x y))
 -- @
---
--- /Note/, the following doesn't hold:
---
--- @
--- distrThesePair \<$> align (zip xs ys) zs ≢ zip (align xs zs) (align ys zs)
--- @
---
--- when @xs = []@ and @ys = zs = [0]@, then
--- the left hand side is "only" @[('That' 0, 'That' 0)]@,
--- but the right hand side is @[('That' 0, 'These' 0 0)]@.
---
 --
 class Functor f => Semialign f where
     -- | Analogous to @'zip'@, combines two structures by taking the union of
@@ -174,18 +141,8 @@ class Functor f => Semialign f where
     alignWith :: (These a b -> c) -> f a -> f b -> f c
     alignWith f a b = f <$> align a b
 
-    -- | Combines to structures by taking the intersection of their shapes
-    -- and using pair to hold the elements.
-    zip :: f a -> f b -> f (a, b)
-    zip = zipWith (,)
-    --
-    -- | Combines to structures by taking the intersection of their shapes
-    -- and combining the elements with the given function.
-    zipWith :: (a -> b -> c) -> f a -> f b -> f c
-    zipWith f a b = uncurry f <$> zip a b
-
 #if __GLASGOW_HASKELL__ >= 707
-    {-# MINIMAL (align | alignWith), (zip | zipWith) #-}
+    {-# MINIMAL (align | alignWith) #-}
 #endif
 
 -- | A unit of 'align'.
@@ -235,14 +192,103 @@ class Semialign f => Unalign f where
 #endif
 
 
--- | A unit of 'zip'.
+-- | Functors supporting a 'zip' operation that takes the intersection of
+-- non-uniform shapes.
+--
+-- Minimal definition: either 'zip' or 'zipWith'.
+--
+-- /Idempotency/
+--
+-- @
+-- join zip   ≡ fmap (join (,))
+-- @
+--
+-- /Commutativity/
+--
+-- @
+-- zip x y ≡ swap \<$> zip y x
+-- @
+--
+-- /Associativity/
+--
+-- @
+-- zip x (zip y z) ≡ assoc \<$> zip (zip x y) z
+-- @
+--
+-- /Absorption/
+--
+-- @
+-- fst    \<$> zip xs (align xs ys) ≡ xs
+-- toThis \<$> align xs (zip xs ys) ≡ This \<$> xs
+--   where
+--     toThis (This a)    = This a
+--     toThis (These a _) = This a
+--     toThis (That b)    = That b
+-- @
+--
+-- /With/
+--
+-- @
+-- zipWith f a b ≡ f \<$> zip a b
+-- @
+--
+-- /Functoriality/
+--
+-- @
+-- zip (f \<$> x) (g \<$> y) ≡ bimap f g \<$> zip x y
+-- @
+--
+-- /Zippyness/
+--
+-- @
+-- fmap fst (zip x x) ≡ x
+-- fmap snd (zip x x) ≡ x
+-- zip (fmap fst x) (fmap snd x) ≡ x
+-- @
+--
+-- /Distributivity/
+--
+-- @
+--                    align (zip xs ys) zs ≡ undistrThesePair \<$> zip (align xs zs) (align ys zs)
+-- distrPairThese \<$> zip (align xs ys) zs ≡                      align (zip xs zs) (zip ys zs)
+--                    zip (align xs ys) zs ≡ undistrPairThese \<$> align (zip xs zs) (zip ys zs)
+-- @
+--
+-- /Note/, the following doesn't hold:
+--
+-- @
+-- distrThesePair \<$> align (zip xs ys) zs ≢ zip (align xs zs) (align ys zs)
+-- @
+--
+-- when @xs = []@ and @ys = zs = [0]@, then
+-- the left hand side is "only" @[('That' 0, 'That' 0)]@,
+-- but the right hand side is @[('That' 0, 'These' 0 0)]@.
+--
+class Semialign f => Semizip f where
+    -- | Combines to structures by taking the intersection of their shapes
+    -- and using pair to hold the elements.
+    zip :: f a -> f b -> f (a, b)
+    zip = zipWith (,)
+    --
+    -- | Combines to structures by taking the intersection of their shapes
+    -- and combining the elements with the given function.
+    zipWith :: (a -> b -> c) -> f a -> f b -> f c
+    zipWith f a b = uncurry f <$> zip a b
+
+#if __GLASGOW_HASKELL__ >= 707
+    {-# MINIMAL (zip | zipWith) #-}
+#endif
+
+-- | Zippable functors supporting left and right units
+--
+-- /Unit/
 --
 -- @
 -- fst \<$> zip xs (full y) ≡ xs
 -- snd \<$> zip (full x) ys ≡ ys
 -- @
 --
-class Semialign f => Zip f where
+class Semizip f => Zip f where
     -- | A /full/ structure.
     full :: a -> f a
 
@@ -265,7 +311,7 @@ class Semialign f => Zip f where
 --
 -- For sequence-like types this holds, but for Map-like it doesn't.
 --
-class Semialign f => Unzip f where
+class Semizip f => Unzip f where
     unzipWith :: (c -> (a, b)) -> f c -> (f a, f b)
     unzipWith f = unzip . fmap f
 
@@ -287,6 +333,7 @@ instance Semialign ((->) e) where
     align f g x = These (f x) (g x)
     alignWith h f g x = h (These (f x) (g x))
 
+instance Semizip ((->) e) where
     zip f g x = (f x, g x)
 
 instance Zip ((->) e) where
@@ -298,6 +345,7 @@ instance Semialign Maybe where
     align Nothing (Just b) = Just (That b)
     align (Just a) (Just b) = Just (These a b)
 
+instance Semizip Maybe where
     zip Nothing  _        = Nothing
     zip (Just _) Nothing  = Nothing
     zip (Just a) (Just b) = Just (a, b)
@@ -323,11 +371,12 @@ instance Semialign [] where
     align [] ys = That <$> ys
     align (x:xs) (y:ys) = These x y : align xs ys
 
-    zip     = Prelude.zip
-    zipWith = Prelude.zipWith
-
 instance Align [] where
     nil = []
+
+instance Semizip [] where
+    zip     = Prelude.zip
+    zipWith = Prelude.zipWith
 
 instance Zip [] where
     full = repeat
@@ -339,10 +388,12 @@ instance Unzip [] where
 -- | @'zipWith' = 'liftA2'@ .
 instance Semialign ZipList where
     alignWith f (ZipList xs) (ZipList ys) = ZipList (alignWith f xs ys)
-    zipWith   f (ZipList xs) (ZipList ys) = ZipList (zipWith f xs ys)
 
 instance Align ZipList where
     nil = ZipList []
+
+instance Semizip ZipList where
+    zipWith   f (ZipList xs) (ZipList ys) = ZipList (zipWith f xs ys)
 
 instance Zip ZipList where
     full = pure
@@ -358,6 +409,7 @@ instance Unzip ZipList where
 instance Semialign NonEmpty where
     align (x :| xs) (y :| ys) = These x y :| align xs ys
 
+instance Semizip NonEmpty where
     zip     = NE.zip
     zipWith = NE.zipWith
 
@@ -394,9 +446,6 @@ instance Semialign Seq where
         yn = Seq.length ys
         fc x y = f (These x y)
 
-    zip     = Seq.zip
-    zipWith = Seq.zipWith
-
 instance Align Seq where
     nil = Seq.empty
 
@@ -408,9 +457,14 @@ instance Unzip Seq where
     unzip = unzipDefault
 #endif
 
+instance Semizip Seq where
+    zip     = Seq.zip
+    zipWith = Seq.zipWith
+
 instance Semialign T.Tree where
     align (T.Node x xs) (T.Node y ys) = T.Node (These x y) (alignWith (these (fmap This) (fmap That) align) xs ys)
 
+instance Semizip T.Tree where
     zipWith f (T.Node x xs) (T.Node y ys) = T.Node (f x y) (zipWith (zipWith f) xs ys)
 
 instance Zip T.Tree where
@@ -439,8 +493,6 @@ instance Ord k => Semialign (Map k) where
             merge _ _ = oops "Align Map: merge"
 #endif
 
-    zipWith = Map.intersectionWith
-
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
 
@@ -448,6 +500,9 @@ instance Ord k => Unalign (Map k) where
     unalign xs = (Map.mapMaybe justHere xs, Map.mapMaybe justThere xs)
 
 instance Ord k => Unzip (Map k) where unzip = unzipDefault
+
+instance Ord k => Semizip (Map k) where
+    zipWith = Map.intersectionWith
 
 instance Semialign IntMap where
 #if MIN_VERSION_containers(0,5,9)
@@ -462,8 +517,6 @@ instance Semialign IntMap where
             merge _ _ = oops "Align IntMap: merge"
 #endif
 
-    zipWith = IntMap.intersectionWith
-
 instance Align IntMap where
     nil = IntMap.empty
 
@@ -472,6 +525,9 @@ instance Unalign IntMap where
 
 instance Unzip IntMap where unzip = unzipDefault
 
+instance Semizip IntMap where
+    zipWith = IntMap.intersectionWith
+
 -------------------------------------------------------------------------------
 -- transformers
 -------------------------------------------------------------------------------
@@ -479,6 +535,7 @@ instance Unzip IntMap where unzip = unzipDefault
 instance Semialign Identity where
     alignWith f (Identity a) (Identity b) = Identity (f (These a b))
 
+instance Semizip Identity where
     zipWith f (Identity a) (Identity b) = Identity (f a b)
 
 instance Zip Identity where
@@ -492,9 +549,6 @@ instance (Semialign f, Semialign g) => Semialign (Product f g) where
     align (Pair a b) (Pair c d) = Pair (align a c) (align b d)
     alignWith f (Pair a b) (Pair c d) = Pair (alignWith f a c) (alignWith f b d)
 
-    zip (Pair a b) (Pair c d) = Pair (zip a c) (zip b d)
-    zipWith f (Pair a b) (Pair c d) = Pair (zipWith f a c) (zipWith f b d)
-
 instance (Unalign f, Unalign g) => Unalign (Product f g) where
     unalign (Pair a b) = (Pair al bl, Pair ar br) where
         ~(al, ar) = unalign a
@@ -502,6 +556,10 @@ instance (Unalign f, Unalign g) => Unalign (Product f g) where
 
 instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil
+
+instance (Semizip f, Semizip g) => Semizip (Product f g) where
+    zip (Pair a b) (Pair c d) = Pair (zip a c) (zip b d)
+    zipWith f (Pair a b) (Pair c d) = Pair (zipWith f a c) (zipWith f b d)
 
 instance (Zip f, Zip g) => Zip (Product f g) where
     full x = Pair (full x) (full x)
@@ -518,10 +576,11 @@ instance (Semialign f, Semialign g) => Semialign (Compose f g) where
         g (That gb)     = fmap (f . That) gb
         g (These ga gb) = alignWith f ga gb
 
-    zipWith f (Compose x) (Compose y) = Compose (zipWith (zipWith f) x y)
-
 instance (Align f, Semialign g) => Align (Compose f g) where
     nil = Compose nil
+
+instance (Semizip f, Semizip g) => Semizip (Compose f g) where
+    zipWith f (Compose x) (Compose y) = Compose (zipWith (zipWith f) x y)
 
 instance (Zip f, Zip g) => Zip (Compose f g) where
     full x = Compose (full (full x))
@@ -571,6 +630,7 @@ instance Monad m => Semialign (Stream m) where
                     (_, True)       -> Done
                     _               -> Skip (sa, sb, Nothing, False)
 
+instance Monad m => Semizip (Stream m) where
     zipWith = Stream.zipWith
 
 #if MIN_VERSION_vector(0,11,0)
@@ -580,13 +640,16 @@ instance Monad m => Align (Bundle m v) where
 instance Monad m => Semialign (Bundle m v) where
     alignWith f Bundle{sElems = sa, sSize = na} Bundle{sElems = sb, sSize = nb}
       = Bundle.fromStream (alignWith f sa sb) (Bundle.larger na nb)
-
-    zipWith = Bundle.zipWith
 #endif
+
+instance Monad m => Semizip (Bundle m v) where
+    zipWith = Bundle.zipWith
 
 instance Semialign V.Vector where
     alignWith = alignVectorWith
-    zipWith   = V.zipWith
+
+instance Semizip V.Vector where
+    zipWith = V.zipWith
 
 instance Align V.Vector where
     nil = Data.Vector.Generic.empty
@@ -610,6 +673,7 @@ instance (Eq k, Hashable k) => Semialign (HashMap k) where
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align HashMap: merge"
 
+instance (Eq k, Hashable k) => Semizip (HashMap k) where
     zipWith = HM.intersectionWith
 
 instance (Eq k, Hashable k) => Unzip   (HashMap k) where unzip = unzipDefault
@@ -624,6 +688,7 @@ instance (Eq k, Hashable k) => Unalign (HashMap k) where
 instance Semialign (Tagged b) where
     alignWith f (Tagged x) (Tagged y) = Tagged (f (These x y))
 
+instance Semizip (Tagged b) where
     zipWith f (Tagged x) (Tagged y) = Tagged (f x y)
 
 instance Zip (Tagged b) where
@@ -637,14 +702,15 @@ instance Semialign Proxy where
     alignWith _ _ _ = Proxy
     align _ _       = Proxy
 
-    zipWith _ _ _ = Proxy
-    zip _ _       = Proxy
-
 instance Align Proxy where
     nil = Proxy
 
 instance Unalign Proxy where
     unalign _ = (Proxy, Proxy)
+
+instance Semizip Proxy where
+    zipWith _ _ _ = Proxy
+    zip _ _       = Proxy
 
 instance Zip Proxy where
     full _ = Proxy

@@ -32,6 +32,7 @@ instance Ord k => Semialign (WrongMap k) where
        | Map.null x = WM $ That <$> y
        | otherwise  = WM $ Map.intersectionWith These x y
 
+instance Ord k => Semizip (WrongMap k) where
     zip (WM x) (WM y) = WM (Map.intersectionWith (,) x y)
 
 -------------------------------------------------------------------------------
@@ -61,6 +62,7 @@ instance Ord k => Semialign (WeirdMap k) where
         g (That (k, a))         = (k, f (That a))
         g (These (k, a) (_, b)) = (k, f (These a b))
 
+instance Ord k => Semizip (WeirdMap k) where
     zipWith f (WeirdMap x) (WeirdMap y) = WeirdMap $ Map.fromList $
         zipWith (\(k, a) (_, b) -> (k, f a b)) (Map.toList x) (Map.toList y)
 
@@ -96,6 +98,7 @@ instance Semialign R where
       where
         shape = fmap (() <$)
 
+instance Semizip R where
     -- doesn't work with align above
     zip (Nest ass) (Nest bss) = Nest $ zipWith (zipWith (,)) ass bss
 
