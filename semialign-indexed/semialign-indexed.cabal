@@ -54,8 +54,8 @@ library
     , containers  >=0.4.2.1 && <0.7
 
   build-depends:
-      semialign  >=1 && <1.1
-    , these      >=1 && <1.1
+      semialign  >=1.1 && <1.2
+    , these      >=1   && <1.1
 
   -- other dependencies
   build-depends:

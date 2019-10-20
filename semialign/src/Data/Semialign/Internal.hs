@@ -3,7 +3,7 @@
 module Data.Semialign.Internal where
 
 import Prelude ()
-import Prelude.Compat hiding (unzip, zip, zipWith)
+import Prelude.Compat hiding (repeat, unzip, zip, zipWith)
 
 import qualified Prelude.Compat as Prelude
 
@@ -264,7 +264,7 @@ class Semialign f => Unalign f where
 -- the left hand side is "only" @[('That' 0, 'That' 0)]@,
 -- but the right hand side is @[('That' 0, 'These' 0 0)]@.
 --
-class Semialign f => Semizip f where
+class Semialign f => Zip f where
     -- | Combines to structures by taking the intersection of their shapes
     -- and using pair to hold the elements.
     zip :: f a -> f b -> f (a, b)
@@ -284,13 +284,13 @@ class Semialign f => Semizip f where
 -- /Unit/
 --
 -- @
--- fst \<$> zip xs (full y) ≡ xs
--- snd \<$> zip (full x) ys ≡ ys
+-- fst \<$> zip xs (repeat y) ≡ xs
+-- snd \<$> zip (repeat x) ys ≡ ys
 -- @
 --
-class Semizip f => Zip f where
-    -- | A /full/ structure.
-    full :: a -> f a
+class Zip f => Repeat f where
+    -- | A /repeat/ structure.
+    repeat :: a -> f a
 
 -- | Right inverse of 'zip'.
 --
@@ -311,7 +311,7 @@ class Semizip f => Zip f where
 --
 -- For sequence-like types this holds, but for Map-like it doesn't.
 --
-class Semizip f => Unzip f where
+class Zip f => Unzip f where
     unzipWith :: (c -> (a, b)) -> f c -> (f a, f b)
     unzipWith f = unzip . fmap f
 
@@ -333,11 +333,11 @@ instance Semialign ((->) e) where
     align f g x = These (f x) (g x)
     alignWith h f g x = h (These (f x) (g x))
 
-instance Semizip ((->) e) where
+instance Zip ((->) e) where
     zip f g x = (f x, g x)
 
-instance Zip ((->) e) where
-    full = pure
+instance Repeat ((->) e) where
+    repeat = pure
 
 instance Semialign Maybe where
     align Nothing Nothing = Nothing
@@ -345,13 +345,13 @@ instance Semialign Maybe where
     align Nothing (Just b) = Just (That b)
     align (Just a) (Just b) = Just (These a b)
 
-instance Semizip Maybe where
+instance Zip Maybe where
     zip Nothing  _        = Nothing
     zip (Just _) Nothing  = Nothing
     zip (Just a) (Just b) = Just (a, b)
 
-instance Zip Maybe where
-    full = Just
+instance Repeat Maybe where
+    repeat = Just
 
 instance Unalign Maybe where
     unalign Nothing            = (Nothing, Nothing)
@@ -374,12 +374,12 @@ instance Semialign [] where
 instance Align [] where
     nil = []
 
-instance Semizip [] where
+instance Zip [] where
     zip     = Prelude.zip
     zipWith = Prelude.zipWith
 
-instance Zip [] where
-    full = repeat
+instance Repeat [] where
+    repeat = Prelude.repeat
 
 instance Unzip [] where
     unzip = Prelude.unzip
@@ -392,11 +392,11 @@ instance Semialign ZipList where
 instance Align ZipList where
     nil = ZipList []
 
-instance Semizip ZipList where
+instance Zip ZipList where
     zipWith   f (ZipList xs) (ZipList ys) = ZipList (zipWith f xs ys)
 
-instance Zip ZipList where
-    full = pure
+instance Repeat ZipList where
+    repeat = pure
 
 instance Unzip ZipList where
     unzip (ZipList xs) = (ZipList ys, ZipList zs) where
@@ -409,12 +409,12 @@ instance Unzip ZipList where
 instance Semialign NonEmpty where
     align (x :| xs) (y :| ys) = These x y :| align xs ys
 
-instance Semizip NonEmpty where
+instance Zip NonEmpty where
     zip     = NE.zip
     zipWith = NE.zipWith
 
-instance Zip NonEmpty where
-    full = NE.repeat
+instance Repeat NonEmpty where
+    repeat = NE.repeat
 
 instance Unzip NonEmpty where
     unzip = NE.unzip
@@ -457,18 +457,18 @@ instance Unzip Seq where
     unzip = unzipDefault
 #endif
 
-instance Semizip Seq where
+instance Zip Seq where
     zip     = Seq.zip
     zipWith = Seq.zipWith
 
 instance Semialign T.Tree where
     align (T.Node x xs) (T.Node y ys) = T.Node (These x y) (alignWith (these (fmap This) (fmap That) align) xs ys)
 
-instance Semizip T.Tree where
+instance Zip T.Tree where
     zipWith f (T.Node x xs) (T.Node y ys) = T.Node (f x y) (zipWith (zipWith f) xs ys)
 
-instance Zip T.Tree where
-    full x = n where n = T.Node x (repeat n)
+instance Repeat T.Tree where
+    repeat x = n where n = T.Node x (repeat n)
 
 instance Unzip T.Tree where
     unzipWith f = go where
@@ -501,7 +501,7 @@ instance Ord k => Unalign (Map k) where
 
 instance Ord k => Unzip (Map k) where unzip = unzipDefault
 
-instance Ord k => Semizip (Map k) where
+instance Ord k => Zip (Map k) where
     zipWith = Map.intersectionWith
 
 instance Semialign IntMap where
@@ -525,7 +525,7 @@ instance Unalign IntMap where
 
 instance Unzip IntMap where unzip = unzipDefault
 
-instance Semizip IntMap where
+instance Zip IntMap where
     zipWith = IntMap.intersectionWith
 
 -------------------------------------------------------------------------------
@@ -535,11 +535,11 @@ instance Semizip IntMap where
 instance Semialign Identity where
     alignWith f (Identity a) (Identity b) = Identity (f (These a b))
 
-instance Semizip Identity where
+instance Zip Identity where
     zipWith f (Identity a) (Identity b) = Identity (f a b)
 
-instance Zip Identity where
-    full = pure
+instance Repeat Identity where
+    repeat = pure
 
 instance Unzip Identity where
     unzip (Identity ~(a, b)) = (Identity a, Identity b)
@@ -557,12 +557,12 @@ instance (Unalign f, Unalign g) => Unalign (Product f g) where
 instance (Align f, Align g) => Align (Product f g) where
     nil = Pair nil nil
 
-instance (Semizip f, Semizip g) => Semizip (Product f g) where
+instance (Zip f, Zip g) => Zip (Product f g) where
     zip (Pair a b) (Pair c d) = Pair (zip a c) (zip b d)
     zipWith f (Pair a b) (Pair c d) = Pair (zipWith f a c) (zipWith f b d)
 
-instance (Zip f, Zip g) => Zip (Product f g) where
-    full x = Pair (full x) (full x)
+instance (Repeat f, Repeat g) => Repeat (Product f g) where
+    repeat x = Pair (repeat x) (repeat x)
 
 instance (Unzip f, Unzip g) => Unzip (Product f g) where
     unzip (Pair a b) = (Pair al bl, Pair ar br) where
@@ -579,11 +579,11 @@ instance (Semialign f, Semialign g) => Semialign (Compose f g) where
 instance (Align f, Semialign g) => Align (Compose f g) where
     nil = Compose nil
 
-instance (Semizip f, Semizip g) => Semizip (Compose f g) where
+instance (Zip f, Zip g) => Zip (Compose f g) where
     zipWith f (Compose x) (Compose y) = Compose (zipWith (zipWith f) x y)
 
-instance (Zip f, Zip g) => Zip (Compose f g) where
-    full x = Compose (full (full x))
+instance (Repeat f, Repeat g) => Repeat (Compose f g) where
+    repeat x = Compose (repeat (repeat x))
 
 instance (Unzip f, Unzip g) => Unzip (Compose f g) where
     unzipWith f (Compose x) = (Compose y, Compose z) where
@@ -630,7 +630,7 @@ instance Monad m => Semialign (Stream m) where
                     (_, True)       -> Done
                     _               -> Skip (sa, sb, Nothing, False)
 
-instance Monad m => Semizip (Stream m) where
+instance Monad m => Zip (Stream m) where
     zipWith = Stream.zipWith
 
 #if MIN_VERSION_vector(0,11,0)
@@ -642,13 +642,13 @@ instance Monad m => Semialign (Bundle m v) where
       = Bundle.fromStream (alignWith f sa sb) (Bundle.larger na nb)
 #endif
 
-instance Monad m => Semizip (Bundle m v) where
+instance Monad m => Zip (Bundle m v) where
     zipWith = Bundle.zipWith
 
 instance Semialign V.Vector where
     alignWith = alignVectorWith
 
-instance Semizip V.Vector where
+instance Zip V.Vector where
     zipWith = V.zipWith
 
 instance Align V.Vector where
@@ -673,7 +673,7 @@ instance (Eq k, Hashable k) => Semialign (HashMap k) where
       where merge (This a) (That b) = These a b
             merge _ _ = oops "Align HashMap: merge"
 
-instance (Eq k, Hashable k) => Semizip (HashMap k) where
+instance (Eq k, Hashable k) => Zip (HashMap k) where
     zipWith = HM.intersectionWith
 
 instance (Eq k, Hashable k) => Unzip   (HashMap k) where unzip = unzipDefault
@@ -688,11 +688,11 @@ instance (Eq k, Hashable k) => Unalign (HashMap k) where
 instance Semialign (Tagged b) where
     alignWith f (Tagged x) (Tagged y) = Tagged (f (These x y))
 
-instance Semizip (Tagged b) where
+instance Zip (Tagged b) where
     zipWith f (Tagged x) (Tagged y) = Tagged (f x y)
 
-instance Zip (Tagged b) where
-    full = Tagged
+instance Repeat (Tagged b) where
+    repeat = Tagged
 
 instance Unzip (Tagged b) where
     unzip (Tagged ~(a, b)) = (Tagged a, Tagged b)
@@ -708,12 +708,12 @@ instance Align Proxy where
 instance Unalign Proxy where
     unalign _ = (Proxy, Proxy)
 
-instance Semizip Proxy where
+instance Zip Proxy where
     zipWith _ _ _ = Proxy
     zip _ _       = Proxy
 
-instance Zip Proxy where
-    full _ = Proxy
+instance Repeat Proxy where
+    repeat _ = Proxy
 
 instance Unzip Proxy where
     unzip _ = (Proxy, Proxy)

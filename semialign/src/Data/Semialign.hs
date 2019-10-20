@@ -1,11 +1,14 @@
 {-# LANGUAGE Trustworthy #-}
 -- | Zipping and aligning of functors with non-uniform shapes.
+--
+--
 module Data.Semialign (
+    -- * Classes
     Semialign (..),
     Align (..),
     Unalign (..),
-    Semizip (..),
     Zip (..),
+    Repeat (..),
     Unzip (..),
     unzipDefault,
     -- * Specialized aligns
