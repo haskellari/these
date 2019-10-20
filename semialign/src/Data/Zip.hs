@@ -5,6 +5,7 @@
 --
 module Data.Zip (
     Semialign (..),
+    Semizip (..),
     Zip (..),
     Unzip (..),
     unzipDefault,
@@ -29,7 +30,7 @@ import Data.Functor.Apply (Apply (..))
 newtype Zippy f a = Zippy { getZippy :: f a }
   deriving (Eq, Ord, Show, Read, Functor)
 
-instance (Semialign f, Semigroup a) => Semigroup (Zippy f a) where
+instance (Zip f, Semigroup a) => Semigroup (Zippy f a) where
     Zippy x <> Zippy y = Zippy $ zipWith (<>) x y
 
 instance (Zip f, Monoid a) => Monoid (Zippy f a) where
@@ -37,7 +38,7 @@ instance (Zip f, Monoid a) => Monoid (Zippy f a) where
     mappend (Zippy x) (Zippy y) = Zippy $ zipWith mappend x y
 
 #ifdef MIN_VERSION_semigroupoids
-instance Semialign f => Apply (Zippy f) where
+instance Zip f => Apply (Zippy f) where
     Zippy f <.> Zippy x = Zippy $ zipWith ($) f x
 #endif
 

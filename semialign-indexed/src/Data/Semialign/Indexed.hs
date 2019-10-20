@@ -5,6 +5,7 @@
 -- | Zipping and aligning of indexed functors.
 module Data.Semialign.Indexed (
     SemialignWithIndex (..),
+    SemizipWithIndex (..),
     ) where
 
 import Prelude hiding (zip, zipWith)
@@ -12,6 +13,7 @@ import Prelude hiding (zip, zipWith)
 import Control.Lens (FunctorWithIndex (imap))
 
 import Data.Align
+import Data.Zip
 import Data.These
 
 -- Instances
@@ -37,6 +39,8 @@ class (FunctorWithIndex i f, Semialign f) => SemialignWithIndex i f | f -> i whe
     ialignWith :: (i -> These a b -> c) -> f a -> f b -> f c
     ialignWith f a b = imap f (align a b)
 
+-- | Indexed version of 'Semizip'
+class (SemialignWithIndex i f, Semizip f) => SemizipWithIndex i f | f -> i where
     -- | Analogous to 'zipWith', but also provides an index.
     izipWith :: (i -> a -> b -> c) -> f a -> f b -> f c
     izipWith f a b = imap (uncurry . f) (zip a b)
@@ -46,41 +50,50 @@ class (FunctorWithIndex i f, Semialign f) => SemialignWithIndex i f | f -> i whe
 -------------------------------------------------------------------------------
 
 instance SemialignWithIndex () Maybe
+instance SemizipWithIndex () Maybe
 instance SemialignWithIndex Int []
+instance SemizipWithIndex Int []
 instance SemialignWithIndex Int ZipList
+instance SemizipWithIndex Int ZipList
 
 -------------------------------------------------------------------------------
 -- transformers
 -------------------------------------------------------------------------------
 
 instance SemialignWithIndex () Identity
+instance SemizipWithIndex () Identity
 
 instance (SemialignWithIndex i f, SemialignWithIndex j g) => SemialignWithIndex (Either i j) (Product f g) where
-    izipWith f (Pair fa ga) (Pair fb gb) = Pair fc gc where
-        fc = izipWith (f . Left) fa fb
-        gc = izipWith (f . Right) ga gb
-
     ialignWith f (Pair fa ga) (Pair fb gb) = Pair fc gc where
         fc = ialignWith (f . Left) fa fb
         gc = ialignWith (f . Right) ga gb
 
-instance (SemialignWithIndex i f, SemialignWithIndex j g) => SemialignWithIndex (i, j) (Compose f g) where
-    izipWith f (Compose fga) (Compose fgb) = Compose fgc where
-        fgc = izipWith (\i -> izipWith (\j -> f (i, j))) fga fgb
+instance (SemizipWithIndex i f, SemizipWithIndex j g) => SemizipWithIndex (Either i j) (Product f g) where
+    izipWith f (Pair fa ga) (Pair fb gb) = Pair fc gc where
+        fc = izipWith (f . Left) fa fb
+        gc = izipWith (f . Right) ga gb
 
+instance (SemialignWithIndex i f, SemialignWithIndex j g) => SemialignWithIndex (i, j) (Compose f g) where
     ialignWith f (Compose fga) (Compose fgb) = Compose $ ialignWith g fga fgb where
         g i (This ga)     = imap (\j -> f (i, j) . This) ga
         g i (That gb)     = imap (\j -> f (i, j) . That) gb
         g i (These ga gb) = ialignWith (\j -> f (i, j)) ga gb
+
+instance (SemizipWithIndex i f, SemizipWithIndex j g) => SemizipWithIndex (i, j) (Compose f g) where
+    izipWith f (Compose fga) (Compose fgb) = Compose fgc where
+        fgc = izipWith (\i -> izipWith (\j -> f (i, j))) fga fgb
 
 -------------------------------------------------------------------------------
 -- containers
 -------------------------------------------------------------------------------
 
 instance SemialignWithIndex Int Seq
-instance SemialignWithIndex Int IntMap where
+instance SemizipWithIndex Int Seq
+instance SemialignWithIndex Int IntMap
+instance SemizipWithIndex Int IntMap where
     izipWith = IntMap.intersectionWithKey
 instance Ord k => SemialignWithIndex k (Map k) where
+instance Ord k => SemizipWithIndex k (Map k) where
     izipWith = Map.intersectionWithKey
 
 -------------------------------------------------------------------------------
@@ -88,6 +101,7 @@ instance Ord k => SemialignWithIndex k (Map k) where
 -------------------------------------------------------------------------------
 
 instance (Eq k, Hashable k) => SemialignWithIndex k (HashMap k) where
+instance (Eq k, Hashable k) => SemizipWithIndex k (HashMap k) where
     izipWith = HM.intersectionWithKey
 
 -------------------------------------------------------------------------------
@@ -95,4 +109,5 @@ instance (Eq k, Hashable k) => SemialignWithIndex k (HashMap k) where
 -------------------------------------------------------------------------------
 
 instance SemialignWithIndex Int Vector where
+instance SemizipWithIndex Int Vector where
     izipWith = V.izipWith

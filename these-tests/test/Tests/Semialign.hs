@@ -127,7 +127,7 @@ semialignLaws p = testGroup name $ case p of
 {-# NOINLINE unalignLaws' #-}
 
 semialignLaws'
-    :: forall f proxy. (Semialign f, Foldable f
+    :: forall f proxy. (Semizip f, Foldable f
        , Eq (f A), Show (f A), Arbitrary (f A)
        , Eq (f B), Show (f B), Arbitrary (f B)
        , Eq (f C), Show (f C), Arbitrary (f C)
