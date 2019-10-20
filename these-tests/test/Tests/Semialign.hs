@@ -6,7 +6,7 @@
 module Tests.Semialign (alignProps, semialignLaws) where
 
 import Prelude ()
-import Prelude.Compat hiding (unzip, zip, zipWith)
+import Prelude.Compat hiding (repeat, unzip, zip, zipWith)
 
 -- import qualified Prelude.Compat as Prelude
 
@@ -86,9 +86,9 @@ data CSemialign f where
 --    CSemialign :: Semialign f                 => CSemialign f
     CAlign     :: Align f                     => CSemialign f
     CUnalign   :: (Align f, Unalign f)        => CSemialign f
-    CZip       :: Zip f                       => CSemialign f
-    CAll       :: (Align f, Zip f)            => CSemialign f
-    CUnAll     :: (Align f, Zip f, Unalign f) => CSemialign f
+    CZip       :: Repeat f                       => CSemialign f
+    CAll       :: (Align f, Repeat f)            => CSemialign f
+    CUnAll     :: (Align f, Repeat f, Unalign f) => CSemialign f
 
 semialignLaws
     :: forall (f :: * -> *).
@@ -127,7 +127,7 @@ semialignLaws p = testGroup name $ case p of
 {-# NOINLINE unalignLaws' #-}
 
 semialignLaws'
-    :: forall f proxy. (Semizip f, Foldable f
+    :: forall f proxy. (Zip f, Foldable f
        , Eq (f A), Show (f A), Arbitrary (f A)
        , Eq (f B), Show (f B), Arbitrary (f B)
        , Eq (f C), Show (f C), Arbitrary (f C)
@@ -286,7 +286,7 @@ alignLaws' _ = testGroup "Align"
     leftIdentityProp xs = ((nil :: f A) `align` xs) === fmap That xs
 
 zipLaws'
-    :: forall f proxy. (Zip f
+    :: forall f proxy. (Repeat f
        , Eq (f A), Show (f A), Arbitrary (f A)
        )
     => proxy f -> TestTree
@@ -296,10 +296,10 @@ zipLaws' _ = testGroup "Zip"
     ]
   where
     zipRightIdentityProp :: f A -> B -> Property
-    zipRightIdentityProp xs y = (fst <$> zip xs (full y)) === xs
+    zipRightIdentityProp xs y = (fst <$> zip xs (repeat y)) === xs
 
     zipLeftIdentityProp :: B -> f A -> Property
-    zipLeftIdentityProp x ys = (snd <$> zip (full x) ys) === ys
+    zipLeftIdentityProp x ys = (snd <$> zip (repeat x) ys) === ys
 
 unalignLaws'
     :: forall f proxy. (Unalign f

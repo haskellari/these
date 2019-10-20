@@ -1,3 +1,28 @@
+# 1.1
+
+- Split `Semialign` into `Semialign` and `Zip`.
+- Rename old `Zip` into `Repeat`
+- i.e. current main hierarchy is
+
+```haskell
+instance Functor f => Semialign f where
+    alignWith :: (These a b -> c) -> f a -> f b -> f c
+
+instance Semialign f => Align f where
+    nil :: f a
+
+instance Semialign f => Zip f where
+    zipWith :: (a -> b -> c) -> f a -> f b -> f c
+
+instance Zip f => Repeat f where
+    repeat :: a -> f a
+```
+
+This biased choice, that `Semialign` is a super-class of `Zip` is motivated by the fact that
+- There's no `Semialign`-like class anywhere else, yet
+- `Zip` and `Repeat` are `Apply` (from `semigroupoids`) and `Applicative` with slightly more laws. I
+  If you need only `Repeat` class, and your type isn't `Aling`able, maybe using `Applicative` is enough?
+
 # 1
 
 Split out of `these` package.

@@ -5,15 +5,15 @@
 --
 module Data.Zip (
     Semialign (..),
-    Semizip (..),
     Zip (..),
+    Repeat (..),
     Unzip (..),
     unzipDefault,
     Zippy (..),
     ) where
 
 import Prelude ()
-import Prelude.Compat hiding (zipWith)
+import Prelude.Compat hiding (repeat, zipWith)
 
 import Data.Semigroup (Semigroup (..))
 
@@ -33,8 +33,8 @@ newtype Zippy f a = Zippy { getZippy :: f a }
 instance (Zip f, Semigroup a) => Semigroup (Zippy f a) where
     Zippy x <> Zippy y = Zippy $ zipWith (<>) x y
 
-instance (Zip f, Monoid a) => Monoid (Zippy f a) where
-    mempty                      = Zippy $ full mempty
+instance (Repeat f, Monoid a) => Monoid (Zippy f a) where
+    mempty                      = Zippy $ repeat mempty
     mappend (Zippy x) (Zippy y) = Zippy $ zipWith mappend x y
 
 #ifdef MIN_VERSION_semigroupoids
@@ -42,8 +42,8 @@ instance Zip f => Apply (Zippy f) where
     Zippy f <.> Zippy x = Zippy $ zipWith ($) f x
 #endif
 
-instance Zip f => Applicative (Zippy f) where
-    pure  = Zippy . full
+instance Repeat f => Applicative (Zippy f) where
+    pure  = Zippy . repeat
 #ifdef MIN_VERSION_semigroupoids
     (<*>) = (<.>)
 #else
