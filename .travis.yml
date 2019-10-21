@@ -146,18 +146,22 @@ install:
   - |
     echo "packages: these" >> cabal.project
     echo "packages: these-lens" >> cabal.project
+    if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then echo "packages: these-optics" >> cabal.project ; fi
     echo "packages: semialign" >> cabal.project
     echo "packages: semialign-indexed" >> cabal.project
+    if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then echo "packages: semialign-optics" >> cabal.project ; fi
     echo "packages: monad-chronicle" >> cabal.project
     echo "packages: these-tests" >> cabal.project
   - |
-  - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|these|these-lens|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
+  - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|semialign-optics|these|these-lens|these-optics|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
   - if [ -f "these/configure.ac" ]; then (cd "these" && autoreconf -i); fi
   - if [ -f "these-lens/configure.ac" ]; then (cd "these-lens" && autoreconf -i); fi
+  - if [ -f "these-optics/configure.ac" ]; then (cd "these-optics" && autoreconf -i); fi
   - if [ -f "semialign/configure.ac" ]; then (cd "semialign" && autoreconf -i); fi
   - if [ -f "semialign-indexed/configure.ac" ]; then (cd "semialign-indexed" && autoreconf -i); fi
+  - if [ -f "semialign-optics/configure.ac" ]; then (cd "semialign-optics" && autoreconf -i); fi
   - if [ -f "monad-chronicle/configure.ac" ]; then (cd "monad-chronicle" && autoreconf -i); fi
   - if [ -f "these-tests/configure.ac" ]; then (cd "these-tests" && autoreconf -i); fi
   - ${CABAL} v2-freeze $WITHCOMPILER ${TEST} ${BENCH} | color_cabal_output
@@ -176,8 +180,10 @@ script:
   - find . -maxdepth 1 -type f -name '*.tar.gz' -exec rm       '{}' \;
   - PKGDIR_these="$(find . -maxdepth 1 -type d -regex '.*/these-[0-9.]*')"
   - PKGDIR_these_lens="$(find . -maxdepth 1 -type d -regex '.*/these-lens-[0-9.]*')"
+  - PKGDIR_these_optics="$(find . -maxdepth 1 -type d -regex '.*/these-optics-[0-9.]*')"
   - PKGDIR_semialign="$(find . -maxdepth 1 -type d -regex '.*/semialign-[0-9.]*')"
   - PKGDIR_semialign_indexed="$(find . -maxdepth 1 -type d -regex '.*/semialign-indexed-[0-9.]*')"
+  - PKGDIR_semialign_optics="$(find . -maxdepth 1 -type d -regex '.*/semialign-optics-[0-9.]*')"
   - PKGDIR_monad_chronicle="$(find . -maxdepth 1 -type d -regex '.*/monad-chronicle-[0-9.]*')"
   - PKGDIR_these_tests="$(find . -maxdepth 1 -type d -regex '.*/these-tests-[0-9.]*')"
   # Generate cabal.project
@@ -186,12 +192,14 @@ script:
   - |
     echo "packages: ${PKGDIR_these}" >> cabal.project
     echo "packages: ${PKGDIR_these_lens}" >> cabal.project
+    if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then echo "packages: ${PKGDIR_these_optics}" >> cabal.project ; fi
     echo "packages: ${PKGDIR_semialign}" >> cabal.project
     echo "packages: ${PKGDIR_semialign_indexed}" >> cabal.project
+    if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then echo "packages: ${PKGDIR_semialign_optics}" >> cabal.project ; fi
     echo "packages: ${PKGDIR_monad_chronicle}" >> cabal.project
     echo "packages: ${PKGDIR_these_tests}" >> cabal.project
   - |
-  - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|these|these-lens|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
+  - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|semialign-optics|these|these-lens|these-optics|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
   - |
@@ -199,8 +207,10 @@ script:
       case $1 in
         these) echo ${PKGDIR_these} ;;
         these-lens) echo ${PKGDIR_these_lens} ;;
+        these-optics) echo ${PKGDIR_these_optics} ;;
         semialign) echo ${PKGDIR_semialign} ;;
         semialign-indexed) echo ${PKGDIR_semialign_indexed} ;;
+        semialign-optics) echo ${PKGDIR_semialign_optics} ;;
         monad-chronicle) echo ${PKGDIR_monad_chronicle} ;;
         these-tests) echo ${PKGDIR_these_tests} ;;
       esac
@@ -217,8 +227,10 @@ script:
   # cabal check...
   - (cd ${PKGDIR_these} && ${CABAL} -vnormal check)
   - (cd ${PKGDIR_these_lens} && ${CABAL} -vnormal check)
+  - if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_these_optics} && ${CABAL} -vnormal check) ; fi
   - (cd ${PKGDIR_semialign} && ${CABAL} -vnormal check)
   - (cd ${PKGDIR_semialign_indexed} && ${CABAL} -vnormal check)
+  - if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_semialign_optics} && ${CABAL} -vnormal check) ; fi
   - (cd ${PKGDIR_monad_chronicle} && ${CABAL} -vnormal check)
   - (cd ${PKGDIR_these_tests} && ${CABAL} -vnormal check)
   # haddock...

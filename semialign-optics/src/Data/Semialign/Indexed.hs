@@ -10,7 +10,7 @@ module Data.Semialign.Indexed (
 
 import Prelude hiding (repeat, zip, zipWith)
 
-import Control.Lens (FunctorWithIndex (imap))
+import Optics.Indexed (FunctorWithIndex (imap))
 
 import Data.Align
 import Data.These
