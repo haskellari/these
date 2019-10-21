@@ -4,7 +4,7 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.5.20190916
+# version: 0.5.20191020
 #
 language: c
 dist: xenial
@@ -49,8 +49,6 @@ matrix:
       addons: {"apt":{"sources":["hvr-ghc"],"packages":["ghc-7.6.3","cabal-install-3.0"]}}
     - compiler: ghc-7.4.2
       addons: {"apt":{"sources":["hvr-ghc"],"packages":["ghc-7.4.2","cabal-install-3.0"]}}
-  allow_failures:
-    - compiler: ghc-8.8.1
 before_install:
   - |
     if echo $CC | grep -q ghcjs; then
@@ -110,35 +108,31 @@ install:
   - TEST=--enable-tests
   - BENCH=--enable-benchmarks
   - HEADHACKAGE=false
-  - if ! $GHCJS && [ $HCNUMVER -ge 80800 ] ; then HEADHACKAGE=true ; fi
   - rm -f $CABALHOME/config
   - |
-    echo "verbose: normal +nowrap +markoutput"          >> $CABALHOME/config
-    echo "remote-build-reporting: anonymous"            >> $CABALHOME/config
-    echo "write-ghc-environment-files: always"          >> $CABALHOME/config
-    echo "remote-repo-cache: $CABALHOME/packages"       >> $CABALHOME/config
-    echo "logs-dir:          $CABALHOME/logs"           >> $CABALHOME/config
-    echo "world-file:        $CABALHOME/world"          >> $CABALHOME/config
-    echo "extra-prog-path:   $CABALHOME/bin"            >> $CABALHOME/config
-    echo "symlink-bindir:    $CABALHOME/bin"            >> $CABALHOME/config
-    echo "installdir:        $CABALHOME/bin"            >> $CABALHOME/config
-    echo "build-summary:     $CABALHOME/logs/build.log" >> $CABALHOME/config
-    echo "store-dir:         $CABALHOME/store"          >> $CABALHOME/config
-    echo "install-dirs user"                            >> $CABALHOME/config
-    echo "  prefix: $CABALHOME"                         >> $CABALHOME/config
-    echo "repository hackage.haskell.org"               >> $CABALHOME/config
-    echo "  url: http://hackage.haskell.org/"           >> $CABALHOME/config
-  - |
-    if $HEADHACKAGE; then
-    echo "allow-newer: $($HCPKG list --simple-output | sed -E 's/([a-zA-Z-]+)-[0-9.]+/*:\1/g')" >> $CABALHOME/config
-    echo "repository head.hackage.ghc.haskell.org"                                        >> $CABALHOME/config
-    echo "   url: https://ghc.gitlab.haskell.org/head.hackage/"                           >> $CABALHOME/config
-    echo "   secure: True"                                                                >> $CABALHOME/config
-    echo "   root-keys: 7541f32a4ccca4f97aea3b22f5e593ba2c0267546016b992dfadcd2fe944e55d" >> $CABALHOME/config
-    echo "              26021a13b401500c8eb2761ca95c61f2d625bfef951b939a8124ed12ecf07329" >> $CABALHOME/config
-    echo "              f76d08be13e9a61a377a85e2fb63f4c5435d40f8feb3e12eb05905edb8cdea89" >> $CABALHOME/config
-    echo "   key-threshold: 3"                                                            >> $CABALHOME/config
-    fi
+    echo "verbose: normal +nowrap +markoutput"                                  >> $CABALHOME/config
+    echo "remote-build-reporting: anonymous"                                    >> $CABALHOME/config
+    echo "write-ghc-environment-files: always"                                  >> $CABALHOME/config
+    echo "remote-repo-cache: $CABALHOME/packages"                               >> $CABALHOME/config
+    echo "logs-dir:          $CABALHOME/logs"                                   >> $CABALHOME/config
+    echo "world-file:        $CABALHOME/world"                                  >> $CABALHOME/config
+    echo "extra-prog-path:   $CABALHOME/bin"                                    >> $CABALHOME/config
+    echo "symlink-bindir:    $CABALHOME/bin"                                    >> $CABALHOME/config
+    echo "installdir:        $CABALHOME/bin"                                    >> $CABALHOME/config
+    echo "build-summary:     $CABALHOME/logs/build.log"                         >> $CABALHOME/config
+    echo "store-dir:         $CABALHOME/store"                                  >> $CABALHOME/config
+    echo "install-dirs user"                                                    >> $CABALHOME/config
+    echo "  prefix: $CABALHOME"                                                 >> $CABALHOME/config
+    echo "repository hackage.haskell.org"                                       >> $CABALHOME/config
+    echo "  url: http://hackage.haskell.org/"                                   >> $CABALHOME/config
+    echo "  secure: True"                                                       >> $CABALHOME/config
+    echo "  key-threshold: 3"                                                   >> $CABALHOME/config
+    echo "  root-keys:"                                                         >> $CABALHOME/config
+    echo "    fe331502606802feac15e514d9b9ea83fee8b6ffef71335479a2e68d84adc6b0" >> $CABALHOME/config
+    echo "    1ea9ba32c526d1cc91ab5e5bd364ec5e9e8cb67179a471872f6e26f0ae773d42" >> $CABALHOME/config
+    echo "    2c6c3627bd6c982990239487f1abd02e08a02e6cf16edb105a8012d444d870c3" >> $CABALHOME/config
+    echo "    0a5c7ea47cd1b15f01f5f51a33adda7e655bc0f0b0615baa8e271f4c3351e21d" >> $CABALHOME/config
+    echo "    51f0161b906011b52c6613376b1ae937670da69322113a246a09f807c62f6921" >> $CABALHOME/config
   - |
     echo "program-default-options"                >> $CABALHOME/config
     echo "  ghc-options: $GHCJOBS +RTS -M6G -RTS" >> $CABALHOME/config
@@ -152,18 +146,16 @@ install:
   - |
     echo "packages: these" >> cabal.project
     echo "packages: these-lens" >> cabal.project
-    if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then echo "packages: these-optics" >> cabal.project ; fi
     echo "packages: semialign" >> cabal.project
     echo "packages: semialign-indexed" >> cabal.project
     echo "packages: monad-chronicle" >> cabal.project
     echo "packages: these-tests" >> cabal.project
   - |
-  - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|these|these-lens|these-optics|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
+  - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|these|these-lens|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
   - if [ -f "these/configure.ac" ]; then (cd "these" && autoreconf -i); fi
   - if [ -f "these-lens/configure.ac" ]; then (cd "these-lens" && autoreconf -i); fi
-  - if [ -f "these-optics/configure.ac" ]; then (cd "these-optics" && autoreconf -i); fi
   - if [ -f "semialign/configure.ac" ]; then (cd "semialign" && autoreconf -i); fi
   - if [ -f "semialign-indexed/configure.ac" ]; then (cd "semialign-indexed" && autoreconf -i); fi
   - if [ -f "monad-chronicle/configure.ac" ]; then (cd "monad-chronicle" && autoreconf -i); fi
@@ -184,7 +176,6 @@ script:
   - find . -maxdepth 1 -type f -name '*.tar.gz' -exec rm       '{}' \;
   - PKGDIR_these="$(find . -maxdepth 1 -type d -regex '.*/these-[0-9.]*')"
   - PKGDIR_these_lens="$(find . -maxdepth 1 -type d -regex '.*/these-lens-[0-9.]*')"
-  - PKGDIR_these_optics="$(find . -maxdepth 1 -type d -regex '.*/these-optics-[0-9.]*')"
   - PKGDIR_semialign="$(find . -maxdepth 1 -type d -regex '.*/semialign-[0-9.]*')"
   - PKGDIR_semialign_indexed="$(find . -maxdepth 1 -type d -regex '.*/semialign-indexed-[0-9.]*')"
   - PKGDIR_monad_chronicle="$(find . -maxdepth 1 -type d -regex '.*/monad-chronicle-[0-9.]*')"
@@ -195,13 +186,12 @@ script:
   - |
     echo "packages: ${PKGDIR_these}" >> cabal.project
     echo "packages: ${PKGDIR_these_lens}" >> cabal.project
-    if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then echo "packages: ${PKGDIR_these_optics}" >> cabal.project ; fi
     echo "packages: ${PKGDIR_semialign}" >> cabal.project
     echo "packages: ${PKGDIR_semialign_indexed}" >> cabal.project
     echo "packages: ${PKGDIR_monad_chronicle}" >> cabal.project
     echo "packages: ${PKGDIR_these_tests}" >> cabal.project
   - |
-  - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|these|these-lens|these-optics|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
+  - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(monad-chronicle|semialign|semialign-indexed|these|these-lens|these-tests)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
   - cat cabal.project || true
   - cat cabal.project.local || true
   - |
@@ -209,7 +199,6 @@ script:
       case $1 in
         these) echo ${PKGDIR_these} ;;
         these-lens) echo ${PKGDIR_these_lens} ;;
-        these-optics) echo ${PKGDIR_these_optics} ;;
         semialign) echo ${PKGDIR_semialign} ;;
         semialign-indexed) echo ${PKGDIR_semialign_indexed} ;;
         monad-chronicle) echo ${PKGDIR_monad_chronicle} ;;
@@ -228,7 +217,6 @@ script:
   # cabal check...
   - (cd ${PKGDIR_these} && ${CABAL} -vnormal check)
   - (cd ${PKGDIR_these_lens} && ${CABAL} -vnormal check)
-  - if $GHCJS || ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_these_optics} && ${CABAL} -vnormal check) ; fi
   - (cd ${PKGDIR_semialign} && ${CABAL} -vnormal check)
   - (cd ${PKGDIR_semialign_indexed} && ${CABAL} -vnormal check)
   - (cd ${PKGDIR_monad_chronicle} && ${CABAL} -vnormal check)
@@ -249,5 +237,5 @@ script:
   # Constraint set no-QuickCheck
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks --constraint='these -QuickCheck' all | color_cabal_output
 
-# REGENDATA ["--config=cabal.haskell-ci","cabal.project"]
+# REGENDATA ("0.5.20191020",["--config=cabal.haskell-ci","cabal.project"])
 # EOF

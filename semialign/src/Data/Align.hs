@@ -9,7 +9,7 @@ module Data.Align (
     Align (..),
     Unalign (..),
     -- * Specialized aligns
-    malign, salign, padZip, padZipWith,
+    salign, padZip, padZipWith,
     lpadZip, lpadZipWith,
     rpadZip, rpadZipWith,
     alignVectorWith,
