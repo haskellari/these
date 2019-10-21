@@ -17,6 +17,10 @@ description:
   @
   class (FunctorWithIndex i f, Semialign f) => SemialignWithIndex i f | f -> i where
   \    ialignWith :: (i -> These a b -> c) -> f a -> f b -> f c
+  @
+  .
+  @
+  class (SemialignWithIndex i f, Zip f) => ZipWithIndex i f | f -> i where
   \    izipWith   :: (i -> a -> b -> c)    -> f a -> f b -> f c
   @
   .
