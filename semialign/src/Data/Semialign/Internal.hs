@@ -1,5 +1,7 @@
-{-# LANGUAGE CPP         #-}
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE CPP                        #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE Trustworthy                #-}
 module Data.Semialign.Internal where
 
 import Prelude ()
@@ -17,7 +19,7 @@ import Data.HashMap.Strict               (HashMap)
 import Data.List.NonEmpty                (NonEmpty (..))
 import Data.Maybe                        (catMaybes)
 import Data.Proxy                        (Proxy (..))
-import Data.Semigroup                    (Semigroup (..))
+import Data.Semigroup                    (Option (..), Semigroup (..))
 import Data.Sequence                     (Seq)
 import Data.Tagged                       (Tagged (..))
 import Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
@@ -418,6 +420,13 @@ instance Repeat NonEmpty where
 
 instance Unzip NonEmpty where
     unzip = NE.unzip
+
+deriving instance Semialign Option
+deriving instance Align Option
+deriving instance Unalign Option
+deriving instance Zip Option
+deriving instance Repeat Option
+deriving instance Unzip Option
 
 -------------------------------------------------------------------------------
 -- containers: ListLike

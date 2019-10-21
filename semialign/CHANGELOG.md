@@ -4,6 +4,7 @@
 - Rename old `Zip` into `Repeat`
 - i.e. current main hierarchy is
 - Remove `malign`, use `salign` or `alignWith mappend` where `Monoid` is necessary.
+- Add `Option` instances
 
 ```haskell
 instance Functor f => Semialign f where
