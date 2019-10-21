@@ -722,13 +722,6 @@ instance Unzip Proxy where
 -- combinators
 -------------------------------------------------------------------------------
 
--- | Align two structures and combine with 'mappend'.
---
--- See `salign`. `malign` will be deprecated after `Semigroup` becomes a super
--- class of `Monoid`
-malign :: (Semialign f, Monoid a) => f a -> f a -> f a
-malign = alignWith (mergeThese mappend)
-
 -- | Align two structures and combine with '<>'.
 salign :: (Semialign f, Semigroup a) => f a -> f a -> f a
 salign = alignWith (mergeThese (<>))

@@ -12,7 +12,7 @@ module Data.Semialign (
     Unzip (..),
     unzipDefault,
     -- * Specialized aligns
-    malign, salign, padZip, padZipWith,
+    salign, padZip, padZipWith,
     lpadZip, lpadZipWith,
     rpadZip, rpadZipWith,
     alignVectorWith,
