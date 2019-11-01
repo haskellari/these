@@ -3,6 +3,9 @@
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
+-- Const instances
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Tests.Semialign (alignProps, semialignLaws) where
 
 import Prelude ()
@@ -10,7 +13,7 @@ import Prelude.Compat hiding (repeat, unzip, zip, zipWith)
 
 -- import qualified Prelude.Compat as Prelude
 
-import Control.Applicative           (ZipList (..))
+import Control.Applicative           (Const (..), ZipList (..))
 import Control.Lens                  (folded, toListOf)
 import Control.Monad                 (join)
 import Control.Monad.Trans.Instances ()
@@ -36,6 +39,12 @@ import Test.QuickCheck.Instances ()
 import Test.QuickCheck.Poly          (A, B, C)
 import Test.Tasty                    (TestTree, testGroup)
 import Test.Tasty.QuickCheck         (testProperty)
+
+#ifdef MIN_VERSION_lattice
+import Algebra.Lattice
+       (BoundedJoinSemiLattice (..), BoundedMeetSemiLattice (..), Lattice (..))
+import Algebra.Lattice.M2            (M2)
+#endif
 
 import qualified Data.Tree   as T
 import qualified Data.Vector as V
@@ -76,7 +85,35 @@ alignProps = testGroup "Align"
     , semialignLaws  (CZip     :: CSemialign Identity)
     , semialignLaws  (CUnAll   :: CSemialign Proxy)
     , semialignLaws  (CZip     :: CSemialign (Tagged Char))
+#ifdef MIN_VERSION_lattice
+    -- note: with e.g. N5 (which isn't distributive lattice) distributivity laws fail!
+    , semialignLaws  (CZip     :: CSemialign (Const M2))
+#endif
     ]
+
+-------------------------------------------------------------------------------
+-- Const
+-------------------------------------------------------------------------------
+
+#ifdef MIN_VERSION_lattice
+instance Lattice a => Semialign (Const a) where
+    alignWith _ (Const a) (Const b) = Const (a \/ b)
+
+-- This is valid when @a@ is distributive lattice
+-- otherwise distributivity laws don't hold.
+instance Lattice a => Zip (Const a) where
+    zipWith _ (Const a) (Const b) = Const (a /\ b)
+
+-- Note: idempotency of lattice makes this valid!
+instance Lattice a => Unzip (Const a) where
+    unzip (Const a) = (Const a, Const a)
+
+instance BoundedJoinSemiLattice a => Align (Const a) where
+    nil = Const bottom
+
+instance BoundedMeetSemiLattice a => Repeat (Const a) where
+    repeat _ = Const top
+#endif
 
 -------------------------------------------------------------------------------
 -- Align laws
