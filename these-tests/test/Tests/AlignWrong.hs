@@ -67,18 +67,6 @@ instance Ord k => Zip (WeirdMap k) where
         zipWith (\(k, a) (_, b) -> (k, f a b)) (Map.toList x) (Map.toList y)
 
 -------------------------------------------------------------------------------
--- Const is invalid Align with Monoid, we need Idempotent monoid!
--------------------------------------------------------------------------------
-
-{-
-instance Monoid a => Align (Const a) where
-    nil = Const mempty
-
-instance Monoid a => Semialign (Const a) where
-    align (Const a) (Const b) = Const (mappend a b)
--}
-
--------------------------------------------------------------------------------
 -- R does satisfy Align laws, though is weird
 -- https://github.com/isomorphism/these/issues/96
 -------------------------------------------------------------------------------
