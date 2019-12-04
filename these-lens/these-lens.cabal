@@ -45,4 +45,4 @@ library
   -- other dependencies
   build-depends:
       base-compat  >=0.10.5 && <0.12
-    , lens         >=4.17.1 && <4.19
+    , lens         >=4.17 && <4.19
