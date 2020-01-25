@@ -267,12 +267,12 @@ class Semialign f => Unalign f where
 -- but the right hand side is @[('That' 0, 'These' 0 0)]@.
 --
 class Semialign f => Zip f where
-    -- | Combines to structures by taking the intersection of their shapes
+    -- | Combines two structures by taking the intersection of their shapes
     -- and using pair to hold the elements.
     zip :: f a -> f b -> f (a, b)
     zip = zipWith (,)
     --
-    -- | Combines to structures by taking the intersection of their shapes
+    -- | Combines two structures by taking the intersection of their shapes
     -- and combining the elements with the given function.
     zipWith :: (a -> b -> c) -> f a -> f b -> f c
     zipWith f a b = uncurry f <$> zip a b
