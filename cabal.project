@@ -1,9 +1,9 @@
 packages: these
 packages: these-lens
-packages: these-optics
+-- packages: these-optics
 packages: semialign
 packages: semialign-indexed
-packages: semialign-optics
+-- packages: semialign-optics
 packages: monad-chronicle
 packages: these-tests
 
