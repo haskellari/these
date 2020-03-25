@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               these-lens
 version:            1
-x-revision:         1
+x-revision:         2
 synopsis:           Lenses for These
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
@@ -21,7 +21,8 @@ tested-with:
      || ==8.2.2
      || ==8.4.4
      || ==8.6.5
-     || ==8.8.1
+     || ==8.8.3
+     || ==8.10.1
   , GHCJS ==8.4
 
 source-repository head
@@ -39,10 +40,10 @@ library
   exposed-modules:  Data.These.Lens
 
   -- ghc boot libs
-  build-depends:    base >=4.5.1.0 && <4.14
+  build-depends:    base >=4.5.1.0 && <4.15
   build-depends:    these >=1 && <1.1
 
   -- other dependencies
   build-depends:
       base-compat  >=0.10.5 && <0.12
-    , lens         >=4.17.1 && <4.19
+    , lens         >=4.17.1 && <4.20
