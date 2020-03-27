@@ -11,6 +11,7 @@ steps:
   - trailing_whitespace: {}
 columns: 80
 language_extensions:
+  - DataKinds
   - EmptyCase
   - ExplicitForAll
   - FlexibleContexts

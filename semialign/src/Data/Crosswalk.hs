@@ -82,8 +82,8 @@ instance Crosswalk ((,) a) where
 -- instances for them
 
 instance (Crosswalk f, Crosswalk g) => Crosswalk (Compose f g) where
-    crosswalk f = id
-        . fmap Compose -- can't coerce: maybe the Align-able thing has role nominal
+    crosswalk f
+        = fmap Compose -- can't coerce: maybe the Align-able thing has role nominal
         . crosswalk (crosswalk f)
         . getCompose
 

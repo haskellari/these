@@ -7,6 +7,7 @@ Patches welcome!
     - Regenerate `.travis.yml` with `haskell-ci regenerate` (get the latest from [GitHub haskell-ci/haskell-ci](https://github.com/haskell-ci/haskell-ci))
 
 - Don't edit `CHANGELOG.md`, rather include a copyable entry in your pull request description. I often process pull requests in bulk, and everyone editing the `CHANGELOG.md` causes unnecessary conflicts.
+- For the same reason, do not edit `version` or `x-revision`
 
 - I use [`stylish-haskell`](https://github.com/jaspervdj/stylish-haskell) to format imports. I encourage you to use it too, when contributing.
 - General code style is 4 spaces, just look around how it looks, it's not so strict.
