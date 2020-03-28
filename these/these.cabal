@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               these
 version:            1.0.1
-x-revision:         2
+x-revision:         3
 synopsis:           An either-or-both data type.
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
@@ -120,4 +120,4 @@ library
     build-depends: semigroupoids >=5.3.2 && <5.4
 
   if flag(quickcheck)
-    build-depends: QuickCheck >=2.12.6.1 && <2.14
+    build-depends: QuickCheck >=2.12.6.1 && <2.15
