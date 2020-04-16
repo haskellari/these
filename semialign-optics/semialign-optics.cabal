@@ -1,6 +1,7 @@
 cabal-version:      >=1.10
 name:               semialign-optics
 version:            1.1
+x-revision:         1
 synopsis:           SemialignWithIndex, i.e. izipWith and ialignWith
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
@@ -27,7 +28,7 @@ description:
   See https://hackage.haskell.org/package/semialign-indexed for @lens@ variant.
 
 tested-with:
-    GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.3
+    GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.3 || ==8.10.1
   , GHCJS ==8.4
 
 source-repository head
@@ -46,7 +47,7 @@ library
 
   -- ghc boot libs
   build-depends:
-      base        >=4.5.1.0 && <4.14
+      base        >=4.5.1.0 && <4.15
     , containers  >=0.4.2.1 && <0.7
 
   build-depends:
@@ -56,7 +57,7 @@ library
   -- other dependencies
   build-depends:
       hashable              >=1.2.7.0  && <1.4
-    , optics-extra          >=0.2      && <0.3
+    , optics-extra          >=0.2      && <0.4
     , unordered-containers  >=0.2.8.0  && <0.3
     , vector                >=0.12.0.2 && <0.13
 
