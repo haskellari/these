@@ -17,13 +17,13 @@ import Data.Functor.Product              (Product (..))
 import Data.Hashable                     (Hashable (..))
 import Data.HashMap.Strict               (HashMap)
 import Data.List.NonEmpty                (NonEmpty (..))
-import Data.Maybe                        (catMaybes)
 import Data.Proxy                        (Proxy (..))
 import Data.Semigroup                    (Option (..), Semigroup (..))
 import Data.Sequence                     (Seq)
 import Data.Tagged                       (Tagged (..))
 import Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
 import Data.Vector.Generic               (Vector, empty, stream, unstream)
+import Data.Witherable.Class             (Filterable, catMaybes)
 
 import qualified Data.HashMap.Strict               as HM
 import qualified Data.List.NonEmpty                as NE
@@ -744,17 +744,17 @@ padZipWith :: (Semialign f) => (Maybe a -> Maybe b -> c) -> f a -> f b -> f c
 padZipWith f xs ys = uncurry f <$> padZip xs ys
 
 -- | Left-padded 'zipWith'.
-lpadZipWith :: (Maybe a -> b -> c) -> [a] -> [b] -> [c]
+lpadZipWith :: (Semialign f, Filterable f) => (Maybe a -> b -> c) -> f a -> f b -> f c
 lpadZipWith f xs ys = catMaybes $ padZipWith (\x y -> f x <$> y) xs ys
 
 -- | Left-padded 'zip'.
-lpadZip :: [a] -> [b] -> [(Maybe a, b)]
+lpadZip :: (Semialign f, Filterable f) => f a -> f b -> f (Maybe a, b)
 lpadZip = lpadZipWith (,)
 
 -- | Right-padded 'zipWith'.
-rpadZipWith :: (a -> Maybe b -> c) -> [a] -> [b] -> [c]
+rpadZipWith :: (Semialign f, Filterable f) => (a -> Maybe b -> c) -> f a -> f b -> f c
 rpadZipWith f xs ys = lpadZipWith (flip f) ys xs
 
 -- | Right-padded 'zip'.
-rpadZip :: [a] -> [b] -> [(a, Maybe b)]
+rpadZip :: (Semialign f, Filterable f) => f a -> f b -> f (a, Maybe b)
 rpadZip = rpadZipWith (,)
