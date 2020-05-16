@@ -8,7 +8,7 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.10
+# version: 0.10.1
 #
 version: ~> 1.0
 language: c
@@ -245,5 +245,5 @@ script:
   # Constraint set no-QuickCheck
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks --constraint='these -QuickCheck' all
 
-# REGENDATA ("0.10",["--config=cabal.haskell-ci","cabal.project"])
+# REGENDATA ("0.10.1",["--config=cabal.haskell-ci","cabal.project"])
 # EOF
