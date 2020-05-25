@@ -1,7 +1,6 @@
 cabal-version:      >=1.10
 name:               these
-version:            1.0.1
-x-revision:         4
+version:            1.1
 synopsis:           An either-or-both data type.
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
@@ -48,23 +47,8 @@ source-repository head
   type:     git
   location: https://github.com/isomorphism/these.git
 
-flag aeson
-  description: Build with aeson dependency
-  manual:      True
-  default:     True
-
 flag assoc
   description: Build with assoc dependency
-  manual:      True
-  default:     True
-
-flag semigroupoids
-  description: Build with semigroupoids dependency
-  manual:      True
-  default:     True
-
-flag QuickCheck
-  description: Build with QuickCheck dependency
   manual:      True
   default:     True
 
@@ -108,16 +92,5 @@ library
     if impl(ghc >=7.10)
       build-depends: transformers >=0.4.2.0
 
-  if flag(aeson)
-    build-depends:
-        aeson                 >=1.4.2.0 && <1.6
-      , unordered-containers  >=0.2.8.0 && <0.3
-
   if flag(assoc)
     build-depends: assoc >=1 && <1.1
-
-  if flag(semigroupoids)
-    build-depends: semigroupoids >=5.3.2 && <5.4
-
-  if flag(quickcheck)
-    build-depends: QuickCheck >=2.12.6.1 && <2.15
