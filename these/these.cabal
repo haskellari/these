@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               these
 version:            1.0.1
-x-revision:         3
+x-revision:         4
 synopsis:           An either-or-both data type.
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
@@ -110,7 +110,7 @@ library
 
   if flag(aeson)
     build-depends:
-        aeson                 >=1.4.2.0 && <1.5
+        aeson                 >=1.4.2.0 && <1.6
       , unordered-containers  >=0.2.8.0 && <0.3
 
   if flag(assoc)
