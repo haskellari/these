@@ -51,8 +51,7 @@ test-suite test
 
   -- library constrained dependencies
   build-depends:
-      aeson
-    , assoc
+      assoc
     , base
     , base-compat
     , bifunctors
@@ -75,7 +74,7 @@ test-suite test
 
   -- additional dependencies
   build-depends:
-      quickcheck-instances  >=0.3.15 && <0.4
+      quickcheck-instances  >=0.3.23 && <0.4
     , tasty                 >=1.2    && <1.4
     , tasty-quickcheck      >=0.10   && <0.11
     , transformers-compat   >=0.6.5  && <0.7

@@ -24,7 +24,6 @@ import Test.QuickCheck.Poly      (A, B, C)
 import Test.Tasty                (TestTree, testGroup)
 import Test.Tasty.QuickCheck     (testProperty)
 
-import qualified Data.Aeson  as Aeson
 import qualified Data.Binary as Binary
 import qualified Data.IntMap as IntMap
 import qualified Data.Map    as Map
@@ -44,7 +43,6 @@ theseProps = testGroup "These"
     , functorLaws (CMonad       :: CFunctor (These (NonEmpty Int)))
     , testProperty "Map value laziness property" mapStrictnessProp
     , testProperty "IntMap value laziness property" intmapStrictnessProp
-    , aesonProps
     , binaryProps
     , semigroupLaws  (CSemigroup :: CSemigroup (These String String))
     , testGroup "Extras"
@@ -277,22 +275,6 @@ monadLaws' _ = testGroup "Monad"
 
     fmapLiftM :: f A -> Fun A B -> Property
     fmapLiftM x (Fun _ f) = fmap f x === liftM f x
-
--------------------------------------------------------------------------------
--- aeson
--------------------------------------------------------------------------------
-
-aesonProps :: TestTree
-aesonProps = testGroup "aeson"
-    [ testProperty "roundtrip / direct" prop1
-    , testProperty "roundtrip / toJSON" prop2
-    ]
-  where
-    prop1 :: These Int String -> Property
-    prop1 x = Just x === Aeson.decode (Aeson.encode x)
-
-    prop2 :: These Int String -> Property
-    prop2 x = Just x === Aeson.decode (Aeson.encode $ Aeson.toJSON x)
 
 -------------------------------------------------------------------------------
 -- binary

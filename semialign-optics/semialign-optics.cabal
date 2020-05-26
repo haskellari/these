@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               semialign-optics
 version:            1.1
-x-revision:         1
+x-revision:         2
 synopsis:           SemialignWithIndex, i.e. izipWith and ialignWith
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
@@ -52,7 +52,7 @@ library
 
   build-depends:
       semialign  >=1.1 && <1.2
-    , these      >=1   && <1.1
+    , these      >=1   && <1.2
 
   -- other dependencies
   build-depends:

@@ -69,7 +69,7 @@ instance (Functor m) => Functor (ChronicleT c m) where
 
 #ifdef MIN_VERSION_semigroupoids
 instance (Semigroup c, Apply m) => Apply (ChronicleT c m) where
-    ChronicleT f <.> ChronicleT x = ChronicleT ((<.>) <$> f <.> x)
+    ChronicleT f <.> ChronicleT x = ChronicleT ((<*>) <$> f <.> x)
 
 instance (Semigroup c, Apply m, Monad m) => Bind (ChronicleT c m) where
     (>>-) = (>>=)

@@ -1,3 +1,9 @@
+# 1.1
+
+- Reverse dependency with `aeson`.
+  - The `QuickCheck` instances are moved into `quickcheck-instances`
+  - The `semigroupoids` instances are gone for now.
+
 # 1.0.1
 
 - add `partitionEithersNE :: NonEmpty (Either a b) -> These (NonEmpty a) (NonEmpty b)`
