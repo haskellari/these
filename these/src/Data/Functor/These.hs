@@ -1,35 +1,36 @@
 {-# LANGUAGE CPP                #-}
-{-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE Trustworthy        #-}
-
-#if MIN_VERSION_base(4,9,0)
-#define LIFTED_FUNCTOR_CLASSES 1
-#else
-#if MIN_VERSION_transformers(0,5,0)
-#define LIFTED_FUNCTOR_CLASSES 1
-#else
-#if MIN_VERSION_transformers_compat(0,5,0) && !MIN_VERSION_transformers(0,4,0)
-#define LIFTED_FUNCTOR_CLASSES 1
-#endif
-#endif
-#endif
-
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveFoldable     #-}
 {-# LANGUAGE DeriveFunctor      #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE DeriveTraversable  #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE Safe               #-}
+
+#if MIN_VERSION_base(4,9,0)
+#define LIFTED_FUNCTOR_CLASSES 1
+
+#elif MIN_VERSION_transformers(0,5,0)
+#define LIFTED_FUNCTOR_CLASSES 1
+
+#elif MIN_VERSION_transformers_compat(0,5,0) && !MIN_VERSION_transformers(0,4,0)
+#define LIFTED_FUNCTOR_CLASSES 1
+#endif
 module Data.Functor.These (
     These1 (..),
     ) where
 
-import Prelude ()
-import Prelude.Compat
-
+import Data.Foldable        (Foldable)
 import Data.Functor.Classes
        (Eq1 (..), Ord1 (..), Read1 (..), Show1 (..), compare1, eq1, readsPrec1,
        showsPrec1)
+import Data.Monoid          (Monoid (..))
+import Data.Traversable     (Traversable)
 import GHC.Generics         (Generic)
+import Prelude
+       (Bool (..), Eq (..), Functor, Ord (..), Ordering (..), Read (..),
+       Show (..), lex, readParen, return, seq, showChar, showParen, showString,
+       ($), (&&), (.))
 
 
 #if MIN_VERSION_deepseq(1,4,3)

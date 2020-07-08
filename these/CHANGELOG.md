@@ -1,3 +1,8 @@
+# 1.1.1
+
+- These doesn't depend on `base-compat` anymore
+- Add `NFData1/2`, `Hashable1/2`, `Eq1/2` ... instances
+
 # 1.1
 
 - Reverse dependency with `aeson`.
