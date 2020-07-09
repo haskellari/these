@@ -3,7 +3,17 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE Trustworthy        #-}
+{-# LANGUAGE Safe               #-}
+
+#if MIN_VERSION_base(4,9,0)
+#define LIFTED_FUNCTOR_CLASSES 1
+
+#elif MIN_VERSION_transformers(0,5,0)
+#define LIFTED_FUNCTOR_CLASSES 1
+
+#elif MIN_VERSION_transformers_compat(0,5,0) && !MIN_VERSION_transformers(0,4,0)
+#define LIFTED_FUNCTOR_CLASSES 1
+#endif
 module Data.These (
       These(..)
 
@@ -27,20 +37,30 @@ module Data.These (
     , undistrPairThese
     ) where
 
-import Prelude ()
-import Prelude.Compat
+import Control.Applicative  (Applicative (..), (<$>))
+import Control.DeepSeq      (NFData (..))
+import Data.Bifoldable      (Bifoldable (..))
+import Data.Bifunctor       (Bifunctor (..))
+import Data.Binary          (Binary (..))
+import Data.Bitraversable   (Bitraversable (..))
+import Data.Data            (Data, Typeable)
+import Data.Either          (partitionEithers)
+import Data.Foldable        (Foldable (..))
+import Data.Hashable        (Hashable (..))
+import Data.Hashable.Lifted (Hashable1 (..), Hashable2 (..))
+import Data.List.NonEmpty   (NonEmpty (..))
+import Data.Monoid          (Monoid (..))
+import Data.Semigroup       (Semigroup (..))
+import Data.Traversable     (Traversable (..))
+import GHC.Generics         (Generic)
+import Prelude
+       (Bool (..), Either (..), Eq (..), Functor (..), Int, Monad (..),
+       Ord (..), Ordering (..), Read (..), Show (..), fail, id, lex, readParen,
+       seq, showParen, showString, ($), (&&), (.))
 
-import Control.DeepSeq    (NFData (..))
-import Data.Bifoldable    (Bifoldable (..))
-import Data.Bifunctor     (Bifunctor (..))
-import Data.Binary        (Binary (..))
-import Data.Bitraversable (Bitraversable (..))
-import Data.Data          (Data, Typeable)
-import Data.Either        (partitionEithers)
-import Data.Hashable      (Hashable (..))
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.Semigroup     (Semigroup (..))
-import GHC.Generics       (Generic)
+#if MIN_VERSION_deepseq(1,4,3)
+import Control.DeepSeq (NFData1 (..), NFData2 (..))
+#endif
 
 #if __GLASGOW_HASKELL__ >= 706
 import GHC.Generics (Generic1)
@@ -49,6 +69,14 @@ import GHC.Generics (Generic1)
 #ifdef MIN_VERSION_assoc
 import Data.Bifunctor.Assoc (Assoc (..))
 import Data.Bifunctor.Swap  (Swap (..))
+#endif
+
+#ifdef LIFTED_FUNCTOR_CLASSES
+import Data.Functor.Classes
+       (Eq1 (..), Eq2 (..), Ord1 (..), Ord2 (..), Read1 (..), Read2 (..),
+       Show1 (..), Show2 (..))
+#else
+import Data.Functor.Classes (Eq1 (..), Ord1 (..), Read1 (..), Show1 (..))
 #endif
 
 -- $setup
@@ -250,7 +278,88 @@ instance (Semigroup a) => Monad (These a) where
                           This  b   -> This  (a <> b)
                           That    y -> These a y
                           These b y -> These (a <> b) y
-instance (Hashable a, Hashable b) => Hashable (These a b)
+
+-------------------------------------------------------------------------------
+-- Data.Functor.Classes
+-------------------------------------------------------------------------------
+
+#ifdef LIFTED_FUNCTOR_CLASSES
+-- | @since 1.1.1
+instance Eq2 These where
+  liftEq2 f _ (This a)    (This a')     = f a a'
+  liftEq2 _ g (That b)    (That b')     = g b b'
+  liftEq2 f g (These a b) (These a' b') = f a a' && g b b'
+  liftEq2 _ _ _           _             = False
+
+-- | @since 1.1.1
+instance Eq a => Eq1 (These a) where
+  liftEq = liftEq2 (==)
+
+-- | @since 1.1.1
+instance Ord2 These where
+  liftCompare2 f _ (This a)    (This a')     = f a a'
+  liftCompare2 _ _ (This _)    _             = LT
+  liftCompare2 _ _ _           (This _)      = GT
+  liftCompare2 _ g (That b)    (That b')     = g b b'
+  liftCompare2 _ _ (That _)    _             = LT
+  liftCompare2 _ _ _           (That _)      = GT
+  liftCompare2 f g (These a b) (These a' b') = f a a' `mappend` g b b'
+
+-- | @since 1.1.1
+instance Ord a => Ord1 (These a) where
+  liftCompare = liftCompare2 compare
+
+-- | @since 1.1.1
+instance Show a => Show1 (These a) where
+  liftShowsPrec = liftShowsPrec2 showsPrec showList
+
+-- | @since 1.1.1
+instance Show2 These where
+  liftShowsPrec2 sa _ _sb _ d (This a) = showParen (d > 10)
+    $ showString "This "
+    . sa 11 a
+  liftShowsPrec2 _sa _ sb _ d (That b) = showParen (d > 10)
+    $ showString "That "
+    . sb 11 b
+  liftShowsPrec2 sa _ sb _ d (These a b) = showParen (d > 10)
+    $ showString "These "
+    . sa 11 a
+    . showString " "
+    . sb 11 b
+
+-- | @since 1.1.1
+instance Read2 These where
+  liftReadsPrec2 ra _ rb _ d = readParen (d > 10) $ \s -> cons s
+    where
+      cons s0 = do
+        (ident, s1) <- lex s0
+        case ident of
+            "This" ->  do
+                (a, s2) <- ra 11 s1
+                return (This a, s2)
+            "That" ->  do
+                (b, s2) <- rb 11 s1
+                return (That b, s2)
+            "These" -> do
+                (a, s2) <- ra 11 s1
+                (b, s3) <- rb 11 s2
+                return (These a b, s3)
+            _ -> []
+
+-- | @since 1.1.1
+instance Read a => Read1 (These a) where
+  liftReadsPrec = liftReadsPrec2 readsPrec readList
+
+#else
+-- | @since 1.1.1
+instance Eq a   => Eq1   (These a) where eq1        = (==)
+-- | @since 1.1.1
+instance Ord a  => Ord1  (These a) where compare1   = compare
+-- | @since 1.1.1
+instance Show a => Show1 (These a) where showsPrec1 = showsPrec
+-- | @since 1.1.1
+instance Read a => Read1 (These a) where readsPrec1 = readsPrec
+#endif
 
 -------------------------------------------------------------------------------
 -- assoc
@@ -292,6 +401,20 @@ instance (NFData a, NFData b) => NFData (These a b) where
     rnf (That b)    = rnf b
     rnf (These a b) = rnf a `seq` rnf b
 
+#if MIN_VERSION_deepseq(1,4,3)
+-- | @since 1.1.1
+instance NFData a => NFData1 (These a) where
+    liftRnf _rnfB (This a)    = rnf a
+    liftRnf  rnfB (That b)    = rnfB b
+    liftRnf  rnfB (These a b) = rnf a `seq` rnfB b
+
+-- | @since 1.1.1
+instance NFData2 These where
+    liftRnf2  rnfA _rnfB (This a)    = rnfA a
+    liftRnf2 _rnfA  rnfB (That b)    = rnfB b
+    liftRnf2  rnfA  rnfB (These a b) = rnfA a `seq` rnfB b
+#endif
+
 -------------------------------------------------------------------------------
 -- binary
 -------------------------------------------------------------------------------
@@ -309,3 +432,33 @@ instance (Binary a, Binary b) => Binary (These a b) where
             1 -> That <$> get
             2 -> These <$> get <*> get
             _ -> fail "Invalid These index"
+
+-------------------------------------------------------------------------------
+-- hashable
+-------------------------------------------------------------------------------
+
+instance (Hashable a, Hashable b) => Hashable (These a b) where
+    hashWithSalt salt (This a) =
+        salt `hashWithSalt` (0 :: Int) `hashWithSalt` a
+    hashWithSalt salt (That b) =
+        salt `hashWithSalt` (1 :: Int) `hashWithSalt` b
+    hashWithSalt salt (These a b) =
+        salt `hashWithSalt` (2 :: Int) `hashWithSalt` a `hashWithSalt` b
+
+-- | @since 1.1.1
+instance Hashable a => Hashable1 (These a) where
+    liftHashWithSalt _hashB salt (This a) =
+        salt `hashWithSalt` (0 :: Int) `hashWithSalt` a
+    liftHashWithSalt  hashB salt (That b) =
+        (salt `hashWithSalt` (1 :: Int)) `hashB` b
+    liftHashWithSalt  hashB salt (These a b) =
+        (salt `hashWithSalt` (2 :: Int) `hashWithSalt` a) `hashB` b
+
+-- | @since 1.1.1
+instance Hashable2 These where
+    liftHashWithSalt2  hashA _hashB salt (This a) =
+        (salt `hashWithSalt` (0 :: Int)) `hashA` a
+    liftHashWithSalt2 _hashA  hashB salt (That b) =
+        (salt `hashWithSalt` (1 :: Int)) `hashB` b
+    liftHashWithSalt2  hashA  hashB salt (These a b) =
+        (salt `hashWithSalt` (2 :: Int)) `hashA` a `hashB` b

@@ -80,13 +80,12 @@ module Data.These.Combinators (
     mapThese,
     ) where
 
-import Prelude ()
-import Prelude.Compat
-
-import Data.Bifunctor     (bimap, first, second)
-import Data.Bitraversable (bitraverse)
-import Data.Maybe         (isJust, mapMaybe)
+import Control.Applicative (Applicative (..))
+import Data.Bifunctor      (bimap, first, second)
+import Data.Bitraversable  (bitraverse)
+import Data.Maybe          (isJust, mapMaybe)
 import Data.These
+import Prelude             (Bool (..), Maybe (..), curry, uncurry, (.))
 
 #ifdef MIN_VERSION_assoc
 import Data.Bifunctor.Assoc (assoc, unassoc)
