@@ -4,12 +4,15 @@
 {-# LANGUAGE Trustworthy                #-}
 module Data.Semialign.Internal where
 
-import Prelude ()
-import Prelude.Compat hiding (repeat, unzip, zip, zipWith)
+import Prelude
+       (Bool (..), Eq (..), Functor (fmap), Maybe (..), Monad (..), Ord (..),
+       Ordering (..), String, error, flip, fst, id, maybe, snd, uncurry, ($),
+       (++), (.))
 
-import qualified Prelude.Compat as Prelude
+import qualified Prelude as Prelude
 
-import Control.Applicative               (ZipList (..))
+import Control.Applicative (ZipList (..), pure, (<$>))
+import Data.Monoid         (Monoid (..))
 import Data.Bifunctor                    (Bifunctor (..))
 import Data.Functor.Compose              (Compose (..))
 import Data.Functor.Identity             (Identity (..))

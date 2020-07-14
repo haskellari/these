@@ -1,3 +1,7 @@
+# 1.1.1.1
+
+- Workaround GCC-4 C-preprocessor bug
+
 # 1.1.1
 
 - These doesn't depend on `base-compat` anymore

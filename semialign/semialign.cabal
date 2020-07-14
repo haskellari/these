@@ -1,7 +1,6 @@
 cabal-version:      >=1.10
 name:               semialign
-version:            1.1
-x-revision:         2
+version:            1.1.0.1
 synopsis:
   Align and Zip type-classes from the common Semialign ancestor.
 
@@ -70,8 +69,7 @@ library
 
   -- other dependencies
   build-depends:
-      base-compat           >=0.10.5   && <0.12
-    , hashable              >=1.2.7.0  && <1.4
+      hashable              >=1.2.7.0  && <1.4
     , tagged                >=0.8.6    && <0.9
     , unordered-containers  >=0.2.8.0  && <0.3
     , vector                >=0.12.0.2 && <0.13

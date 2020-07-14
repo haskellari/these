@@ -7,14 +7,14 @@ module Data.Crosswalk (
     Bicrosswalk (..),
     ) where
 
-import Prelude ()
-import Prelude.Compat
-
+import Control.Applicative   (pure, (<$>))
 import Data.Bifoldable       (Bifoldable (..))
 import Data.Bifunctor        (Bifunctor (..))
+import Data.Foldable         (Foldable (..))
 import Data.Functor.Compose  (Compose (..))
 import Data.Functor.Identity (Identity (..))
 import Data.Vector.Generic   (Vector)
+import Prelude               (Either (..), Functor (fmap), Maybe (..), id, (.))
 
 import qualified Data.Sequence       as Seq
 import qualified Data.Vector         as V
