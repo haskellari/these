@@ -12,10 +12,10 @@ module Data.Zip (
     Zippy (..),
     ) where
 
-import Prelude ()
-import Prelude.Compat hiding (repeat, zipWith)
-
-import Data.Semigroup (Semigroup (..))
+import Control.Applicative (Applicative (..))
+import Data.Monoid         (Monoid (..))
+import Data.Semigroup      (Semigroup (..))
+import Prelude             (Eq, Functor (..), Ord, Read, Show, ($), (.))
 
 import Data.Semialign.Internal
 
@@ -48,4 +48,8 @@ instance Repeat f => Applicative (Zippy f) where
     (<*>) = (<.>)
 #else
     Zippy f <*> Zippy x = Zippy $ zipWith ($) f x
+#endif
+
+#if MIN_VERSION_base(4,10,0)
+    liftA2 f (Zippy x) (Zippy y) = Zippy $ zipWith f x y
 #endif

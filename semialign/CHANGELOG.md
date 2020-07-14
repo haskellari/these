@@ -1,3 +1,7 @@
+# 1.1.0.1
+
+- Drop `base-compat` dependency
+
 # 1.1
 
 - Split `Semialign` into `Semialign` and `Zip`.

@@ -8,8 +8,8 @@ module Data.These.Lens (
     _This, _That, _These,
     ) where
 
-import Prelude ()
-import Prelude.Compat
+import Control.Applicative (pure, (<$>))
+import Prelude             (Either (..), flip, uncurry, ($), (.))
 
 import Control.Lens           (Prism', Swapped (..), Traversal, iso, prism)
 import Data.These
