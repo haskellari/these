@@ -1,4 +1,8 @@
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE Trustworthy           #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Data.These.Optics (
     -- * Affine traversals
@@ -11,7 +15,8 @@ module Data.These.Optics (
 import Data.These
 import Data.These.Combinators (swapThese)
 import Optics.Core
-       (AffineTraversal, Prism', Swapped (..), atraversalVL, iso, prism)
+       (AffineTraversal, Each (..), Prism', Swapped (..), atraversalVL, iso,
+       itraversalVL, prism)
 
 -- $setup
 -- >>> import Optics.Core
@@ -76,3 +81,10 @@ _These = prism (uncurry These) (these (Left . This) (Left . That) (\x y -> Right
 
 instance Swapped These where
     swapped = iso swapThese swapThese
+
+-- | @since 1.0.1
+instance (a ~ a', b ~ b') => Each (Either () ()) (These a a') (These b b') a b where
+    each = itraversalVL aux where
+        aux f (This a)    = This <$> f (Left ()) a
+        aux f (That b)    = This <$> f (Right ()) b
+        aux f (These a b) = These <$> f (Left ()) a <*> f (Right ()) b
