@@ -22,6 +22,7 @@ import Data.These.Combinators (swapThese)
 
 -- $setup
 -- >>> import Control.Lens
+-- >>> import Prelude (show)
 
 -------------------------------------------------------------------------------
 -- Traversals

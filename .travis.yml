@@ -123,6 +123,7 @@ install:
   - cat $CABALHOME/config
   - rm -fv cabal.project cabal.project.local cabal.project.freeze
   - travis_retry ${CABAL} v2-update -v
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then ${CABAL} v2-install $WITHCOMPILER --ignore-project -j2 doctest --constraint='doctest ^>=0.17' ; fi
   - if $GHCJS ; then ${CABAL} v2-install -w ghc-8.4.4 --ignore-project cabal-plan --constraint='cabal-plan ^>=0.6.0.0' --constraint='cabal-plan +exe' ; fi
   # Generate cabal.project
   - rm -rf cabal.project cabal.project.local cabal.project.freeze
@@ -238,6 +239,15 @@ script:
   # Testing...
   - if ! $GHCJS ; then ${CABAL} v2-test $WITHCOMPILER ${TEST} ${BENCH} all ; fi
   - if $GHCJS ; then cabal-plan list-bins '*:test:*' | while read -r line; do testpkg=$(echo "$line" | perl -pe 's/:.*//'); testexe=$(echo "$line" | awk '{ print $2 }'); echo "testing $textexe in package $textpkg"; (cd "$(pkgdir $testpkg)" && nodejs "$testexe".jsexe/all.js); done ; fi
+  # Doctest...
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_these} && doctest  src) ; fi
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_these_lens} && doctest  src) ; fi
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_these_optics} && doctest  src) ; fi
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_semialign} && doctest  src) ; fi
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_semialign_indexed} && doctest  src) ; fi
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_semialign_optics} && doctest  src) ; fi
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_monad_chronicle} && doctest  src) ; fi
+  - if ! $GHCJS && [ $HCNUMVER -ge 80000 ] ; then (cd ${PKGDIR_these_tests} && doctest  src) ; fi
   # cabal check...
   - (cd ${PKGDIR_these} && ${CABAL} -vnormal check)
   - (cd ${PKGDIR_these_lens} && ${CABAL} -vnormal check)
