@@ -1,4 +1,8 @@
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE Trustworthy           #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Data.These.Lens (
     -- * Traversals
@@ -8,10 +12,11 @@ module Data.These.Lens (
     _This, _That, _These,
     ) where
 
-import Control.Applicative (pure, (<$>))
+import Control.Applicative (pure, (<$>), (<*>))
 import Prelude             (Either (..), flip, uncurry, ($), (.))
 
-import Control.Lens           (Prism', Swapped (..), Traversal, iso, prism)
+import Control.Lens
+       (Each (..), Prism', Swapped (..), Traversal, iso, prism)
 import Data.These
 import Data.These.Combinators (swapThese)
 
@@ -80,3 +85,9 @@ _These = prism (uncurry These) (these (Left . This) (Left . That) (\x y -> Right
 
 instance Swapped These where
     swapped = iso swapThese swapThese
+
+-- | @since 1.0.1
+instance (a ~ a', b ~ b') => Each (These a a') (These b b') a b where
+    each f (This a)    = This <$> f a
+    each f (That b)    = This <$> f b
+    each f (These a b) = These <$> f a <*> f b

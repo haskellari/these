@@ -1,7 +1,6 @@
 cabal-version:      >=1.10
 name:               these-optics
-version:            1
-x-revision:         4
+version:            1.0.1
 synopsis:           Optics for These
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
