@@ -1,6 +1,6 @@
 cabal-version:      >=1.10
 name:               these-lens
-version:            1.0.1
+version:            1.0.1.1
 synopsis:           Lenses for These
 homepage:           https://github.com/isomorphism/these
 license:            BSD3
