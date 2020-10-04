@@ -1,4 +1,5 @@
 branches: master
+doctest: True
 jobs-selection: any
 ghcjs-tests: True
 
