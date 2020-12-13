@@ -1,18 +1,23 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE Trustworthy                #-}
+{-# LANGUAGE UndecidableInstances       #-}
+#if __GLASGOW_HASKELL__ >= 706
+{-# LANGUAGE PolyKinds                  #-}
+#endif
 module Data.Semialign.Internal where
 
 import Prelude
-       (Bool (..), Eq (..), Functor (fmap), Maybe (..), Monad (..), Ord (..),
-       Ordering (..), String, error, flip, fst, id, maybe, snd, uncurry, ($),
-       (++), (.))
+       (Bool (..), Either (..), Eq (..), Functor (fmap), Int, Maybe (..),
+       Monad (..), Ord (..), Ordering (..), String, error, flip, fst, id,
+       maybe, snd, uncurry, ($), (++), (.))
 
 import qualified Prelude as Prelude
 
-import Control.Applicative (ZipList (..), pure, (<$>))
-import Data.Monoid         (Monoid (..))
+import Control.Applicative               (ZipList (..), pure, (<$>))
 import Data.Bifunctor                    (Bifunctor (..))
 import Data.Functor.Compose              (Compose (..))
 import Data.Functor.Identity             (Identity (..))
@@ -21,12 +26,17 @@ import Data.Hashable                     (Hashable (..))
 import Data.HashMap.Strict               (HashMap)
 import Data.List.NonEmpty                (NonEmpty (..))
 import Data.Maybe                        (catMaybes)
+import Data.Monoid                       (Monoid (..))
 import Data.Proxy                        (Proxy (..))
 import Data.Semigroup                    (Option (..), Semigroup (..))
 import Data.Sequence                     (Seq)
 import Data.Tagged                       (Tagged (..))
 import Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
 import Data.Vector.Generic               (Vector, empty, stream, unstream)
+import Data.Void                         (Void)
+
+import Data.Functor.WithIndex           (FunctorWithIndex (imap))
+import Data.Functor.WithIndex.Instances ()
 
 import qualified Data.HashMap.Strict               as HM
 import qualified Data.List.NonEmpty                as NE
@@ -330,6 +340,32 @@ class Zip f => Unzip f where
 unzipDefault :: Functor f => f (a, b) -> (f a, f b)
 unzipDefault x = (fst <$> x, snd <$> x)
 
+-- | Indexed version of 'Semialign'.
+--
+-- @since 1.2
+class (FunctorWithIndex i f, Semialign f) => SemialignWithIndex i f | f -> i where
+    -- | Analogous to 'alignWith', but also provides an index.
+    ialignWith :: (i -> These a b -> c) -> f a -> f b -> f c
+    ialignWith f a b = imap f (align a b)
+
+-- | Indexed version of 'Zip'.
+--
+-- @since 1.2
+class (SemialignWithIndex i f, Zip f) => ZipWithIndex i f | f -> i where
+    -- | Analogous to 'zipWith', but also provides an index.
+    izipWith :: (i -> a -> b -> c) -> f a -> f b -> f c
+    izipWith f a b = imap (uncurry . f) (zip a b)
+
+-- | Indexed version of 'Repeat'.
+--
+-- @since 1.2
+class (ZipWithIndex i f, Repeat f) => RepeatWithIndex i f | f -> i where
+    -- | Analogous to 'repeat', but also provides an index.
+    --
+    -- This should be the same as 'tabulate' for representable functors.
+    irepeat :: (i -> a) -> f a
+    irepeat f = imap (\i f' -> f' i) (repeat f)
+
 -------------------------------------------------------------------------------
 -- base
 -------------------------------------------------------------------------------
@@ -343,6 +379,13 @@ instance Zip ((->) e) where
 
 instance Repeat ((->) e) where
     repeat = pure
+
+instance SemialignWithIndex e ((->) e) where
+    ialignWith h f g x = h x (These (f x) (g x))
+instance ZipWithIndex e ((->) e) where
+    izipWith h f g x = h x (f x) (g x)
+instance RepeatWithIndex e ((->) e) where
+    irepeat = id
 
 instance Semialign Maybe where
     align Nothing Nothing = Nothing
@@ -370,6 +413,9 @@ instance Unzip Maybe where
 instance Align Maybe where
     nil = Nothing
 
+instance SemialignWithIndex () Maybe
+instance ZipWithIndex () Maybe
+instance RepeatWithIndex () Maybe
 
 instance Semialign [] where
     align xs [] = This <$> xs
@@ -389,6 +435,9 @@ instance Repeat [] where
 instance Unzip [] where
     unzip = Prelude.unzip
 
+instance SemialignWithIndex Int []
+instance ZipWithIndex Int []
+instance RepeatWithIndex Int []
 
 -- | @'zipWith' = 'liftA2'@ .
 instance Semialign ZipList where
@@ -407,6 +456,10 @@ instance Unzip ZipList where
     unzip (ZipList xs) = (ZipList ys, ZipList zs) where
         (ys, zs) = unzip xs
 
+instance SemialignWithIndex Int ZipList
+instance ZipWithIndex Int ZipList
+instance RepeatWithIndex Int ZipList
+
 -------------------------------------------------------------------------------
 -- semigroups
 -------------------------------------------------------------------------------
@@ -424,12 +477,22 @@ instance Repeat NonEmpty where
 instance Unzip NonEmpty where
     unzip = NE.unzip
 
+instance SemialignWithIndex Int NonEmpty
+instance ZipWithIndex Int NonEmpty
+instance RepeatWithIndex Int NonEmpty
+
 deriving instance Semialign Option
 deriving instance Align Option
 deriving instance Unalign Option
 deriving instance Zip Option
 deriving instance Repeat Option
 deriving instance Unzip Option
+
+{-
+deriving instance SemialignWithIndex () Option
+deriving instance ZipWithIndex () Option
+deriving instance RepeatWithIndex () Option
+-}
 
 -------------------------------------------------------------------------------
 -- containers: ListLike
@@ -472,6 +535,9 @@ instance Unzip Seq where
 instance Zip Seq where
     zip     = Seq.zip
     zipWith = Seq.zipWith
+
+instance SemialignWithIndex Int Seq
+instance ZipWithIndex Int Seq
 
 instance Semialign T.Tree where
     align (T.Node x xs) (T.Node y ys) = T.Node (These x y) (alignWith (these (fmap This) (fmap That) align) xs ys)
@@ -540,6 +606,13 @@ instance Unzip IntMap where unzip = unzipDefault
 instance Zip IntMap where
     zipWith = IntMap.intersectionWith
 
+instance SemialignWithIndex Int IntMap
+instance ZipWithIndex Int IntMap where
+    izipWith = IntMap.intersectionWithKey
+instance Ord k => SemialignWithIndex k (Map k) where
+instance Ord k => ZipWithIndex k (Map k) where
+    izipWith = Map.intersectionWithKey
+
 -------------------------------------------------------------------------------
 -- transformers
 -------------------------------------------------------------------------------
@@ -556,6 +629,9 @@ instance Repeat Identity where
 instance Unzip Identity where
     unzip (Identity ~(a, b)) = (Identity a, Identity b)
 
+instance SemialignWithIndex () Identity
+instance ZipWithIndex () Identity
+instance RepeatWithIndex () Identity
 
 instance (Semialign f, Semialign g) => Semialign (Product f g) where
     align (Pair a b) (Pair c d) = Pair (align a c) (align b d)
@@ -580,6 +656,19 @@ instance (Unzip f, Unzip g) => Unzip (Product f g) where
     unzip (Pair a b) = (Pair al bl, Pair ar br) where
         ~(al, ar) = unzip a
         ~(bl, br) = unzip b
+
+instance (SemialignWithIndex i f, SemialignWithIndex j g) => SemialignWithIndex (Either i j) (Product f g) where
+    ialignWith f (Pair fa ga) (Pair fb gb) = Pair fc gc where
+        fc = ialignWith (f . Left) fa fb
+        gc = ialignWith (f . Right) ga gb
+
+instance (ZipWithIndex i f, ZipWithIndex j g) => ZipWithIndex (Either i j) (Product f g) where
+    izipWith f (Pair fa ga) (Pair fb gb) = Pair fc gc where
+        fc = izipWith (f . Left) fa fb
+        gc = izipWith (f . Right) ga gb
+
+instance (RepeatWithIndex i f, RepeatWithIndex j g) => RepeatWithIndex (Either i j) (Product f g) where
+    irepeat f = Pair (irepeat (f . Left)) (irepeat (f . Right))
 
 
 instance (Semialign f, Semialign g) => Semialign (Compose f g) where
@@ -606,6 +695,19 @@ instance (Unzip f, Unzip g) => Unzip (Compose f g) where
 -- instance (Unalign f, Unalign g) => Unalign (Compose f g) where
 --     unalignWith f (Compose x) = (Compose y, Compose z) where
 --         ~(y, z) = unalignWith (uncurry These . unalignWith f) x
+
+instance (SemialignWithIndex i f, SemialignWithIndex j g) => SemialignWithIndex (i, j) (Compose f g) where
+    ialignWith f (Compose fga) (Compose fgb) = Compose $ ialignWith g fga fgb where
+        g i (This ga)     = imap (\j -> f (i, j) . This) ga
+        g i (That gb)     = imap (\j -> f (i, j) . That) gb
+        g i (These ga gb) = ialignWith (\j -> f (i, j)) ga gb
+
+instance (ZipWithIndex i f, ZipWithIndex j g) => ZipWithIndex (i, j) (Compose f g) where
+    izipWith f (Compose fga) (Compose fgb) = Compose fgc where
+        fgc = izipWith (\i -> izipWith (\j -> f (i, j))) fga fgb
+
+instance (RepeatWithIndex i f, RepeatWithIndex j g) => RepeatWithIndex (i, j) (Compose f g) where
+    irepeat f = Compose (irepeat (\i -> irepeat (\j -> f (i, j))))
 
 -------------------------------------------------------------------------------
 -- vector
@@ -673,6 +775,10 @@ alignVectorWith :: (Vector v a, Vector v b, Vector v c)
         => (These a b -> c) -> v a -> v b -> v c
 alignVectorWith f x y = unstream $ alignWith f (stream x) (stream y)
 
+instance SemialignWithIndex Int V.Vector where
+instance ZipWithIndex Int V.Vector where
+    izipWith = V.izipWith
+
 -------------------------------------------------------------------------------
 -- unordered-containers
 -------------------------------------------------------------------------------
@@ -693,6 +799,10 @@ instance (Eq k, Hashable k) => Unzip   (HashMap k) where unzip = unzipDefault
 instance (Eq k, Hashable k) => Unalign (HashMap k) where
     unalign xs = (HM.mapMaybe justHere xs, HM.mapMaybe justThere xs)
 
+instance (Eq k, Hashable k) => SemialignWithIndex k (HashMap k) where
+instance (Eq k, Hashable k) => ZipWithIndex k (HashMap k) where
+    izipWith = HM.intersectionWithKey
+
 -------------------------------------------------------------------------------
 -- tagged
 -------------------------------------------------------------------------------
@@ -709,6 +819,9 @@ instance Repeat (Tagged b) where
 instance Unzip (Tagged b) where
     unzip (Tagged ~(a, b)) = (Tagged a, Tagged b)
 
+instance SemialignWithIndex () (Tagged b)
+instance ZipWithIndex () (Tagged b)
+instance RepeatWithIndex () (Tagged b)
 
 instance Semialign Proxy where
     alignWith _ _ _ = Proxy
@@ -729,6 +842,10 @@ instance Repeat Proxy where
 
 instance Unzip Proxy where
     unzip _ = (Proxy, Proxy)
+
+instance SemialignWithIndex Void Proxy
+instance ZipWithIndex Void Proxy
+instance RepeatWithIndex Void Proxy
 
 -------------------------------------------------------------------------------
 -- combinators

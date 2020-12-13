@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Trustworthy           #-}
@@ -15,10 +16,13 @@ module Data.These.Lens (
 import Control.Applicative (pure, (<$>), (<*>))
 import Prelude             (Either (..), flip, uncurry, ($), (.))
 
-import Control.Lens
-       (Each (..), Prism', Swapped (..), Traversal, iso, prism)
+import Control.Lens (Prism', Traversal, prism)
 import Data.These
+
+#if !MIN_VERSION_lens(5,0,0)
+import Control.Lens           (Each (..), Swapped (..), iso)
 import Data.These.Combinators (swapThese)
+#endif
 
 -- $setup
 -- >>> import Data.These
@@ -85,6 +89,7 @@ _These = prism (uncurry These) (these (Left . This) (Left . That) (\x y -> Right
 -- Orphans
 -------------------------------------------------------------------------------
 
+#if !MIN_VERSION_lens(5,0,0)
 instance Swapped These where
     swapped = iso swapThese swapThese
 
@@ -93,3 +98,4 @@ instance (a ~ a', b ~ b') => Each (These a a') (These b b') a b where
     each f (This a)    = This <$> f a
     each f (That b)    = That <$> f b
     each f (These a b) = These <$> f a <*> f b
+#endif

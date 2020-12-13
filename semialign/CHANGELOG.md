@@ -1,3 +1,10 @@
+# 1.2
+
+- Migrate `SemialignWithIndex` and `ZipWithIndex` to this package,
+  using `FunctorWithIndex` from `indexed-traversable`.
+- Add `RepeatWithIndex` type-class.
+- Poly-kinded instances (notably `Tagged`)
+
 # 1.1.0.1
 
 - Drop `base-compat` dependency
