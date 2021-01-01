@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE Trustworthy           #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -35,6 +36,7 @@ import Optics.Core
 --
 here :: AffineTraversal (These a c) (These b c) a b
 here = atraversalVL here' where
+    here' :: Functor f => (forall r. r -> f r) -> (a -> f b) -> These a c -> f (These b c)
     here' _     f (This x)    = This <$> f x
     here' _     f (These x y) = flip These y <$> f x
     here' point _ (That x)    = point (That x)
@@ -49,6 +51,7 @@ here = atraversalVL here' where
 --
 there :: AffineTraversal (These c a) (These c b) a b
 there = atraversalVL there' where
+    there' :: Functor f => (forall r. r -> f r) -> (a -> f b) -> These c a -> f (These c b)
     there' point _ (This x)    = point (This x)
     there' _     f (These x y) = These x <$> f y
     there' _     f (That x)    = That <$> f x
