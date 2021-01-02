@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.11.20201230
+# version: 0.11.20210101
 #
-# REGENDATA ("0.11.20201230",["github","--config=cabal.haskell-ci","cabal.project"])
+# REGENDATA ("0.11.20210101",["github","--config=cabal.haskell-ci","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -125,6 +125,15 @@ jobs:
           rm -f cabal-plan.xz
           chmod a+x $HOME/.cabal/bin/cabal-plan
           cabal-plan --version
+      - name: install cabal-docspec
+        run: |
+          mkdir -p $HOME/.cabal/bin
+          curl -sL https://github.com/phadej/cabal-extras/releases/download/cabal-docspec-0.0.0.20201230.1/cabal-docspec-0.0.0.20201230.1.xz > cabal-docspec.xz
+          echo '18caf4f361fadd978782f08e78f42d21d4f177567419055ffccae19b8214852d  cabal-docspec.xz' | sha256sum -c -
+          xz -d < cabal-docspec.xz > $HOME/.cabal/bin/cabal-docspec
+          rm -f cabal-docspec.xz
+          chmod a+x $HOME/.cabal/bin/cabal-docspec
+          cabal-docspec --version
       - name: install doctest
         run: |
           if [ $((! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then $CABAL --store-dir=$HOME/.haskell-ci-tools/store v2-install $ARG_COMPILER --ignore-project -j2 doctest --constraint='doctest ^>=0.17' ; fi
@@ -228,6 +237,10 @@ jobs:
           if [ $((! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then doctest  src ; fi
           if [ $((! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then cd ${PKGDIR_these_tests} || false ; fi
           if [ $((! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then doctest  src ; fi
+      - name: docspec
+        run: |
+          $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all
+          cabal-docspec $ARG_COMPILER
       - name: cabal check
         run: |
           cd ${PKGDIR_these} || false

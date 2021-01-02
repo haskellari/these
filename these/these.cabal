@@ -92,3 +92,5 @@ library
 
   if flag(assoc)
     build-depends: assoc >=1 && <1.1
+
+  x-docspec-extra-packages: lens

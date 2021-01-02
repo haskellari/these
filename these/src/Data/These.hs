@@ -84,7 +84,8 @@ import Data.Functor.Classes (Eq1 (..), Ord1 (..), Read1 (..), Show1 (..))
 
 -- $setup
 -- >>> import Control.Lens
--- >>> import Prelude (map)
+-- >>> import Data.List.NonEmpty (NonEmpty (..))
+-- >>> import Prelude (Either (..), map, ($))
 
 -- --------------------------------------------------------------------------
 -- | The 'These' type represents values with two non-exclusive possibilities.

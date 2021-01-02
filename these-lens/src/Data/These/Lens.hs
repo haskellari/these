@@ -21,6 +21,7 @@ import Data.These
 import Data.These.Combinators (swapThese)
 
 -- $setup
+-- >>> import Data.These
 -- >>> import Control.Lens
 -- >>> import Prelude (show)
 
