@@ -20,6 +20,7 @@ import Optics.Core
        itraversalVL, prism)
 
 -- $setup
+-- >>> import Data.These
 -- >>> import Optics.Core
 
 -------------------------------------------------------------------------------

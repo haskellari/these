@@ -92,6 +92,9 @@ import Data.Bifunctor.Assoc (assoc, unassoc)
 import Data.Bifunctor.Swap  (swap)
 #endif
 
+-- $setup
+-- >>> import Data.These
+
 -------------------------------------------------------------------------------
 -- bifunctors
 -------------------------------------------------------------------------------
