@@ -2,7 +2,7 @@ cabal-version:      >=1.10
 name:               these
 version:            1.1.1.1
 synopsis:           An either-or-both data type.
-homepage:           https://github.com/isomorphism/these
+homepage:           https://github.com/haskellari/these
 license:            BSD3
 license-file:       LICENSE
 author:             C. McCann, Oleg Grenrus
@@ -45,7 +45,7 @@ tested-with:
 
 source-repository head
   type:     git
-  location: https://github.com/isomorphism/these.git
+  location: https://github.com/haskellari/these.git
 
 flag assoc
   description: Build with assoc dependency

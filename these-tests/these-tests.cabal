@@ -5,7 +5,7 @@ synopsis:      Tests for these packages.
 description:
   Tests for these, these-lens, monad-chronicle, semialign and semialign-indexed
 
-homepage:      https://github.com/isomorphism/these
+homepage:      https://github.com/haskellari/these
 license:       BSD3
 license-file:  LICENSE
 author:        C. McCann, Oleg Grenrus
@@ -27,7 +27,7 @@ tested-with:
 
 source-repository head
   type:     git
-  location: https://github.com/isomorphism/these.git
+  location: https://github.com/haskellari/these.git
 
 library
   default-language: Haskell2010

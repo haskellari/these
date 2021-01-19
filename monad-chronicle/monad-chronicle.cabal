@@ -2,7 +2,7 @@ cabal-version:      >=1.10
 name:               monad-chronicle
 version:            1.0.0.1
 synopsis:           These as a transformer, ChronicleT
-homepage:           https://github.com/isomorphism/these
+homepage:           https://github.com/haskellari/these
 license:            BSD3
 license-file:       LICENSE
 author:             C. McCann, Oleg Grenrus
@@ -30,7 +30,7 @@ tested-with:
 
 source-repository head
   type:     git
-  location: https://github.com/isomorphism/these.git
+  location: https://github.com/haskellari/these.git
 
 flag semigroupoids
   description: Build with semigroupoids dependency

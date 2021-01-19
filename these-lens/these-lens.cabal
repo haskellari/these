@@ -2,7 +2,7 @@ cabal-version:      >=1.10
 name:               these-lens
 version:            1.0.1.1
 synopsis:           Lenses for These
-homepage:           https://github.com/isomorphism/these
+homepage:           https://github.com/haskellari/these
 license:            BSD3
 license-file:       LICENSE
 author:             C. McCann, Oleg Grenrus
@@ -26,7 +26,7 @@ tested-with:
 
 source-repository head
   type:     git
-  location: https://github.com/isomorphism/these.git
+  location: https://github.com/haskellari/these.git
 
 library
   default-language: Haskell2010
