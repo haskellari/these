@@ -1,4 +1,8 @@
-# 1.0.1
+# 1.0.1.2
+
+- Add `lens-5` support
+
+# 1.0.1.1
 
 - Add `Each These` instance
 

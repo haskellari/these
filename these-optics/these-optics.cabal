@@ -1,6 +1,6 @@
 cabal-version:      >=1.10
 name:               these-optics
-version:            1.0.1.1
+version:            1.0.1.2
 synopsis:           Optics for These
 homepage:           https://github.com/haskellari/these
 license:            BSD3
@@ -12,12 +12,19 @@ build-type:         Simple
 extra-source-files: CHANGELOG.md
 description:        This package provides Prism and Traversals for @These@.
 tested-with:
-    GHC ==8.0.2 || ==8.2.2 || ==8.4.4 || ==8.6.5 || ==8.8.3 || ==8.10.1
+    GHC ==8.0.2
+     || ==8.2.2
+     || ==8.4.4
+     || ==8.6.5
+     || ==8.8.4
+     || ==8.10.4
+     || ==9.0.1
   , GHCJS ==8.4
 
 source-repository head
   type:     git
   location: https://github.com/haskellari/these.git
+  subdir:   these-optics
 
 library
   default-language: Haskell2010
@@ -30,10 +37,10 @@ library
   exposed-modules:  Data.These.Optics
 
   -- ghc boot libs
-  build-depends:    base >=4.9 && <4.15
+  build-depends:    base >=4.9 && <4.16
 
   -- these
   build-depends:    these >=1 && <1.2
 
   -- other dependencies
-  build-depends:    optics-core >=0.1 && <0.4
+  build-depends:    optics-core >=0.3 && <0.5

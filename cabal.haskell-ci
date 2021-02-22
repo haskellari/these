@@ -1,5 +1,5 @@
 branches: master
-doctest: True
+doctest: <9
 docspec: True
 jobs-selection: any
 ghcjs-tests: True
@@ -10,3 +10,11 @@ install-dependencies: False
 constraint-set light
   constraints: monad-chronicle -semigroupoids
   constraints: semialign -semigroupoids
+
+constraint-set optics-0.3
+  ghc: >=8.0
+  constraints: optics-core ^>=0.3
+
+constraint-set lens-4
+  ghc: <9
+  constraints: lens <5
