@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.11.20210222
+# version: 0.12
 #
-# REGENDATA ("0.11.20210222",["github","cabal.project"])
+# REGENDATA ("0.12",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -22,7 +22,7 @@ on:
       - master
 jobs:
   linux:
-    name: Haskell-CI - Linux - GHC ${{ matrix.ghc }}
+    name: Haskell-CI - Linux - ${{ matrix.compiler }}
     runs-on: ubuntu-18.04
     container:
       image: buildpack-deps:bionic
@@ -30,59 +30,77 @@ jobs:
     strategy:
       matrix:
         include:
-          - ghc: 9.0.1
+          - compiler: ghcjs-8.4
             allow-failure: false
-          - ghc: 8.10.4
+          - compiler: ghc-9.0.1
             allow-failure: false
-          - ghc: 8.8.4
+          - compiler: ghc-8.10.4
             allow-failure: false
-          - ghc: 8.6.5
+          - compiler: ghc-8.8.4
             allow-failure: false
-          - ghc: 8.4.4
+          - compiler: ghc-8.6.5
             allow-failure: false
-          - ghc: 8.2.2
+          - compiler: ghc-8.4.4
             allow-failure: false
-          - ghc: 8.0.2
+          - compiler: ghc-8.2.2
             allow-failure: false
-          - ghc: 7.10.3
+          - compiler: ghc-8.0.2
             allow-failure: false
-          - ghc: 7.8.4
+          - compiler: ghc-7.10.3
             allow-failure: false
-          - ghc: 7.6.3
+          - compiler: ghc-7.8.4
             allow-failure: false
-          - ghc: 7.4.2
+          - compiler: ghc-7.6.3
+            allow-failure: false
+          - compiler: ghc-7.4.2
             allow-failure: false
       fail-fast: false
     steps:
+      - name: Set GHCJS environment variables
+        run: |
+          if echo $CC | grep -q ghcjs; then
+          echo "GHCJS=true" >> $GITHUB_ENV
+          echo "GHCJSARITH=1" >> $GITHUB_ENV
+          else
+          echo "GHCJS=false" >> $GITHUB_ENV
+          echo "GHCJSARITH=0" >> $GITHUB_ENV
+          fi
+        env:
+          CC: ${{ matrix.compiler }}
       - name: apt
         run: |
           apt-get update
           apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common
           apt-add-repository -y 'ppa:hvr/ghc'
+          if [ $((GHCJSARITH)) -ne 0 ] ; then apt-add-repository -y 'ppa:hvr/ghcjs' ; fi
+          if [ $((GHCJSARITH)) -ne 0 ] ; then curl -sSL "https://deb.nodesource.com/gpgkey/nodesource.gpg.key" | apt-key add - ; fi
+          if [ $((GHCJSARITH)) -ne 0 ] ; then apt-add-repository -y 'deb https://deb.nodesource.com/node_10.x bionic main' ; fi
           apt-get update
-          apt-get install -y ghc-$GHC_VERSION cabal-install-3.4
+          if [ $((GHCJSARITH)) -ne 0 ] ; then apt-get install -y $CC cabal-install-3.4 ghc-8.4.4 nodejs ; else apt-get install -y $CC cabal-install-3.4 ; fi
         env:
-          GHC_VERSION: ${{ matrix.ghc }}
+          CC: ${{ matrix.compiler }}
       - name: Set PATH and environment variables
         run: |
           echo "$HOME/.cabal/bin" >> $GITHUB_PATH
+          if [ $((GHCJSARITH)) -ne 0 ] ; then echo "/opt/ghc/8.4.4/bin" >> $GITHUB_PATH ; fi
           echo "LANG=C.UTF-8" >> $GITHUB_ENV
           echo "CABAL_DIR=$HOME/.cabal" >> $GITHUB_ENV
           echo "CABAL_CONFIG=$HOME/.cabal/config" >> $GITHUB_ENV
-          HC=/opt/ghc/$GHC_VERSION/bin/ghc
+          HCDIR=$(echo "/opt/$CC" | sed 's/-/\//')
+          if [ $((GHCJSARITH)) -ne 0 ] ; then HCNAME=ghcjs ; else HCNAME=ghc ; fi
+          HC=$HCDIR/bin/$HCNAME
           echo "HC=$HC" >> $GITHUB_ENV
-          echo "HCPKG=/opt/ghc/$GHC_VERSION/bin/ghc-pkg" >> $GITHUB_ENV
-          echo "HADDOCK=/opt/ghc/$GHC_VERSION/bin/haddock" >> $GITHUB_ENV
+          echo "HCPKG=$HCDIR/bin/$HCNAME-pkg" >> $GITHUB_ENV
+          echo "HADDOCK=$HCDIR/bin/haddock" >> $GITHUB_ENV
           echo "CABAL=/opt/cabal/3.4/bin/cabal -vnormal+nowrap" >> $GITHUB_ENV
           HCNUMVER=$(${HC} --numeric-version|perl -ne '/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?$/; print(10000 * $1 + 100 * $2 + ($3 == 0 ? $5 != 1 : $3))')
           echo "HCNUMVER=$HCNUMVER" >> $GITHUB_ENV
           echo "ARG_TESTS=--enable-tests" >> $GITHUB_ENV
           echo "ARG_BENCH=--enable-benchmarks" >> $GITHUB_ENV
           echo "HEADHACKAGE=false" >> $GITHUB_ENV
-          echo "ARG_COMPILER=--ghc --with-compiler=$HC" >> $GITHUB_ENV
-          echo "GHCJSARITH=0" >> $GITHUB_ENV
+          echo "ARG_COMPILER=--$HCNAME --with-compiler=$HC" >> $GITHUB_ENV
         env:
-          GHC_VERSION: ${{ matrix.ghc }}
+          CC: ${{ matrix.compiler }}
       - name: env
         run: |
           env
@@ -111,13 +129,15 @@ jobs:
           $HC --version || true
           $HC --print-project-git-commit-id || true
           $CABAL --version || true
+          if [ $((GHCJSARITH)) -ne 0 ] ; then node --version ; fi
+          if [ $((GHCJSARITH)) -ne 0 ] ; then echo $GHCJS ; fi
       - name: update cabal index
         run: |
           $CABAL v2-update -v
       - name: cache (tools)
         uses: actions/cache@v2
         with:
-          key: ${{ runner.os }}-${{ matrix.ghc }}-tools-68b98ccd
+          key: ${{ runner.os }}-${{ matrix.compiler }}-tools-68b98ccd
           path: ~/.haskell-ci-tools
       - name: install cabal-plan
         run: |
@@ -209,9 +229,9 @@ jobs:
       - name: cache
         uses: actions/cache@v2
         with:
-          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ github.sha }}
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ github.sha }}
           path: ~/.cabal/store
-          restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
+          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-
       - name: build w/o tests
         run: |
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
@@ -221,6 +241,18 @@ jobs:
       - name: tests
         run: |
           if [ $((! GHCJSARITH)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct ; fi
+          pkgdir() {
+            case $1 in
+              these) echo ${PKGDIR_these} ;;
+              these-lens) echo ${PKGDIR_these_lens} ;;
+              these-optics) echo ${PKGDIR_these_optics} ;;
+              semialign) echo ${PKGDIR_semialign} ;;
+              monad-chronicle) echo ${PKGDIR_monad_chronicle} ;;
+              these-tests) echo ${PKGDIR_these_tests} ;;
+            esac
+          }
+
+          if [ $((GHCJSARITH)) -ne 0 ] ; then cabal-plan list-bins '*:test:*' | while read -r line; do testpkg=$(echo "$line" | perl -pe 's/:.*//'); testexe=$(echo "$line" | awk '{ print $2 }'); echo "testing $textexe in package $textpkg"; (cd "$(pkgdir $testpkg)" && nodejs "$testexe".jsexe/all.js); done ; fi
       - name: doctest
         run: |
           if [ $((! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90000)) -ne 0 ] ; then cd ${PKGDIR_these} || false ; fi
@@ -237,8 +269,8 @@ jobs:
           if [ $((! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90000)) -ne 0 ] ; then doctest  src ; fi
       - name: docspec
         run: |
-          $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all
-          cabal-docspec $ARG_COMPILER
+          if [ $((! GHCJSARITH)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all ; fi
+          if [ $((! GHCJSARITH)) -ne 0 ] ; then cabal-docspec $ARG_COMPILER ; fi
       - name: cabal check
         run: |
           cd ${PKGDIR_these} || false
