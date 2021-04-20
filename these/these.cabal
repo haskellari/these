@@ -99,7 +99,7 @@ library
     if impl(ghc >=7.10)
       build-depends: transformers >=0.4.2.0
 
-  if flag(assoc)
+  if flag(assoc) && !flag(boot)
     build-depends: assoc >=1 && <1.1
 
   x-docspec-extra-packages: lens
