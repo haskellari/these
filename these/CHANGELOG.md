@@ -1,3 +1,8 @@
+# 1.1.1.2 -- UNRELEASED
+
+- Add a `boot` flag for a minimal dependency footprint. This is intended for
+  testing purposes e.g. to break dependency cycles in GHC bootstrapping libs.
+
 # 1.1.1.1
 
 - Workaround GCC-4 C-preprocessor bug
