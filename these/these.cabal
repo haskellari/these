@@ -1,6 +1,6 @@
 cabal-version:      >=1.10
 name:               these
-version:            1.1.1.1
+version:            1.1.1.2
 x-revision:         1
 synopsis:           An either-or-both data type.
 homepage:           https://github.com/haskellari/these
@@ -55,6 +55,11 @@ flag assoc
   manual:      True
   default:     True
 
+flag boot
+  description: Build with minimal dependencies
+  manual:      True
+  default:     False
+
 library
   default-language: Haskell2010
   ghc-options:      -Wall
@@ -71,11 +76,12 @@ library
   -- ghc boot libs
   build-depends:
       base     >=4.5.1.0 && <4.16
-    , binary   >=0.5.1.0 && <0.10
     , deepseq  >=1.3.0.0 && <1.5
 
-  -- other dependencies
-  build-depends:    hashable >=1.2.7.0 && <1.4
+  if !flag(boot)
+    build-depends:
+        binary     >=0.5.1.0 && <0.10
+      , hashable   >=1.2.7.0 && <1.4
 
   if impl(ghc <7.5)
     build-depends: ghc-prim
@@ -93,7 +99,7 @@ library
     if impl(ghc >=7.10)
       build-depends: transformers >=0.4.2.0
 
-  if flag(assoc)
+  if flag(assoc) && !flag(boot)
     build-depends: assoc >=1 && <1.1
 
   x-docspec-extra-packages: lens

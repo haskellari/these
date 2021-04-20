@@ -44,13 +44,17 @@ import Control.Applicative  (Applicative (..), (<$>))
 import Control.DeepSeq      (NFData (..))
 import Data.Bifoldable      (Bifoldable (..))
 import Data.Bifunctor       (Bifunctor (..))
+#ifdef MIN_VERSION_binary
 import Data.Binary          (Binary (..))
+#endif
 import Data.Bitraversable   (Bitraversable (..))
 import Data.Data            (Data, Typeable)
 import Data.Either          (partitionEithers)
 import Data.Foldable        (Foldable (..))
+#ifdef MIN_VERSION_hashable
 import Data.Hashable        (Hashable (..))
 import Data.Hashable.Lifted (Hashable1 (..), Hashable2 (..))
+#endif
 import Data.List.NonEmpty   (NonEmpty (..))
 import Data.Monoid          (Monoid (..))
 import Data.Semigroup       (Semigroup (..))
@@ -424,6 +428,7 @@ instance NFData2 These where
 -- binary
 -------------------------------------------------------------------------------
 
+#ifdef MIN_VERSION_binary
 -- | @since 0.7.1
 instance (Binary a, Binary b) => Binary (These a b) where
     put (This a)    = put (0 :: Int) >> put a
@@ -437,11 +442,13 @@ instance (Binary a, Binary b) => Binary (These a b) where
             1 -> That <$> get
             2 -> These <$> get <*> get
             _ -> fail "Invalid These index"
+#endif
 
 -------------------------------------------------------------------------------
 -- hashable
 -------------------------------------------------------------------------------
 
+#ifdef MIN_VERSION_hashable
 instance (Hashable a, Hashable b) => Hashable (These a b) where
     hashWithSalt salt (This a) =
         salt `hashWithSalt` (0 :: Int) `hashWithSalt` a
@@ -467,3 +474,4 @@ instance Hashable2 These where
         (salt `hashWithSalt` (1 :: Int)) `hashB` b
     liftHashWithSalt2  hashA  hashB salt (These a b) =
         (salt `hashWithSalt` (2 :: Int)) `hashA` a `hashB` b
+#endif
