@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                    #-}
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE Trustworthy            #-}
@@ -23,17 +24,20 @@ import qualified Control.Monad.Trans.Chronicle as Ch
 import           Data.These
 import           Data.These.Combinators
 
-import Control.Monad.Trans.Error         as Error
 import Control.Monad.Trans.Except        as Except
 import Control.Monad.Trans.Identity      as Identity
 import Control.Monad.Trans.Maybe         as Maybe
-import Control.Monad.Trans.Reader        as Reader
 import Control.Monad.Trans.RWS.Lazy      as LazyRWS
 import Control.Monad.Trans.RWS.Strict    as StrictRWS
+import Control.Monad.Trans.Reader        as Reader
 import Control.Monad.Trans.State.Lazy    as LazyState
 import Control.Monad.Trans.State.Strict  as StrictState
 import Control.Monad.Trans.Writer.Lazy   as LazyWriter
 import Control.Monad.Trans.Writer.Strict as StrictWriter
+
+#if !(MIN_VERSION_transformers(0,6,0))
+import Control.Monad.Trans.Error as Error
+#endif
 
 import Control.Monad             (liftM)
 import Control.Monad.Trans.Class (lift)
@@ -132,6 +136,7 @@ instance (MonadChronicle c m) => MonadChronicle c (MaybeT m) where
     retcon f (MaybeT m) = MaybeT $ retcon f m
     chronicle = lift . chronicle
 
+#if !(MIN_VERSION_transformers(0,6,0))
 instance (Error e, MonadChronicle c m) => MonadChronicle c (ErrorT e m) where
     dictate = lift . dictate
     confess = lift . confess
@@ -140,6 +145,7 @@ instance (Error e, MonadChronicle c m) => MonadChronicle c (ErrorT e m) where
     condemn (ErrorT m) = ErrorT $ condemn m
     retcon f (ErrorT m) = ErrorT $ retcon f m
     chronicle = lift . chronicle
+#endif
 
 instance (MonadChronicle c m) => MonadChronicle c (ExceptT e m) where
     dictate = lift . dictate
