@@ -79,10 +79,7 @@ library
     , tagged                         >=0.8.6    && <0.9
     , unordered-containers           >=0.2.8.0  && <0.3
     , vector                         >=0.12.0.2 && <0.13
-
-  -- base shims
-  if !impl(ghc >=8.2)
-    build-depends: bifunctors >=5.5.4 && <5.6
+    , bifunctors                     >=5.5.4 && <5.6
 
   if !impl(ghc >=8.0)
     build-depends:
