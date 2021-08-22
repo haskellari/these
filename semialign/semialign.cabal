@@ -61,12 +61,17 @@ library
     Data.Zip
 
   other-modules:    Data.Semialign.Internal
+                  , Data.Semialign.Internal.Tuples
 
   -- ghc boot libs
   build-depends:
       base          >=4.5.1.0 && <4.16
     , containers    >=0.4.2.1 && <0.7
     , transformers  >=0.3.0.0 && <0.7
+  if impl (ghc < 9.0.1)
+    build-depends:
+      -- For noinline
+      ghc-prim
 
   -- These
   build-depends:    these >=1.1.1.1 && <1.2

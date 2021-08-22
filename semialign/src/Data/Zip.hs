@@ -10,6 +10,14 @@ module Data.Zip (
     Unzip (..),
     unzipDefault,
     Zippy (..),
+    -- * Unzip definition helpers
+    UnzipStrictSpineStrictPairs (..),
+    UnzipStrictSpineLazyPairs (..),
+    UnzipLazySpineLazyPairs (..),
+    unzipWithStrictSpineStrictPairs,
+    unzipWithStrictSpineLazyPairs,
+    unzipStrictSpineLazyPairs,
+    unzipWithLazySpineLazyPairs,
     ) where
 
 import Control.Applicative (Applicative (..))

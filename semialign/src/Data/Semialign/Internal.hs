@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveFoldable             #-}
+{-# LANGUAGE DeriveTraversable          #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -14,13 +16,13 @@ module Data.Semialign.Internal where
 import Prelude
        (Bool (..), Either (..), Eq (..), Functor (fmap), Int, Maybe (..),
        Monad (..), Ord (..), Ordering (..), String, error, flip, fst, id,
-       maybe, snd, uncurry, ($), (++), (.))
+       maybe, snd, uncurry, ($), (++), (.), Traversable, Foldable)
 
 import qualified Prelude as Prelude
 
 import Control.Applicative               (ZipList (..), pure, (<$>))
 import Data.Bifunctor                    (Bifunctor (..))
-import Data.Biapplicative                (Biapplicative (..), traverseBia)
+import Data.Biapplicative                (traverseBia)
 import Data.Functor.Compose              (Compose (..))
 import Data.Functor.Identity             (Identity (..))
 import Data.Functor.Product              (Product (..))
@@ -75,6 +77,8 @@ import qualified Data.Map as Map
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 #endif
+
+import Data.Semialign.Internal.Tuples (SBPair (..), LBPair (..))
 
 import Data.These
 import Data.These.Combinators
@@ -579,16 +583,57 @@ instance (Ord k) => Align (Map k) where
 instance Ord k => Unalign (Map k) where
     unalign xs = (Map.mapMaybe justHere xs, Map.mapMaybe justThere xs)
 
--- A copy of (,) with a stricter bimap.
-newtype SBPair a b = SBPair { unSBPair :: (a, b) }
+newtype UnzipStrictSpineStrictPairs t a =
+  UnzipStrictSpineStrictPairs { getUnzipStrictSpineStrictPairs :: t a }
+  deriving (Functor, Foldable, Traversable, Semialign, Align, Zip)
 
-instance Bifunctor SBPair where
-  bimap f g (SBPair (a, b)) = SBPair (f a, g b)
+instance (Zip t, Traversable t) => Unzip (UnzipStrictSpineStrictPairs t) where
+  unzipWith = unzipWithStrictSpineStrictPairs
 
-instance Biapplicative SBPair where
-  bipure a b = SBPair (a, b)
-  biliftA2 f g (SBPair (a, b)) (SBPair (c, d)) =
-    SBPair (f a c, g b d)
+newtype UnzipStrictSpineLazyPairs t a =
+  UnzipStrictSpineLazyPairs { getUnzipStrictSpineLazyPairs :: t a }
+  deriving (Functor, Foldable, Traversable, Semialign, Align, Zip)
+
+instance (Zip t, Traversable t) => Unzip (UnzipStrictSpineLazyPairs t) where
+  unzipWith = unzipWithStrictSpineLazyPairs
+  unzip = unzipStrictSpineLazyPairs
+
+newtype UnzipLazySpineLazyPairs t a =
+  UnzipLazySpineLazyPairs { getUnzipLazySpineLazyPairs :: t a }
+  deriving (Functor, Foldable, Traversable, Semialign, Align, Zip)
+
+instance (Zip t, Traversable t) => Unzip (UnzipLazySpineLazyPairs t) where
+  unzipWith = unzipWithLazySpineLazyPairs
+
+unzipWithStrictSpineStrictPairs :: Traversable t
+  => (c -> (a, b)) -> t c -> (t a, t b)
+unzipWithStrictSpineStrictPairs f = unSBPair . traverseBia (SBPair . f)
+
+unzipWithStrictSpineLazyPairs :: Traversable t
+  => (c -> (a, b)) -> t c -> (t a, t b)
+unzipWithStrictSpineLazyPairs f = unSBPair . traverseBia (SBPair . foo)
+  where
+    foo c = let
+      {-# NOINLINE fc #-}
+      {-# NOINLINE a #-}
+      {-# NOINLINE b #-}
+      fc = f c
+      (a, b) = fc
+      in (a, b)
+
+unzipStrictSpineLazyPairs :: Traversable t
+  => t (a, b) -> (t a, t b)
+unzipStrictSpineLazyPairs = unSBPair . traverseBia (SBPair . foo)
+  where
+    foo ab = let
+      {-# NOINLINE a #-}
+      {-# NOINLINE b #-}
+      (a, b) = ab
+      in (a, b)
+
+unzipWithLazySpineLazyPairs :: Traversable t
+  => (c -> (a, b)) -> t c -> (t a, t b)
+unzipWithLazySpineLazyPairs f = unLBPair . traverseBia (LBPair . f)
 
 instance Ord k => Unzip (Map k) where unzip = unzipDefault
 
