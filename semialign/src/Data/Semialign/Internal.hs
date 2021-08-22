@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -19,6 +20,7 @@ import qualified Prelude as Prelude
 
 import Control.Applicative               (ZipList (..), pure, (<$>))
 import Data.Bifunctor                    (Bifunctor (..))
+import Data.Biapplicative                (Biapplicative (..), traverseBia)
 import Data.Functor.Compose              (Compose (..))
 import Data.Functor.Identity             (Identity (..))
 import Data.Functor.Product              (Product (..))
@@ -577,7 +579,25 @@ instance (Ord k) => Align (Map k) where
 instance Ord k => Unalign (Map k) where
     unalign xs = (Map.mapMaybe justHere xs, Map.mapMaybe justThere xs)
 
-instance Ord k => Unzip (Map k) where unzip = unzipDefault
+-- A copy of (,) with a stricter bimap.
+newtype SBPair a b = SBPair { unSBPair :: (a, b) }
+
+instance Bifunctor SBPair where
+  bimap f g (SBPair (a, b)) = SBPair (f a, g b)
+
+instance Biapplicative SBPair where
+  bipure a b = SBPair (a, b)
+  biliftA2 f g (SBPair (a, b)) (SBPair (c, d)) =
+    SBPair (f a c, g b d)
+
+instance Ord k => Unzip (Map k) where
+  -- Map has a strict spine, so we have to build a whole one at
+  -- once. The default instance would first build an entire
+  -- Map filled with thunks, each of which will produce a pair,
+  -- and then build two maps, each filled with thunks to extract
+  -- a value from the pair. Sounds like a mess. Let's just do
+  -- the whole calculation eagerly.
+  unzipWith f = unSBPair . traverseBia (SBPair . f)
 
 instance Ord k => Zip (Map k) where
     zipWith = Map.intersectionWith
@@ -601,7 +621,9 @@ instance Align IntMap where
 instance Unalign IntMap where
     unalign xs = (IntMap.mapMaybe justHere xs, IntMap.mapMaybe justThere xs)
 
-instance Unzip IntMap where unzip = unzipDefault
+instance Unzip IntMap where
+  -- See notes at the Map instance
+  unzipWith f = unSBPair . traverseBia (SBPair . f)
 
 instance Zip IntMap where
     zipWith = IntMap.intersectionWith
