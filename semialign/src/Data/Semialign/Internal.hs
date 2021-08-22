@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -19,6 +20,7 @@ import qualified Prelude as Prelude
 
 import Control.Applicative               (ZipList (..), pure, (<$>))
 import Data.Bifunctor                    (Bifunctor (..))
+import Data.Biapplicative                (Biapplicative (..), traverseBia)
 import Data.Functor.Compose              (Compose (..))
 import Data.Functor.Identity             (Identity (..))
 import Data.Functor.Product              (Product (..))
@@ -576,6 +578,17 @@ instance (Ord k) => Align (Map k) where
 
 instance Ord k => Unalign (Map k) where
     unalign xs = (Map.mapMaybe justHere xs, Map.mapMaybe justThere xs)
+
+-- A copy of (,) with a stricter bimap.
+newtype SBPair a b = SBPair { unSBPair :: (a, b) }
+
+instance Bifunctor SBPair where
+  bimap f g (SBPair (a, b)) = SBPair (f a, g b)
+
+instance Biapplicative SBPair where
+  bipure a b = SBPair (a, b)
+  biliftA2 f g (SBPair (a, b)) (SBPair (c, d)) =
+    SBPair (f a c, g b d)
 
 instance Ord k => Unzip (Map k) where unzip = unzipDefault
 
