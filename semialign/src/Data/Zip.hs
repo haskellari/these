@@ -35,7 +35,9 @@ instance (Zip f, Semigroup a) => Semigroup (Zippy f a) where
 
 instance (Repeat f, Monoid a) => Monoid (Zippy f a) where
     mempty                      = Zippy $ repeat mempty
+#if !MIN_VERSION_base(4,16,0)
     mappend (Zippy x) (Zippy y) = Zippy $ zipWith mappend x y
+#endif
 
 #ifdef MIN_VERSION_semigroupoids
 instance Zip f => Apply (Zippy f) where
