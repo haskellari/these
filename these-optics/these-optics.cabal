@@ -37,7 +37,7 @@ library
   exposed-modules:  Data.These.Optics
 
   -- ghc boot libs
-  build-depends:    base >=4.9 && <4.16
+  build-depends:    base >=4.9 && <4.17
 
   -- these
   build-depends:    these >=1 && <1.2

@@ -64,7 +64,7 @@ library
 
   -- ghc boot libs
   build-depends:
-      base          >=4.5.1.0 && <4.16
+      base          >=4.5.1.0 && <4.17
     , containers    >=0.4.2.1 && <0.7
     , transformers  >=0.3.0.0 && <0.7
 
