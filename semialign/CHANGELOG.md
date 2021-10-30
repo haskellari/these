@@ -1,3 +1,7 @@
+# 1.2.0.1
+
+-  GHC-9.2 support
+
 # 1.2
 
 - Migrate `SemialignWithIndex` and `ZipWithIndex` to this package,

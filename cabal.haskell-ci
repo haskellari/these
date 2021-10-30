@@ -1,6 +1,6 @@
 branches: master
-doctest: <9
-docspec: True
+-- doctest: <9
+-- docspec: True
 jobs-selection: any
 ghcjs-tests: True
 

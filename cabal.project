@@ -1,8 +1,8 @@
 packages: these
-packages: these-lens
+-- packages: these-lens
 packages: these-optics
 packages: semialign
 packages: monad-chronicle
-packages: these-tests
+-- packages: these-tests
 
 tests: true
