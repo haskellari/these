@@ -1,6 +1,6 @@
 packages: these
 packages: semialign
-packages: semialign-indexed
+-- packages: semialign-indexed
 packages: semialign-optics
 
 tests: true
