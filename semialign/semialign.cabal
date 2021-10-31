@@ -75,7 +75,7 @@ library
 
   -- other dependencies
   build-depends:
-      hashable                       >=1.2.7.0  && <1.4
+      hashable                       >=1.2.7.0  && <1.5
     , indexed-traversable            >=0.1.1    && <0.2
     , indexed-traversable-instances  >=0.1      && <0.2
     , tagged                         >=0.8.6    && <0.9
