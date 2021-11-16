@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.13.20211030
+# version: 0.13.20211114
 #
-# REGENDATA ("0.13.20211030",["github","--project","cabal.deprecated.project","-o",".github/workflows/haskell-ci-deprecated.yml","--config","cabal.deprecated.haskell-ci"])
+# REGENDATA ("0.13.20211114",["github","--project","cabal.deprecated.project","-o",".github/workflows/haskell-ci-deprecated.yml","--config","cabal.deprecated.haskell-ci"])
 #
 name: Deprecated Packages
 on:
@@ -24,6 +24,8 @@ jobs:
   linux:
     name: Deprecated Packages - Linux - ${{ matrix.compiler }}
     runs-on: ubuntu-18.04
+    timeout-minutes:
+      60
     container:
       image: buildpack-deps:bionic
     continue-on-error: ${{ matrix.allow-failure }}
@@ -190,6 +192,10 @@ jobs:
           repository hackage.haskell.org
             url: http://hackage.haskell.org/
           EOF
+          cat >> $CABAL_CONFIG <<EOF
+          program-default-options
+            ghc-options: $GHCJOBS +RTS -M3G -RTS
+          EOF
           cat $CABAL_CONFIG
       - name: versions
         run: |
@@ -219,6 +225,7 @@ jobs:
           touch cabal.project
           echo "packages: $GITHUB_WORKSPACE/source/these" >> cabal.project
           echo "packages: $GITHUB_WORKSPACE/source/semialign" >> cabal.project
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "packages: $GITHUB_WORKSPACE/source/semialign-indexed" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90200)) -ne 0 ] ; then echo "packages: $GITHUB_WORKSPACE/source/semialign-optics" >> cabal.project ; fi
           cat cabal.project
       - name: sdist
@@ -235,6 +242,8 @@ jobs:
           echo "PKGDIR_these=${PKGDIR_these}" >> "$GITHUB_ENV"
           PKGDIR_semialign="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/semialign-[0-9.]*')"
           echo "PKGDIR_semialign=${PKGDIR_semialign}" >> "$GITHUB_ENV"
+          PKGDIR_semialign_indexed="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/semialign-indexed-[0-9.]*')"
+          echo "PKGDIR_semialign_indexed=${PKGDIR_semialign_indexed}" >> "$GITHUB_ENV"
           PKGDIR_semialign_optics="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/semialign-optics-[0-9.]*')"
           echo "PKGDIR_semialign_optics=${PKGDIR_semialign_optics}" >> "$GITHUB_ENV"
           rm -f cabal.project cabal.project.local
@@ -242,16 +251,19 @@ jobs:
           touch cabal.project.local
           echo "packages: ${PKGDIR_these}" >> cabal.project
           echo "packages: ${PKGDIR_semialign}" >> cabal.project
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "packages: ${PKGDIR_semialign_indexed}" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90200)) -ne 0 ] ; then echo "packages: ${PKGDIR_semialign_optics}" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package semialign" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package semialign-indexed" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90200)) -ne 0 ] ; then echo "package semialign-optics" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           cat >> cabal.project <<EOF
           EOF
-          $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(semialign|semialign-optics|these)$/; }' >> cabal.project.local
+          $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(semialign|semialign-indexed|semialign-optics|these)$/; }' >> cabal.project.local
           cat cabal.project
           cat cabal.project.local
       - name: dump install plan
@@ -276,6 +288,8 @@ jobs:
           ${CABAL} -vnormal check
           cd ${PKGDIR_semialign} || false
           ${CABAL} -vnormal check
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then cd ${PKGDIR_semialign_indexed} || false ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then ${CABAL} -vnormal check ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90200)) -ne 0 ] ; then cd ${PKGDIR_semialign_optics} || false ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90200)) -ne 0 ] ; then ${CABAL} -vnormal check ; fi
       - name: haddock
