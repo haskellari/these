@@ -47,4 +47,4 @@ library
   build-depends:    these >=1 && <1.2
 
   -- other dependencies
-  build-depends:    lens >=4.17.1 && <5.1
+  build-depends:    lens >=4.17.1 && <5.2

@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.13.20211030
+# version: 0.13.20211116
 #
-# REGENDATA ("0.13.20211030",["github","cabal.project"])
+# REGENDATA ("0.13.20211116",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -24,6 +24,8 @@ jobs:
   linux:
     name: Haskell-CI - Linux - ${{ matrix.compiler }}
     runs-on: ubuntu-18.04
+    timeout-minutes:
+      60
     container:
       image: buildpack-deps:bionic
     continue-on-error: ${{ matrix.allow-failure }}
@@ -190,6 +192,10 @@ jobs:
           repository hackage.haskell.org
             url: http://hackage.haskell.org/
           EOF
+          cat >> $CABAL_CONFIG <<EOF
+          program-default-options
+            ghc-options: $GHCJOBS +RTS -M3G -RTS
+          EOF
           cat $CABAL_CONFIG
       - name: versions
         run: |
@@ -218,9 +224,11 @@ jobs:
         run: |
           touch cabal.project
           echo "packages: $GITHUB_WORKSPACE/source/these" >> cabal.project
+          echo "packages: $GITHUB_WORKSPACE/source/these-lens" >> cabal.project
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then echo "packages: $GITHUB_WORKSPACE/source/these-optics" >> cabal.project ; fi
           echo "packages: $GITHUB_WORKSPACE/source/semialign" >> cabal.project
           echo "packages: $GITHUB_WORKSPACE/source/monad-chronicle" >> cabal.project
+          echo "packages: $GITHUB_WORKSPACE/source/these-tests" >> cabal.project
           cat cabal.project
       - name: sdist
         run: |
@@ -234,20 +242,28 @@ jobs:
         run: |
           PKGDIR_these="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/these-[0-9.]*')"
           echo "PKGDIR_these=${PKGDIR_these}" >> "$GITHUB_ENV"
+          PKGDIR_these_lens="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/these-lens-[0-9.]*')"
+          echo "PKGDIR_these_lens=${PKGDIR_these_lens}" >> "$GITHUB_ENV"
           PKGDIR_these_optics="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/these-optics-[0-9.]*')"
           echo "PKGDIR_these_optics=${PKGDIR_these_optics}" >> "$GITHUB_ENV"
           PKGDIR_semialign="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/semialign-[0-9.]*')"
           echo "PKGDIR_semialign=${PKGDIR_semialign}" >> "$GITHUB_ENV"
           PKGDIR_monad_chronicle="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/monad-chronicle-[0-9.]*')"
           echo "PKGDIR_monad_chronicle=${PKGDIR_monad_chronicle}" >> "$GITHUB_ENV"
+          PKGDIR_these_tests="$(find "$GITHUB_WORKSPACE/unpacked" -maxdepth 1 -type d -regex '.*/these-tests-[0-9.]*')"
+          echo "PKGDIR_these_tests=${PKGDIR_these_tests}" >> "$GITHUB_ENV"
           rm -f cabal.project cabal.project.local
           touch cabal.project
           touch cabal.project.local
           echo "packages: ${PKGDIR_these}" >> cabal.project
+          echo "packages: ${PKGDIR_these_lens}" >> cabal.project
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then echo "packages: ${PKGDIR_these_optics}" >> cabal.project ; fi
           echo "packages: ${PKGDIR_semialign}" >> cabal.project
           echo "packages: ${PKGDIR_monad_chronicle}" >> cabal.project
+          echo "packages: ${PKGDIR_these_tests}" >> cabal.project
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these-lens" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these-optics" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
@@ -255,9 +271,11 @@ jobs:
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package monad-chronicle" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these-tests" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           cat >> cabal.project <<EOF
           EOF
-          $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(monad-chronicle|semialign|these|these-optics)$/; }' >> cabal.project.local
+          $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(monad-chronicle|semialign|these|these-lens|these-optics|these-tests)$/; }' >> cabal.project.local
           cat cabal.project
           cat cabal.project.local
       - name: dump install plan
@@ -278,23 +296,32 @@ jobs:
           $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --write-ghc-environment-files=always
       - name: tests
         run: |
+          if [ $((! GHCJSARITH)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct ; fi
           pkgdir() {
             case $1 in
               these) echo ${PKGDIR_these} ;;
+              these-lens) echo ${PKGDIR_these_lens} ;;
               these-optics) echo ${PKGDIR_these_optics} ;;
               semialign) echo ${PKGDIR_semialign} ;;
               monad-chronicle) echo ${PKGDIR_monad_chronicle} ;;
+              these-tests) echo ${PKGDIR_these_tests} ;;
             esac
           }
+
+          if [ $((GHCJSARITH)) -ne 0 ] ; then cabal-plan list-bins '*:test:*' | while read -r line; do testpkg=$(echo "$line" | perl -pe 's/:.*//'); testexe=$(echo "$line" | awk '{ print $2 }'); echo "testing $textexe in package $textpkg"; (cd "$(pkgdir $testpkg)" && nodejs "$testexe".jsexe/all.js); done ; fi
       - name: cabal check
         run: |
           cd ${PKGDIR_these} || false
+          ${CABAL} -vnormal check
+          cd ${PKGDIR_these_lens} || false
           ${CABAL} -vnormal check
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then cd ${PKGDIR_these_optics} || false ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then ${CABAL} -vnormal check ; fi
           cd ${PKGDIR_semialign} || false
           ${CABAL} -vnormal check
           cd ${PKGDIR_monad_chronicle} || false
+          ${CABAL} -vnormal check
+          cd ${PKGDIR_these_tests} || false
           ${CABAL} -vnormal check
       - name: haddock
         run: |
@@ -308,13 +335,10 @@ jobs:
           rm -f cabal.project.local
       - name: constraint set lens-4
         run: |
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90000)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='lens <5' --dependencies-only -j2 all ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90000)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='lens <5' all ; fi
       - name: constraint set optics-0.3
         run: |
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='optics-core ^>=0.3' --dependencies-only -j2 all ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='optics-core ^>=0.3' all ; fi
       - name: constraint set light
         run: |
-          $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='monad-chronicle -semigroupoids' --constraint='semialign -semigroupoids' --dependencies-only -j2 all
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='monad-chronicle -semigroupoids' --constraint='semialign -semigroupoids' all

@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               these
 version:            1.1.1.1
-x-revision:         4
+x-revision:         5
 synopsis:           An either-or-both data type.
 homepage:           https://github.com/haskellari/these
 license:            BSD3
@@ -86,7 +86,7 @@ library
 
   if !impl(ghc >=8.0)
     build-depends:
-        semigroups           >=0.18.5  && <0.20
+        semigroups           >=0.18.5  && <0.21
       , transformers         >=0.3.0.0 && <0.7
       , transformers-compat  >=0.6.5   && <0.8
 
