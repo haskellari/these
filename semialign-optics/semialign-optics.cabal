@@ -1,6 +1,7 @@
 cabal-version:      1.22
 name:               semialign-optics
 version:            1.2
+x-revision:         1
 synopsis:           SemialignWithIndex, i.e. izipWith and ialignWith
 homepage:           https://github.com/haskellari/these
 license:            BSD3
@@ -33,6 +34,6 @@ library
   default-language:   Haskell2010
   ghc-options:        -Wall
   reexported-modules: Data.Semialign.Indexed
-  build-depends:      base >=4.10.0.0 && <4.16
+  build-depends:      base >=4.10.0.0 && <4.17
   build-depends:      semialign >=1.2 && <1.2.1
   build-depends:      optics-core ==0.4.*
