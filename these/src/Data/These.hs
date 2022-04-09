@@ -33,7 +33,7 @@ module Data.These (
 
     -- * Distributivity
     --
-    -- | This distributivity combinators aren't isomorphisms!
+    -- | These distributivity combinators aren't isomorphisms!
     , distrThesePair
     , undistrThesePair
     , distrPairThese
