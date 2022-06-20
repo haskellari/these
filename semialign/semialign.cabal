@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               semialign
 version:            1.2.0.1
-x-revision:         1
+x-revision:         2
 synopsis:
   Align and Zip type-classes from the common Semialign ancestor.
 
@@ -81,7 +81,7 @@ library
     , indexed-traversable-instances  >=0.1      && <0.2
     , tagged                         >=0.8.6    && <0.9
     , unordered-containers           >=0.2.8.0  && <0.3
-    , vector                         >=0.12.0.2 && <0.13
+    , vector                         >=0.12.0.2 && <0.14
 
   -- base shims
   if !impl(ghc >=8.2)
