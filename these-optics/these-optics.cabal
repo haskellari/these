@@ -18,9 +18,10 @@ tested-with:
      || ==8.4.4
      || ==8.6.5
      || ==8.8.4
-     || ==8.10.4
-     || ==9.0.1
-     || ==9.2.1
+     || ==8.10.7
+     || ==9.0.2
+     || ==9.2.4
+     || ==9.4.1
   , GHCJS ==8.4
 
 source-repository head
@@ -39,7 +40,7 @@ library
   exposed-modules:  Data.These.Optics
 
   -- ghc boot libs
-  build-depends:    base >=4.9 && <4.17
+  build-depends:    base >=4.9 && <4.18
 
   -- these
   build-depends:    these >=1 && <1.2

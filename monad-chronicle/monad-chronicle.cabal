@@ -1,6 +1,7 @@
 cabal-version:      >=1.10
 name:               monad-chronicle
 version:            1.0.1
+x-revision:         1
 synopsis:           These as a transformer, ChronicleT
 homepage:           https://github.com/haskellari/these
 license:            BSD3
@@ -25,9 +26,10 @@ tested-with:
      || ==8.4.4
      || ==8.6.5
      || ==8.8.4
-     || ==8.10.4
-     || ==9.0.1
-     || ==9.2.1
+     || ==8.10.7
+     || ==9.0.2
+     || ==9.2.4
+     || ==9.4.1
   , GHCJS ==8.4
 
 source-repository head
@@ -54,7 +56,7 @@ library
 
   -- ghc boot libs
   build-depends:
-      base          >=4.5.1.0 && <4.17
+      base          >=4.5.1.0 && <4.18
     , mtl           >=2.1.3   && <2.4
     , transformers  >=0.3.0.0 && <0.7
 
