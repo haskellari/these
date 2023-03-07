@@ -75,4 +75,4 @@ library
     build-depends: transformers >=0.4.2.0
 
   if flag(semigroupoids)
-    build-depends: semigroupoids >=5.3.2 && <5.4
+    build-depends: semigroupoids >=5.3.2 && <5.8
