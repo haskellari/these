@@ -1,10 +1,8 @@
-{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Trustworthy           #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Data.These.Lens (
     -- * Traversals
     here, there,
@@ -18,11 +16,6 @@ import Prelude             (Either (..), flip, uncurry, ($), (.))
 
 import Control.Lens (Prism', Traversal, prism)
 import Data.These
-
-#if !MIN_VERSION_lens(5,0,0)
-import Control.Lens           (Each (..), Swapped (..), iso)
-import Data.These.Combinators (swapThese)
-#endif
 
 -- $setup
 -- >>> import Data.These
@@ -84,18 +77,3 @@ _That = prism That (these (Left . This) Right (\x y -> Left $ These x y))
 -- /Note:/ cannot change type.
 _These :: Prism' (These a b) (a, b)
 _These = prism (uncurry These) (these (Left . This) (Left . That) (\x y -> Right (x, y)))
-
--------------------------------------------------------------------------------
--- Orphans
--------------------------------------------------------------------------------
-
-#if !MIN_VERSION_lens(5,0,0)
-instance Swapped These where
-    swapped = iso swapThese swapThese
-
--- | @since 1.0.1
-instance (a ~ a', b ~ b') => Each (These a a') (These b b') a b where
-    each f (This a)    = This <$> f a
-    each f (That b)    = That <$> f b
-    each f (These a b) = These <$> f a <*> f b
-#endif
