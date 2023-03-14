@@ -1,3 +1,17 @@
+# 1.2
+
+- Depend on `bifunctor-classes-compat` instead of `bifunctors`
+  See changelog note in `bifunctors-5.6`: https://hackage.haskell.org/package/bifunctors-5.6/changelog
+  This is breaking change, but affects only GHC-8.0 and older users.
+- Depend on `assoc-1.1`. Since version 1.1 `assoc` has an almost trivial
+  dependency footprint, so `these` depends on it unconditionally.
+  In that case you should check various combinations of newer/older
+  `bifunctors`, `these` (and e.g. `semialign`) packages.
+- Add `Bifoldable1 These` instance
+- Add `Foldable1 (Data.Functor.These1 f g)` instance
+- Change `Eq (These1 f g a)`, `Ord`, `Read`, `Show`, `NFData` instances similarly to how
+  they are changed for `Product` and `Sum` in `base-4.18.0.0`.
+
 # 1.1.1.1
 
 - Workaround GCC-4 C-preprocessor bug

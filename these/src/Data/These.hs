@@ -43,6 +43,7 @@ module Data.These (
 import Control.Applicative  (Applicative (..), (<$>))
 import Control.DeepSeq      (NFData (..))
 import Data.Bifoldable      (Bifoldable (..))
+import Data.Bifoldable1     (Bifoldable1 (..))
 import Data.Bifunctor       (Bifunctor (..))
 import Data.Binary          (Binary (..))
 import Data.Bitraversable   (Bitraversable (..))
@@ -218,8 +219,6 @@ undistrPairThese (These (a, c) (b, _)) = (These a b, c)
 -- Instances
 -------------------------------------------------------------------------------
 
-
-
 instance (Semigroup a, Semigroup b) => Semigroup (These a b) where
     This  a   <> This  b   = This  (a <> b)
     This  a   <> That    y = These  a             y
@@ -256,8 +255,14 @@ instance Bifunctor These where
 
 instance Bifoldable These where
     bifold = these id id mappend
+    bifoldMap f g = these f g (\x y -> mappend (f x) (g y))
     bifoldr f g z = these (`f` z) (`g` z) (\x y -> x `f` (y `g` z))
     bifoldl f g z = these (z `f`) (z `g`) (\x y -> (z `f` x) `g` y)
+
+-- | @since 1.2
+instance Bifoldable1 These where
+    bifold1 = these id id (<>)
+    bifoldMap1 f g = these f g (\x y -> f x <> g y)
 
 instance Bitraversable These where
     bitraverse f _ (This x) = This <$> f x
@@ -370,7 +375,6 @@ instance Read a => Read1 (These a) where readsPrec1 = readsPrec
 -- assoc
 -------------------------------------------------------------------------------
 
-#ifdef MIN_VERSION_assoc
 -- | @since 0.8
 instance Swap These where
     swap (This a)    = That a
@@ -394,7 +398,6 @@ instance Assoc These where
     unassoc (These a (This b))    = This (These a b)
     unassoc (These a (That c))    = These (This a) c
     unassoc (These a (These b c)) = These (These a b) c
-#endif
 
 -------------------------------------------------------------------------------
 -- deepseq

@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               these-optics
 version:            1.0.1.2
-x-revision:         1
+x-revision:         2
 synopsis:           Optics for These
 homepage:           https://github.com/haskellari/these
 license:            BSD3
@@ -20,8 +20,8 @@ tested-with:
      || ==8.8.4
      || ==8.10.7
      || ==9.0.2
-     || ==9.2.4
-     || ==9.4.1
+     || ==9.2.7
+     || ==9.4.4
   , GHCJS ==8.4
 
 source-repository head
@@ -40,10 +40,10 @@ library
   exposed-modules:  Data.These.Optics
 
   -- ghc boot libs
-  build-depends:    base >=4.9 && <4.18
+  build-depends:    base >=4.9 && <4.19
 
   -- these
-  build-depends:    these >=1 && <1.2
+  build-depends:    these >=1 && <1.3
 
   -- other dependencies
   build-depends:    optics-core >=0.3 && <0.5

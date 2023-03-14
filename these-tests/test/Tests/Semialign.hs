@@ -14,7 +14,6 @@ import Prelude.Compat hiding (repeat, unzip, zip, zipWith)
 -- import qualified Prelude.Compat as Prelude
 
 import Control.Applicative           (Const (..), ZipList (..))
-import Control.Lens                  (folded, toListOf)
 import Control.Monad                 (join)
 import Control.Monad.Trans.Instances ()
 import Data.Bifunctor                (bimap)
@@ -43,7 +42,7 @@ import Test.Tasty.QuickCheck         (testProperty)
 #ifdef MIN_VERSION_lattice
 import Algebra.Lattice
        (BoundedJoinSemiLattice (..), BoundedMeetSemiLattice (..), Lattice (..))
-import Algebra.Lattice.M2            (M2)
+import Algebra.Lattice.M2 (M2)
 #endif
 
 import qualified Data.Tree   as T
@@ -52,7 +51,11 @@ import qualified Data.Vector as V
 import Data.Semialign
 import Data.These
 import Data.These.Combinators
+
+#ifdef MIN_VERSION_lens
+import Control.Lens    (folded, toListOf)
 import Data.These.Lens
+#endif
 
 import Tests.Orphans ()
 
@@ -204,7 +207,9 @@ semialignLaws' _ = testGroup "Semialign"
     , testProperty "snd-zip" sndZipProp
     , testProperty "zip-fst-snd" zipFstSndProp
 
+#ifdef MIN_VERSION_lens
     , testProperty "alignToList" alignToListProp
+#endif
 
     , testProperty "distributivity 1" distr1'Prop
     , testProperty "distributivity 2"  distr2Prop
@@ -244,6 +249,7 @@ semialignLaws' _ = testGroup "Semialign"
         rhs = (xs `align` ys) `align` zs
         lhs = xs `align` (ys `align` zs)
 
+#ifdef MIN_VERSION_lens
     alignToListProp :: f A -> f B -> Property
     alignToListProp xs ys =
         toList xs === toListOf (folded . here) xys
@@ -253,6 +259,7 @@ semialignLaws' _ = testGroup "Semialign"
         toList ys === toListOf (folded . there) xys
       where
         xys = align xs ys
+#endif
 
     fstZipProp :: f A -> Property
     fstZipProp xs = fmap fst (zip xs xs) === xs

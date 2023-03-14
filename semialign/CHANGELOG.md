@@ -1,3 +1,11 @@
+# 1.3
+
+- Depend on `bifunctor-classes-compat` instead of `bifunctors`
+  See changelog note in `bifunctors-5.6`: https://hackage.haskell.org/package/bifunctors-5.6/changelog
+  This is breaking change, but affects only GHC-8.0 and older users.
+  In that case you should check various combinations of newer/older
+  `bifunctors`, `these`, and `semialign` packages.
+
 # 1.2.0.1
 
 -  GHC-9.2 support

@@ -4,3 +4,8 @@ packages: semialign-indexed
 packages: semialign-optics
 
 tests: true
+
+-- needs these release and propagation of constraints
+allow-newer: *:assoc
+allow-newer: *:these
+allow-newer: *:semialign

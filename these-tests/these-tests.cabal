@@ -24,8 +24,8 @@ tested-with:
      || ==8.8.4
      || ==8.10.7
      || ==9.0.2
-     || ==9.2.4
-     || ==9.4.1
+     || ==9.2.7
+     || ==9.4.4
   , GHCJS ==8.4
 
 source-repository head
@@ -57,23 +57,28 @@ test-suite test
       assoc
     , base
     , base-compat
-    , bifunctors
     , binary
     , containers
     , hashable
     , indexed-traversable
-    , lens
     , QuickCheck
     , semialign
     , tagged
     , these
-    , these-lens
     , transformers
     , unordered-containers
     , vector
 
+  if impl(ghc >=7.8)
+    build-depends:
+        lens
+      , these-lens
+
   if !impl(ghc >=8.0)
     build-depends: semigroups
+
+  if !impl(ghc >=8.2)
+    build-depends: bifunctor-classes-compat
 
   -- additional dependencies
   build-depends:

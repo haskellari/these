@@ -1,7 +1,6 @@
 cabal-version:      >=1.10
 name:               semialign
-version:            1.2.0.1
-x-revision:         3
+version:            1.3
 synopsis:
   Align and Zip type-classes from the common Semialign ancestor.
 
@@ -33,8 +32,9 @@ tested-with:
      || ==8.8.4
      || ==8.10.7
      || ==9.0.2
-     || ==9.2.4
-     || ==9.4.1
+     || ==9.2.7
+     || ==9.4.4
+     || ==9.6.1
   , GHCJS ==8.4
 
 source-repository head
@@ -68,12 +68,12 @@ library
 
   -- ghc boot libs
   build-depends:
-      base          >=4.5.1.0 && <4.18
+      base          >=4.5.1.0 && <4.19
     , containers    >=0.4.2.1 && <0.7
     , transformers  >=0.3.0.0 && <0.7
 
   -- These
-  build-depends:    these >=1.1.1.1 && <1.2
+  build-depends:    these >=1.2 && <1.3
 
   -- other dependencies
   build-depends:
@@ -86,7 +86,7 @@ library
 
   -- base shims
   if !impl(ghc >=8.2)
-    build-depends: bifunctors >=5.5.4 && <5.6
+    build-depends: bifunctor-classes-compat >=0.1 && <0.2
 
   if !impl(ghc >=8.0)
     build-depends:
@@ -105,4 +105,4 @@ library
     build-depends: ghc-prim
 
   if flag(semigroupoids)
-    build-depends: semigroupoids >=5.3.2 && <5.4
+    build-depends: semigroupoids >=5.3.2 && <6.1
