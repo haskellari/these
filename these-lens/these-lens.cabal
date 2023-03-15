@@ -12,9 +12,7 @@ build-type:         Simple
 extra-source-files: CHANGELOG.md
 description:        This package provides Prism and Traversals for @These@.
 tested-with:
-    GHC ==7.8.4
-     || ==7.10.3
-     || ==8.0.2
+    GHC ==8.0.2
      || ==8.2.2
      || ==8.4.4
      || ==8.6.5
@@ -23,6 +21,7 @@ tested-with:
      || ==9.0.2
      || ==9.2.7
      || ==9.4.4
+     || ==9.6.1
   , GHCJS ==8.4
 
 source-repository head
@@ -41,8 +40,8 @@ library
   exposed-modules:  Data.These.Lens
 
   -- ghc boot libs
-  build-depends:    base >=4.7.0.0 && <4.18
+  build-depends:    base >=4.9 && <4.19
   build-depends:    these >=1.2 && <1.3
 
   -- other dependencies
-  build-depends:    lens >=5 && <5.3
+  build-depends:    lens >=5.2.1 && <5.3
