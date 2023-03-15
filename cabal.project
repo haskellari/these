@@ -6,9 +6,3 @@ packages: monad-chronicle
 packages: these-tests
 
 tests: true
-
--- needs these release and propagation of constraints
-allow-newer: *:assoc
-allow-newer: *:these
-allow-newer: *:semialign
-allow-newer: *:strict

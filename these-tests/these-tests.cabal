@@ -26,6 +26,7 @@ tested-with:
      || ==9.0.2
      || ==9.2.7
      || ==9.4.4
+     || ==9.6.1
   , GHCJS ==8.4
 
 source-repository head
@@ -69,7 +70,7 @@ test-suite test
     , unordered-containers
     , vector
 
-  if impl(ghc >=7.8)
+  if impl(ghc >=8.0)
     build-depends:
         lens
       , these-lens
@@ -88,4 +89,4 @@ test-suite test
     , transformers-compat   >=0.6.5  && <0.8
 
   if impl(ghc >=7.6)
-    build-depends: lattices >=2.0.1 && <2.1
+    build-depends: lattices >=2.2 && <2.3
