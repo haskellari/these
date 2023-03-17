@@ -1,7 +1,7 @@
 cabal-version:      >=1.10
 name:               monad-chronicle
 version:            1.0.1
-x-revision:         3
+x-revision:         2
 synopsis:           These as a transformer, ChronicleT
 homepage:           https://github.com/haskellari/these
 license:            BSD3
