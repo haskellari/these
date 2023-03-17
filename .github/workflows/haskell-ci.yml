@@ -345,13 +345,13 @@ jobs:
           rm -f cabal.project.local
       - name: constraint set mtl-2.3
         run: |
-          if [ $((! GHCJSARITH && HCNUMVER >= 80600 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='mtl ^>=2.3' --constraint='transformers <0.6' all ; fi
+          if [ $((! GHCJSARITH && HCNUMVER >= 80600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='mtl ^>=2.3' --constraint='transformers <0.6' all ; fi
       - name: constraint set transformers-0.6
         run: |
           if [ $((! GHCJSARITH && HCNUMVER >= 80600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='transformers ^>=0.6' all ; fi
       - name: constraint set optics-0.3
         run: |
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='optics-core ^>=0.3' all ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='optics-core ^>=0.3' all ; fi
       - name: constraint set light
         run: |
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='monad-chronicle -semigroupoids' --constraint='semialign -semigroupoids' all

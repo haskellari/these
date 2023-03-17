@@ -13,7 +13,7 @@ constraint-set light
 
 -- No 9.6 cause lens fails top build
 constraint-set optics-0.3
-  ghc: >=8.0 && <9.6
+  ghc: >=8.0
   constraints: optics-core ^>=0.3
 
 constraint-set transformers-0.6
@@ -22,5 +22,5 @@ constraint-set transformers-0.6
 
 -- No 9.6 cause lens fails top build
 constraint-set mtl-2.3
-  ghc: >=8.6 && <9.6
+  ghc: >=8.6
   constraints: mtl ^>=2.3, transformers <0.6
