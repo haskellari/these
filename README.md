@@ -38,7 +38,7 @@ I believe the name "Align" was borrowed from [a blog post by Paul Chiusano](http
 Unalign
 -------
 
-`unalign` is to `align` as `unzip` is to `zip`. The `Unalign` class itself does nothing, as `unalign` can be defined for any `Functor`; an instance just documents that `unalign` behaves properly as an inverse to `align`.
+`unalign` is to `align` as `unzip` is to `zip`.
 
 Crosswalk
 ---------
