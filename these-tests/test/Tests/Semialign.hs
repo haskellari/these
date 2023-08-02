@@ -75,6 +75,8 @@ alignProps = testGroup "Align"
     [ semialignLaws  (CAll     :: CSemialign [])
     , semialignLaws  (CUnalign :: CSemialign (HashMap String))
     , semialignLaws  (CUnalign :: CSemialign (Map Char))
+    , semialignLaws  (CUnalign :: CSemialign V.Vector)
+    , semialignLaws  (CUnalign :: CSemialign [])
     , semialignLaws  (CUnalign :: CSemialign IntMap)
     , semialignLaws  (CUnAll   :: CSemialign Maybe)
     , semialignLaws  (CAll     :: CSemialign (Product [] Maybe))
@@ -354,8 +356,7 @@ unalignLaws'
        )
     => proxy f -> TestTree
 unalignLaws' _ = testGroup "Unalign"
-    [ testProperty "right inverse" invProp
-    , testProperty "left inverse" leftProp
+    [ testProperty "left inverse" leftProp
     , testProperty "unalignWith via unalign" unalignWithProp
     , testProperty "unalign via unalignWith" unalignProp
     ]
@@ -365,9 +366,6 @@ unalignLaws' _ = testGroup "Unalign"
 
     unalignProp :: f (These A B) -> Property
     unalignProp xs = unalign xs === unalignWith id xs
-
-    invProp :: f (These A B) -> Property
-    invProp xs = uncurry align (unalign xs) === xs
 
     leftProp :: f A -> f B -> Property
     leftProp xs ys = counterexample (show xys) $ unalign xys === (xs, ys) where

@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE CPP                        #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE FunctionalDependencies     #-}
@@ -13,17 +14,20 @@ module Data.Semialign.Internal where
 import Prelude
        (Bool (..), Either (..), Eq (..), Functor (fmap), Int, Maybe (..),
        Monad (..), Ord (..), Ordering (..), String, error, flip, fst, id,
-       maybe, snd, uncurry, ($), (++), (.))
+       maybe, snd, succ, uncurry, ($), (++), (.), (<*>))
 
 import qualified Prelude as Prelude
 
 import Control.Applicative               (ZipList (..), pure, (<$>))
 import Data.Bifunctor                    (Bifunctor (..))
+import Data.Either                       (partitionEithers)
+import Data.Foldable                     (foldl', traverse_)
 import Data.Functor.Compose              (Compose (..))
 import Data.Functor.Identity             (Identity (..))
 import Data.Functor.Product              (Product (..))
 import Data.Hashable                     (Hashable (..))
 import Data.HashMap.Strict               (HashMap)
+import Data.List                         (concatMap)
 import Data.List.NonEmpty                (NonEmpty (..))
 import Data.Maybe                        (catMaybes)
 import Data.Monoid                       (Monoid (..))
@@ -38,10 +42,13 @@ import Data.Void                         (Void)
 import Data.Functor.WithIndex           (FunctorWithIndex (imap))
 import Data.Functor.WithIndex.Instances ()
 
+import qualified Control.Monad.ST                  as ST
 import qualified Data.HashMap.Strict               as HM
 import qualified Data.List.NonEmpty                as NE
 import qualified Data.Sequence                     as Seq
+import qualified Data.STRef                        as ST
 import qualified Data.Tree                         as T
+import qualified Data.Vector.Mutable               as MV
 import qualified Data.Vector                       as V
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
 
@@ -853,9 +860,57 @@ instance SemialignWithIndex Void Proxy
 instance ZipWithIndex Void Proxy
 instance RepeatWithIndex Void Proxy
 
+instance Unalign [] where
+  unalign = partitionEithers . concatMap theseToEithers
+
+instance Unalign V.Vector where
+  unalign these' = ST.runST $ do
+    let (nAs, nBs) = theseToCounts these'
+    aVec <- MV.new nAs
+    bVec <- MV.new nBs
+    aInd <- ST.newSTRef 0
+    bInd <- ST.newSTRef 0
+    traverse_ (addToVec aVec bVec aInd bInd) these'
+    (,) <$> V.freeze aVec <*> V.freeze bVec
+
+    where
+      addToVec
+        :: MV.MVector s a
+        -> MV.MVector s b
+        -> ST.STRef s Int
+        -> ST.STRef s Int
+        -> These a b
+        -> ST.ST s ()
+      addToVec aVec bVec aIndST bIndST el = case el of
+        (This a) -> writeInd aVec aIndST a
+        (That a) -> writeInd bVec bIndST a
+        (These a b) -> writeInd aVec aIndST a >> writeInd bVec bIndST b
+
+      writeInd :: MV.MVector s a -> ST.STRef s Int -> a -> ST.ST s ()
+      writeInd vec stInd el = do
+        ind <- ST.readSTRef stInd
+        MV.unsafeWrite vec ind el
+        ST.writeSTRef stInd $ succ ind
+
 -------------------------------------------------------------------------------
 -- combinators
 -------------------------------------------------------------------------------
+
+-- | Converts 'These a b' to `[Either a b]`, where all `a`s and `b`s
+--   in the input are present in the output.
+theseToEithers :: These a b -> [Either a b]
+theseToEithers (This a)    = [Left a]
+theseToEithers (That a)    = [Right a]
+theseToEithers (These a b) = [Left a, Right b]
+
+-- | Returns the number of `a`s and the number of `b`s in the input
+--   respectively.
+theseToCounts :: Prelude.Foldable f => f (These a b) -> (Int, Int)
+theseToCounts = foldl' go (0, 0)
+  where
+    go (!as, !bs) (This _)    = (succ as, bs)
+    go (!as, !bs) (That _)    = (as, succ bs)
+    go (!as, !bs) (These _ _) = (succ as, succ bs)
 
 -- | Align two structures and combine with '<>'.
 salign :: (Semialign f, Semigroup a) => f a -> f a -> f a
