@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.15.20230313
+# version: 0.17.20231004
 #
-# REGENDATA ("0.15.20230313",["github","cabal.project"])
+# REGENDATA ("0.17.20231004",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -37,19 +37,24 @@ jobs:
             compilerVersion: "8.4"
             setup-method: hvr-ppa
             allow-failure: false
-          - compiler: ghc-9.6.1
+          - compiler: ghc-9.8.0.20230929
             compilerKind: ghc
-            compilerVersion: 9.6.1
+            compilerVersion: 9.8.0.20230929
             setup-method: ghcup
             allow-failure: false
-          - compiler: ghc-9.4.4
+          - compiler: ghc-9.6.3
             compilerKind: ghc
-            compilerVersion: 9.4.4
+            compilerVersion: 9.6.3
             setup-method: ghcup
             allow-failure: false
-          - compiler: ghc-9.2.7
+          - compiler: ghc-9.4.7
             compilerKind: ghc
-            compilerVersion: 9.2.7
+            compilerVersion: 9.4.7
+            setup-method: ghcup
+            allow-failure: false
+          - compiler: ghc-9.2.8
+            compilerKind: ghc
+            compilerVersion: 9.2.8
             setup-method: ghcup
             allow-failure: false
           - compiler: ghc-9.0.2
@@ -128,8 +133,9 @@ jobs:
           apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common libtinfo5
           if [ "${{ matrix.setup-method }}" = ghcup ]; then
             mkdir -p "$HOME/.ghcup/bin"
-            curl -sL https://downloads.haskell.org/ghcup/0.1.18.0/x86_64-linux-ghcup-0.1.18.0 > "$HOME/.ghcup/bin/ghcup"
+            curl -sL https://downloads.haskell.org/ghcup/0.1.19.5/x86_64-linux-ghcup-0.1.19.5 > "$HOME/.ghcup/bin/ghcup"
             chmod a+x "$HOME/.ghcup/bin/ghcup"
+            "$HOME/.ghcup/bin/ghcup" config add-release-channel https://raw.githubusercontent.com/haskell/ghcup-metadata/master/ghcup-prereleases-0.0.7.yaml;
             "$HOME/.ghcup/bin/ghcup" install ghc "$HCVER" || (cat "$HOME"/.ghcup/logs/*.* && false)
             "$HOME/.ghcup/bin/ghcup" install cabal 3.10.1.0 || (cat "$HOME"/.ghcup/logs/*.* && false)
           else
@@ -140,8 +146,9 @@ jobs:
             apt-get update
             if [ $((GHCJSARITH)) -ne 0 ] ; then apt-get install -y "$HCNAME" ghc-8.4.4 nodejs ; else apt-get install -y "$HCNAME" ; fi
             mkdir -p "$HOME/.ghcup/bin"
-            curl -sL https://downloads.haskell.org/ghcup/0.1.18.0/x86_64-linux-ghcup-0.1.18.0 > "$HOME/.ghcup/bin/ghcup"
+            curl -sL https://downloads.haskell.org/ghcup/0.1.19.5/x86_64-linux-ghcup-0.1.19.5 > "$HOME/.ghcup/bin/ghcup"
             chmod a+x "$HOME/.ghcup/bin/ghcup"
+            "$HOME/.ghcup/bin/ghcup" config add-release-channel https://raw.githubusercontent.com/haskell/ghcup-metadata/master/ghcup-prereleases-0.0.7.yaml;
             "$HOME/.ghcup/bin/ghcup" install cabal 3.10.1.0 || (cat "$HOME"/.ghcup/logs/*.* && false)
           fi
         env:
@@ -157,10 +164,12 @@ jobs:
           echo "CABAL_CONFIG=$HOME/.cabal/config" >> "$GITHUB_ENV"
           HCDIR=/opt/$HCKIND/$HCVER
           if [ "${{ matrix.setup-method }}" = ghcup ]; then
-            HC=$HOME/.ghcup/bin/$HCKIND-$HCVER
+            HC=$("$HOME/.ghcup/bin/ghcup" whereis ghc "$HCVER")
+            HCPKG=$(echo "$HC" | sed 's#ghc$#ghc-pkg#')
+            HADDOCK=$(echo "$HC" | sed 's#ghc$#haddock#')
             echo "HC=$HC" >> "$GITHUB_ENV"
-            echo "HCPKG=$HOME/.ghcup/bin/$HCKIND-pkg-$HCVER" >> "$GITHUB_ENV"
-            echo "HADDOCK=$HOME/.ghcup/bin/haddock-$HCVER" >> "$GITHUB_ENV"
+            echo "HCPKG=$HCPKG" >> "$GITHUB_ENV"
+            echo "HADDOCK=$HADDOCK" >> "$GITHUB_ENV"
             echo "CABAL=$HOME/.ghcup/bin/cabal-3.10.1.0 -vnormal+nowrap" >> "$GITHUB_ENV"
           else
             HC=$HCDIR/bin/$HCKIND
@@ -220,8 +229,8 @@ jobs:
       - name: install cabal-plan
         run: |
           mkdir -p $HOME/.cabal/bin
-          curl -sL https://github.com/haskell-hvr/cabal-plan/releases/download/v0.6.2.0/cabal-plan-0.6.2.0-x86_64-linux.xz > cabal-plan.xz
-          echo 'de73600b1836d3f55e32d80385acc055fd97f60eaa0ab68a755302685f5d81bc  cabal-plan.xz' | sha256sum -c -
+          curl -sL https://github.com/haskell-hvr/cabal-plan/releases/download/v0.7.3.0/cabal-plan-0.7.3.0-x86_64-linux.xz > cabal-plan.xz
+          echo 'f62ccb2971567a5f638f2005ad3173dba14693a45154c1508645c52289714cb2  cabal-plan.xz' | sha256sum -c -
           xz -d < cabal-plan.xz > $HOME/.cabal/bin/cabal-plan
           rm -f cabal-plan.xz
           chmod a+x $HOME/.cabal/bin/cabal-plan
@@ -234,11 +243,11 @@ jobs:
         run: |
           touch cabal.project
           echo "packages: $GITHUB_WORKSPACE/source/these" >> cabal.project
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then echo "packages: $GITHUB_WORKSPACE/source/these-lens" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90800)) -ne 0 ] ; then echo "packages: $GITHUB_WORKSPACE/source/these-lens" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then echo "packages: $GITHUB_WORKSPACE/source/these-optics" >> cabal.project ; fi
           echo "packages: $GITHUB_WORKSPACE/source/semialign" >> cabal.project
-          echo "packages: $GITHUB_WORKSPACE/source/monad-chronicle" >> cabal.project
-          echo "packages: $GITHUB_WORKSPACE/source/these-tests" >> cabal.project
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then echo "packages: $GITHUB_WORKSPACE/source/monad-chronicle" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then echo "packages: $GITHUB_WORKSPACE/source/these-tests" >> cabal.project ; fi
           cat cabal.project
       - name: sdist
         run: |
@@ -266,23 +275,23 @@ jobs:
           touch cabal.project
           touch cabal.project.local
           echo "packages: ${PKGDIR_these}" >> cabal.project
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then echo "packages: ${PKGDIR_these_lens}" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90800)) -ne 0 ] ; then echo "packages: ${PKGDIR_these_lens}" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then echo "packages: ${PKGDIR_these_optics}" >> cabal.project ; fi
           echo "packages: ${PKGDIR_semialign}" >> cabal.project
-          echo "packages: ${PKGDIR_monad_chronicle}" >> cabal.project
-          echo "packages: ${PKGDIR_these_tests}" >> cabal.project
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then echo "packages: ${PKGDIR_monad_chronicle}" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then echo "packages: ${PKGDIR_these_tests}" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these-lens" >> cabal.project ; fi
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90800)) -ne 0 ] ; then echo "package these-lens" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90800)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these-optics" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package semialign" >> cabal.project ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package monad-chronicle" >> cabal.project ; fi
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "package these-tests" >> cabal.project ; fi
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90800)) -ne 0 ] ; then echo "package monad-chronicle" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90800)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90800)) -ne 0 ] ; then echo "package these-tests" >> cabal.project ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80200 && HCNUMVER < 90800)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods" >> cabal.project ; fi
           cat >> cabal.project <<EOF
           EOF
           $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(monad-chronicle|semialign|these|these-lens|these-optics|these-tests)$/; }' >> cabal.project.local
@@ -306,7 +315,7 @@ jobs:
           $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --write-ghc-environment-files=always
       - name: tests
         run: |
-          if [ $((! GHCJSARITH)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct ; fi
+          if [ $((! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct ; fi
           pkgdir() {
             case $1 in
               these) echo ${PKGDIR_these} ;;
@@ -323,16 +332,16 @@ jobs:
         run: |
           cd ${PKGDIR_these} || false
           ${CABAL} -vnormal check
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then cd ${PKGDIR_these_lens} || false ; fi
-          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then ${CABAL} -vnormal check ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90800)) -ne 0 ] ; then cd ${PKGDIR_these_lens} || false ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90800)) -ne 0 ] ; then ${CABAL} -vnormal check ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then cd ${PKGDIR_these_optics} || false ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000)) -ne 0 ] ; then ${CABAL} -vnormal check ; fi
           cd ${PKGDIR_semialign} || false
           ${CABAL} -vnormal check
-          cd ${PKGDIR_monad_chronicle} || false
-          ${CABAL} -vnormal check
-          cd ${PKGDIR_these_tests} || false
-          ${CABAL} -vnormal check
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then cd ${PKGDIR_monad_chronicle} || false ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then ${CABAL} -vnormal check ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then cd ${PKGDIR_these_tests} || false ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER < 90800)) -ne 0 ] ; then ${CABAL} -vnormal check ; fi
       - name: haddock
         run: |
           if [ $((! GHCJSARITH)) -ne 0 ] ; then $CABAL v2-haddock --disable-documentation --haddock-all $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH all ; fi
@@ -345,15 +354,23 @@ jobs:
           rm -f cabal.project.local
       - name: constraint set mtl-2.3
         run: |
+          if [ $((! GHCJSARITH && HCNUMVER >= 80600 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='mtl ^>=2.3' --constraint='transformers <0.6' all --dry-run ; fi
+          if [ $((! GHCJSARITH && HCNUMVER >= 80600 && HCNUMVER < 90600)) -ne 0 ] ; then cabal-plan topo | sort ; fi
           if [ $((! GHCJSARITH && HCNUMVER >= 80600 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='mtl ^>=2.3' --constraint='transformers <0.6' all ; fi
       - name: constraint set transformers-0.6
         run: |
+          if [ $((! GHCJSARITH && HCNUMVER >= 80600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='transformers ^>=0.6' all --dry-run ; fi
+          if [ $((! GHCJSARITH && HCNUMVER >= 80600)) -ne 0 ] ; then cabal-plan topo | sort ; fi
           if [ $((! GHCJSARITH && HCNUMVER >= 80600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='transformers ^>=0.6' all ; fi
       - name: constraint set optics-0.3
         run: |
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='optics-core ^>=0.3' all --dry-run ; fi
+          if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90600)) -ne 0 ] ; then cabal-plan topo | sort ; fi
           if [ $((GHCJSARITH || ! GHCJSARITH && HCNUMVER >= 80000 && HCNUMVER < 90600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='optics-core ^>=0.3' all ; fi
       - name: constraint set light
         run: |
+          $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='monad-chronicle -semigroupoids' --constraint='semialign -semigroupoids' all --dry-run
+          cabal-plan topo | sort
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='monad-chronicle -semigroupoids' --constraint='semialign -semigroupoids' all
       - name: save cache
         uses: actions/cache/save@v3
