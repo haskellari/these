@@ -3,6 +3,7 @@ branches: master
 -- docspec: True
 jobs-selection: any
 ghcjs-tests: True
+head-hackage: False
 
 -- quickcheck-instances makes a loop
 install-dependencies: False
