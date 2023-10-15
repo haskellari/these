@@ -27,6 +27,7 @@ tested-with:
      || ==9.2.8
      || ==9.4.7
      || ==9.6.3
+     || ==9.8.1
   , GHCJS ==8.4
 
 source-repository head
@@ -84,7 +85,7 @@ test-suite test
   -- additional dependencies
   build-depends:
       quickcheck-instances  >=0.3.23 && <0.4
-    , tasty                 >=1.2    && <1.5
+    , tasty                 >=1.2    && <1.6
     , tasty-quickcheck      >=0.10   && <0.11
     , transformers-compat   >=0.6.5  && <0.8
 
