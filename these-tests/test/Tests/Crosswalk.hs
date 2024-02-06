@@ -3,10 +3,16 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Tests.Crosswalk (crosswalkProps) where
 
+import Control.Applicative           (Const)
 import Control.Monad.Trans.Instances ()
+import Control.Monad.Trans.Maybe     (MaybeT)
 import Data.Functor.Compose          (Compose (..))
 import Data.Functor.Identity         (Identity (..))
+import Data.Functor.Sum              (Sum)
+import Data.Functor.These            (These1)
+import Data.List.NonEmpty            (NonEmpty)
 import Data.Map                      (Map)
+import Data.Proxy                    (Proxy)
 import Data.Semigroup                (Semigroup (..))
 import Data.Sequence                 (Seq)
 import Data.Typeable                 (Typeable, typeOf1)
@@ -27,14 +33,21 @@ import Tests.Orphans ()
 
 crosswalkProps :: TestTree
 crosswalkProps = testGroup "Crosswalk"
-    [ crosswalkLaws (P :: P [])
+    [ crosswalkLaws (P :: P Identity)
     , crosswalkLaws (P :: P Maybe)
-    , crosswalkLaws (P :: P Identity)
-    , crosswalkLaws (P :: P (These Int))
+    , crosswalkLaws (P :: P [])
+    , crosswalkLaws (P :: P NonEmpty)
     , crosswalkLaws (P :: P Seq)
     , crosswalkLaws (P :: P V.Vector)
+    , crosswalkLaws (P :: P (Either Int))
+    , crosswalkLaws (P :: P (These Int))
     , crosswalkLaws (P :: P ((,) Int))
+    , crosswalkLaws (P :: P Proxy)
+    , crosswalkLaws (P :: P (Const Int))
+    , crosswalkLaws (P :: P (Sum [] []))
+    , crosswalkLaws (P :: P (These1 [] []))
     , crosswalkLaws (P :: P (Compose [] []))
+    , crosswalkLaws (P :: P (MaybeT []))
     ]
 
 -------------------------------------------------------------------------------
