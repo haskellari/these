@@ -76,7 +76,7 @@ import qualified Data.IntMap as IntMap
 
 #if !(MIN_VERSION_base(4,16,0))
 import Data.Semigroup (Option (..))
-#endif 
+#endif
 
 import Data.These
 import Data.These.Combinators
@@ -95,7 +95,7 @@ oops = error . ("Data.Align: internal error: " ++)
 -- The laws of 'align' and 'zip' resemble lattice laws.
 -- There is a plenty of laws, but they are simply satisfied.
 --
--- And an addition property if @f@ is 'Foldable',
+-- And an additional property if @f@ is 'Foldable',
 -- which tries to enforce 'align'-feel:
 -- neither values are duplicated nor lost.
 --
@@ -137,16 +137,6 @@ oops = error . ("Data.Align: internal error: " ++)
 -- @
 -- toList x ≡ toListOf (folded . here) (align x y)
 --          ≡ mapMaybe justHere (toList (align x y))
--- @
---
---
--- And an addition property if @f@ is 'Foldable',
--- which tries to enforce 'align'-feel:
--- neither values are duplicated nor lost.
---
--- @
--- toList x = toListOf (folded . here) (align x y)
---          = mapMaybe justHere (toList (align x y))
 -- @
 --
 class Functor f => Semialign f where
