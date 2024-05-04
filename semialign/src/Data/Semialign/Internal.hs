@@ -80,6 +80,7 @@ import Data.Semigroup (Option (..))
 
 import Data.These
 import Data.These.Combinators
+import Control.Monad.Trans.Reader (ReaderT (..))
 
 oops :: String -> a
 oops = error . ("Data.Align: internal error: " ++)
@@ -453,6 +454,12 @@ instance Unzip ZipList where
 instance SemialignWithIndex Int ZipList
 instance ZipWithIndex Int ZipList
 instance RepeatWithIndex Int ZipList
+
+instance Semialign m => Semialign (ReaderT r m) where
+    align ma mb = ReaderT $ getCompose $ align (Compose (runReaderT ma)) (Compose (runReaderT mb))
+
+instance Align m => Align (ReaderT r m) where
+    nil = ReaderT $ Prelude.const nil
 
 -------------------------------------------------------------------------------
 -- semigroups
