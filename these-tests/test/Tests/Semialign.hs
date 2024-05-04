@@ -91,6 +91,7 @@ alignProps = testGroup "Align"
 #ifdef MIN_VERSION_lattice
     -- note: with e.g. N5 (which isn't distributive lattice) distributivity laws fail!
     , semialignLaws  (CZip     :: CSemialign (Const M2))
+    , semialignLaws  (CAlign   :: CSemialign (ReaderT Int []))
 #endif
     ]
 
