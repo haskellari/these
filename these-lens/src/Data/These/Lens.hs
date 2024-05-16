@@ -11,7 +11,7 @@ module Data.These.Lens (
     _This, _That, _These,
     ) where
 
-import Control.Applicative (pure, (<$>), (<*>))
+import Control.Applicative (pure, (<$>))
 import Prelude             (Either (..), flip, uncurry, ($), (.))
 
 import Control.Lens (Prism', Traversal, prism)

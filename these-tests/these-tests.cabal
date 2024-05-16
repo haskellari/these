@@ -13,22 +13,15 @@ maintainer:    Oleg Grenrus <oleg.grenrus@iki.fi>
 category:      Data, Control, These, Tests
 build-type:    Simple
 tested-with:
-    GHC ==7.4.2
-     || ==7.6.3
-     || ==7.8.4
-     || ==7.10.3
-     || ==8.0.2
-     || ==8.2.2
-     || ==8.4.4
-     || ==8.6.5
-     || ==8.8.4
-     || ==8.10.7
-     || ==9.0.2
-     || ==9.2.8
-     || ==9.4.7
-     || ==9.6.3
-     || ==9.8.1
-  , GHCJS ==8.4
+  GHC ==8.6.5
+   || ==8.8.4
+   || ==8.10.7
+   || ==9.0.2
+   || ==9.2.8
+   || ==9.4.8
+   || ==9.6.5
+   || ==9.8.2
+   || ==9.10.1
 
 source-repository head
   type:     git
@@ -58,36 +51,24 @@ test-suite test
   build-depends:
       assoc
     , base
-    , base-compat
     , binary
     , containers
     , hashable
     , indexed-traversable
+    , lens
     , QuickCheck
     , semialign
     , tagged
     , these
+    , these-lens
     , transformers
     , unordered-containers
     , vector
 
-  if impl(ghc >=8.0)
-    build-depends:
-        lens
-      , these-lens
-
-  if !impl(ghc >=8.0)
-    build-depends: semigroups
-
-  if !impl(ghc >=8.2)
-    build-depends: bifunctor-classes-compat
-
   -- additional dependencies
   build-depends:
-      quickcheck-instances  >=0.3.23 && <0.4
+      lattices              >=2.2.1  && <2.3
+    , quickcheck-instances  >=0.3.23 && <0.4
     , tasty                 >=1.2    && <1.6
     , tasty-quickcheck      >=0.10   && <0.11
     , transformers-compat   >=0.6.5  && <0.8
-
-  if impl(ghc >=7.6)
-    build-depends: lattices >=2.2 && <2.3

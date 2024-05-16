@@ -3,15 +3,13 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Tests.Crosswalk (crosswalkProps) where
 
-import Prelude ()
-import Prelude.Compat
-
 import Control.Monad.Trans.Instances ()
 import Data.Functor.Compose          (Compose (..))
 import Data.Functor.Identity         (Identity (..))
 import Data.Map                      (Map)
 import Data.Semigroup                (Semigroup (..))
 import Data.Sequence                 (Seq)
+import Data.Typeable                 (Typeable, typeOf1)
 import Test.QuickCheck               (Arbitrary (..), Property, (===))
 import Test.QuickCheck.Function      (Fun (..))
 import Test.QuickCheck.Instances ()
@@ -20,13 +18,6 @@ import Test.Tasty                    (TestTree, testGroup)
 import Test.Tasty.QuickCheck         (testProperty)
 
 import qualified Data.Vector as V
-
-#if MIN_VERSION_base(4,7,0)
-#define Typeable1 Typeable
-import Data.Typeable (Typeable, typeOf1)
-#else
-import Data.Typeable (Typeable1, typeOf1)
-#endif
 
 import Data.Crosswalk
 import Data.Semialign
@@ -55,7 +46,7 @@ data P (a :: * -> *) = P
 
 crosswalkLaws
     :: forall (t :: * -> *).
-       ( Typeable1 t, Crosswalk t
+       ( Typeable t, Crosswalk t
        , Eq (t A), Show (t A), Arbitrary (t A)
        , Eq (t B), Show (t B), Arbitrary (t B)
        )

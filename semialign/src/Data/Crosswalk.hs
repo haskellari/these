@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP         #-}
 {-# LANGUAGE Trustworthy #-}
 module Data.Crosswalk (
     -- * Crosswalk
@@ -42,9 +41,7 @@ class (Functor t, Foldable t) => Crosswalk t where
     sequenceL :: (Align f) => t (f a) -> f (t a)
     sequenceL = crosswalk id
 
-#if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL crosswalk | sequenceL #-}
-#endif
 
 instance Crosswalk Identity where
     crosswalk f (Identity a) = fmap Identity (f a)
@@ -106,10 +103,7 @@ class (Bifunctor t, Bifoldable t) => Bicrosswalk t where
     bisequenceL :: (Align f) => t (f a) (f b) -> f (t a b)
     bisequenceL = bicrosswalk id id
 
-#if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL bicrosswalk | bisequenceL #-}
-#endif
-
 
 instance Bicrosswalk Either where
     bicrosswalk f _ (Left x)  = Left  <$> f x

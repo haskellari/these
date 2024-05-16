@@ -1,5 +1,0 @@
-packages: .
-packages: ../these
-packages: ../semialign
-tests: False
-benchmarks: False

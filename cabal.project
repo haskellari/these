@@ -6,3 +6,6 @@ packages: monad-chronicle
 packages: these-tests
 
 tests: true
+
+allow-newer: quickcheck-instances:base
+allow-newer: quickcheck-instances:containers

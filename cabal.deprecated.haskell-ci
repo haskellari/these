@@ -1,6 +1,0 @@
-github-action-name: Deprecated Packages
-branches: master
-jobs-selection: any
-
--- quickcheck-instances makes a loop
-install-dependencies: False

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP         #-}
 {-# LANGUAGE Trustworthy #-}
 -- | This module provides
 --
@@ -87,10 +86,8 @@ import Data.Maybe          (isJust, mapMaybe)
 import Data.These
 import Prelude             (Bool (..), Maybe (..), curry, uncurry, (.))
 
-#ifdef MIN_VERSION_assoc
 import Data.Bifunctor.Assoc (assoc, unassoc)
 import Data.Bifunctor.Swap  (swap)
-#endif
 
 -- $setup
 -- >>> import Data.These
@@ -127,13 +124,7 @@ bitraverseThese = bitraverse
 --
 -- @since 0.8
 swapThese :: These a b -> These b a
-#ifdef MIN_VERSION_assoc
 swapThese = swap
-#else
-swapThese (This a)    = That a
-swapThese (That b)    = This b
-swapThese (These a b) = These b a
-#endif
 
 -- | 'These' is associative.
 --
@@ -144,33 +135,13 @@ swapThese (These a b) = These b a
 --
 -- @since 0.8
 assocThese :: These (These a b) c -> These a (These b c)
-#ifdef MIN_VERSION_assoc
 assocThese = assoc
-#else
-assocThese (This (This a))       = This a
-assocThese (This (That b))       = That (This b)
-assocThese (That c)              = That (That c)
-assocThese (These (That b) c)    = That (These b c)
-assocThese (This (These a b))    = These a (This b)
-assocThese (These (This a) c)    = These a (That c)
-assocThese (These (These a b) c) = These a (These b c)
-#endif
 
 -- | 'These' is associative. See 'assocThese'.
 --
 -- @since 0.8
 unassocThese :: These a (These b c) -> These (These a b) c
-#ifdef MIN_VERSION_assoc
 unassocThese = unassoc
-#else
-unassocThese (This a)              = This (This a)
-unassocThese (That (This b))       = This (That b)
-unassocThese (That (That c))       = That c
-unassocThese (That (These b c))    = These (That b) c
-unassocThese (These a (This b))    = This (These a b)
-unassocThese (These a (That c))    = These (This a) c
-unassocThese (These a (These b c)) = These (These a b) c
-#endif
 
 -------------------------------------------------------------------------------
 -- preview

@@ -1,7 +1,6 @@
 cabal-version:      >=1.10
 name:               these-lens
-version:            1.0.1.3
-x-revision:         1
+version:            1.0.2
 synopsis:           Lenses for These
 homepage:           https://github.com/haskellari/these
 license:            BSD3
@@ -13,18 +12,15 @@ build-type:         Simple
 extra-source-files: CHANGELOG.md
 description:        This package provides Prism and Traversals for @These@.
 tested-with:
-    GHC ==8.0.2
-     || ==8.2.2
-     || ==8.4.4
-     || ==8.6.5
-     || ==8.8.4
-     || ==8.10.7
-     || ==9.0.2
-     || ==9.2.8
-     || ==9.4.7
-     || ==9.6.3
-     || ==9.8.1
-  , GHCJS ==8.4
+  GHC ==8.6.5
+   || ==8.8.4
+   || ==8.10.7
+   || ==9.0.2
+   || ==9.2.8
+   || ==9.4.8
+   || ==9.6.5
+   || ==9.8.2
+   || ==9.10.1
 
 source-repository head
   type:     git
@@ -33,17 +29,13 @@ source-repository head
 
 library
   default-language: Haskell2010
-  ghc-options:      -Wall
-
-  if impl(ghc >=8.0)
-    ghc-options: -Wno-trustworthy-safe
-
+  ghc-options:      -Wall -Wno-trustworthy-safe
   hs-source-dirs:   src
   exposed-modules:  Data.These.Lens
 
   -- ghc boot libs
-  build-depends:    base >=4.9 && <4.20
-  build-depends:    these >=1.2 && <1.3
+  build-depends:    base >=4.12.0.0 && <4.21
+  build-depends:    these >=1.2.1 && <1.3
 
   -- other dependencies
-  build-depends:    lens >=5.2.1 && <5.3
+  build-depends:    lens >=5.2.1 && <5.4
