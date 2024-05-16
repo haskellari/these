@@ -1,12 +1,8 @@
-{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
 module Tests.These (theseProps) where
-
-import Prelude ()
-import Prelude.Compat
 
 import Control.Applicative       (liftA)
 import Control.Monad             (ap, liftM)
@@ -30,12 +26,6 @@ import qualified Data.Map    as Map
 
 import Data.Align
 import Data.These
-
-#if MIN_VERSION_base(4,7,0)
-#define Typeable1 Typeable
-#else
-import Data.Typeable (Typeable1)
-#endif
 
 theseProps :: TestTree
 theseProps = testGroup "These"
@@ -138,7 +128,7 @@ data CFunctor f where
     CMonad       :: (Applicative f, Monad f) => CFunctor f
 
 functorLaws
-    :: forall f. (Typeable1 f
+    :: forall f. (Typeable f
        , Eq (f A), Show (f A), Arbitrary (f A)
        , Eq (f B), Show (f B), Arbitrary (f B)
        , Eq (f C), Show (f C), Arbitrary (f C)

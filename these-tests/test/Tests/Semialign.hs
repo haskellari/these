@@ -8,12 +8,13 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Tests.Semialign (alignProps, semialignLaws) where
 
-import Prelude ()
-import Prelude.Compat hiding (repeat, unzip, zip, zipWith)
+import Prelude hiding (repeat, unzip, zip, zipWith)
 
--- import qualified Prelude.Compat as Prelude
-
+import Algebra.Lattice
+       (BoundedJoinSemiLattice (..), BoundedMeetSemiLattice (..), Lattice (..))
+import Algebra.Lattice.M2            (M2)
 import Control.Applicative           (Const (..), ZipList (..))
+import Control.Lens                  (folded, toListOf)
 import Control.Monad                 (join)
 import Control.Monad.Trans.Instances ()
 import Data.Bifunctor                (bimap)
@@ -31,6 +32,7 @@ import Data.Maybe                    (mapMaybe)
 import Data.Proxy                    (Proxy)
 import Data.Sequence                 (Seq)
 import Data.Tagged                   (Tagged)
+import Data.Typeable                 (Typeable, typeOf1)
 import Test.QuickCheck
        (Arbitrary (..), Property, counterexample, (.&&.), (===))
 import Test.QuickCheck.Function      (Fun (..))
@@ -39,12 +41,6 @@ import Test.QuickCheck.Poly          (A, B, C)
 import Test.Tasty                    (TestTree, testGroup)
 import Test.Tasty.QuickCheck         (testProperty)
 
-#ifdef MIN_VERSION_lattice
-import Algebra.Lattice
-       (BoundedJoinSemiLattice (..), BoundedMeetSemiLattice (..), Lattice (..))
-import Algebra.Lattice.M2 (M2)
-#endif
-
 import qualified Data.Tree   as T
 import qualified Data.Vector as V
 
@@ -52,19 +48,9 @@ import Data.Semialign
 import Data.These
 import Data.These.Combinators
 
-#ifdef MIN_VERSION_lens
-import Control.Lens    (folded, toListOf)
 import Data.These.Lens
-#endif
 
 import Tests.Orphans ()
-
-#if MIN_VERSION_base(4,7,0)
-#define Typeable1 Typeable
-import Data.Typeable (Typeable, typeOf1)
-#else
-import Data.Typeable (Typeable1, typeOf1)
-#endif
 
 -------------------------------------------------------------------------------
 -- Props
@@ -88,17 +74,14 @@ alignProps = testGroup "Align"
     , semialignLaws  (CZip     :: CSemialign Identity)
     , semialignLaws  (CUnAll   :: CSemialign Proxy)
     , semialignLaws  (CZip     :: CSemialign (Tagged Char))
-#ifdef MIN_VERSION_lattice
     -- note: with e.g. N5 (which isn't distributive lattice) distributivity laws fail!
     , semialignLaws  (CZip     :: CSemialign (Const M2))
-#endif
     ]
 
 -------------------------------------------------------------------------------
 -- Const
 -------------------------------------------------------------------------------
 
-#ifdef MIN_VERSION_lattice
 instance Lattice a => Semialign (Const a) where
     alignWith _ (Const a) (Const b) = Const (a \/ b)
 
@@ -116,7 +99,6 @@ instance BoundedJoinSemiLattice a => Align (Const a) where
 
 instance BoundedMeetSemiLattice a => Repeat (Const a) where
     repeat _ = Const top
-#endif
 
 -------------------------------------------------------------------------------
 -- Align laws
@@ -132,7 +114,7 @@ data CSemialign f where
 
 semialignLaws
     :: forall (f :: * -> *).
-       ( Semialign f, Unzip f, Foldable f, Typeable1 f
+       ( Semialign f, Unzip f, Foldable f, Typeable f
        , Eq (f A), Show (f A), Arbitrary (f A)
        , Eq (f B), Show (f B), Arbitrary (f B)
        , Eq (f C), Show (f C), Arbitrary (f C)

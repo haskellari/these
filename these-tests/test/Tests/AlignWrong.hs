@@ -2,8 +2,7 @@
 {-# LANGUAGE DeriveFunctor  #-}
 module Tests.AlignWrong where
 
-import Prelude ()
-import Prelude.Compat hiding (zip, zipWith)
+import Prelude hiding (zip, zipWith)
 
 import Data.Map        (Map)
 import Test.QuickCheck (Arbitrary (..))

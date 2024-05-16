@@ -2,18 +2,16 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE PolyKinds                  #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE Trustworthy                #-}
 {-# LANGUAGE UndecidableInstances       #-}
-#if __GLASGOW_HASKELL__ >= 706
-{-# LANGUAGE PolyKinds                  #-}
-#endif
 module Data.Semialign.Internal where
 
 import Prelude
        (Bool (..), Either (..), Eq (..), Functor (fmap), Int, Maybe (..),
-       Monad (..), Ord (..), Ordering (..), String, error, flip, fst, id,
-       maybe, snd, uncurry, ($), (++), (.))
+       Monad (..), Ord (..), Ordering (..), String, error, flip, fst, id, maybe,
+       snd, uncurry, ($), (++), (.))
 
 import qualified Prelude as Prelude
 
@@ -45,34 +43,18 @@ import qualified Data.Tree                         as T
 import qualified Data.Vector                       as V
 import qualified Data.Vector.Fusion.Stream.Monadic as Stream
 
-#if MIN_VERSION_vector(0,11,0)
 import           Data.Vector.Fusion.Bundle.Monadic (Bundle (..))
 import qualified Data.Vector.Fusion.Bundle.Monadic as Bundle
 import qualified Data.Vector.Fusion.Bundle.Size    as Bundle
-#else
-import qualified Data.Vector.Fusion.Stream.Size as Stream
-#endif
 
-#if MIN_VERSION_containers(0,5,0)
 import           Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as Map
 
 import           Data.IntMap.Lazy (IntMap)
 import qualified Data.IntMap.Lazy as IntMap
 
-#if MIN_VERSION_containers(0,5,9)
 import qualified Data.IntMap.Merge.Lazy as IntMap
 import qualified Data.Map.Merge.Lazy    as Map
-#endif
-
--- containers <0.5
-#else
-import           Data.Map (Map)
-import qualified Data.Map as Map
-
-import           Data.IntMap (IntMap)
-import qualified Data.IntMap as IntMap
-#endif
 
 #if !(MIN_VERSION_base(4,16,0))
 import Data.Semigroup (Option (..))
@@ -150,9 +132,7 @@ class Functor f => Semialign f where
     alignWith :: (These a b -> c) -> f a -> f b -> f c
     alignWith f a b = f <$> align a b
 
-#if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL (align | alignWith) #-}
-#endif
 
 -- | A unit of 'align'.
 --
@@ -196,10 +176,7 @@ class Semialign f => Unalign f where
     unalignWith :: (c -> These a b) -> f c -> (f a, f b)
     unalignWith f fx = unalign (fmap f fx)
 
-#if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL unalignWith | unalign #-}
-#endif
-
 
 -- | Functors supporting a 'zip' operation that takes the intersection of
 -- non-uniform shapes.
@@ -284,9 +261,7 @@ class Semialign f => Zip f where
     zipWith :: (a -> b -> c) -> f a -> f b -> f c
     zipWith f a b = uncurry f <$> zip a b
 
-#if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL (zip | zipWith) #-}
-#endif
 
 -- | Zippable functors supporting left and right units
 --
@@ -327,9 +302,7 @@ class Zip f => Unzip f where
     unzip :: f (a, b) -> (f a, f b)
     unzip = unzipWith id
 
-#if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL unzipWith | unzip #-}
-#endif
 
 unzipDefault :: Functor f => f (a, b) -> (f a, f b)
 unzipDefault x = (fst <$> x, snd <$> x)
@@ -519,12 +492,8 @@ instance Align Seq where
     nil = Seq.empty
 
 instance Unzip Seq where
-#if MIN_VERSION_containers(0,5,11)
     unzip     = Seq.unzip
     unzipWith = Seq.unzipWith
-#else
-    unzip = unzipDefault
-#endif
 
 instance Zip Seq where
     zip     = Seq.zip
@@ -553,17 +522,9 @@ instance Unzip T.Tree where
 -------------------------------------------------------------------------------
 
 instance Ord k => Semialign (Map k) where
-#if MIN_VERSION_containers(0,5,9)
     alignWith f = Map.merge (Map.mapMissing (\_ x ->  f (This x)))
                             (Map.mapMissing (\_ y ->  f (That y)))
                             (Map.zipWithMatched (\_ x y -> f (These x y)))
-#elif MIN_VERSION_containers(0,5,0)
-    alignWith f = Map.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
-#else
-    align m n = Map.unionWith merge (Map.map This m) (Map.map That n)
-      where merge (This a) (That b) = These a b
-            merge _ _ = oops "Align Map: merge"
-#endif
 
 instance (Ord k) => Align (Map k) where
     nil = Map.empty
@@ -577,17 +538,9 @@ instance Ord k => Zip (Map k) where
     zipWith = Map.intersectionWith
 
 instance Semialign IntMap where
-#if MIN_VERSION_containers(0,5,9)
     alignWith f = IntMap.merge (IntMap.mapMissing (\_ x ->  f (This x)))
                                (IntMap.mapMissing (\_ y ->  f (That y)))
                                (IntMap.zipWithMatched (\_ x y -> f (These x y)))
-#elif MIN_VERSION_containers(0,5,0)
-    alignWith f = IntMap.mergeWithKey (\_ x y -> Just $ f $ These x y) (fmap (f . This)) (fmap (f . That))
-#else
-    align m n = IntMap.unionWith merge (IntMap.map This m) (IntMap.map That n)
-      where merge (This a) (That b) = These a b
-            merge _ _ = oops "Align IntMap: merge"
-#endif
 
 instance Align IntMap where
     nil = IntMap.empty
@@ -712,13 +665,8 @@ instance Monad m => Align (Stream m) where
     nil = Stream.empty
 
 instance Monad m => Semialign (Stream m) where
-#if MIN_VERSION_vector(0,11,0)
     alignWith  f (Stream stepa ta) (Stream stepb tb)
       = Stream step (ta, tb, Nothing, False)
-#else
-    alignWith  f (Stream stepa ta na) (Stream stepb tb nb)
-      = Stream step (ta, tb, Nothing, False) (Stream.larger na nb)
-#endif
       where
         step (sa, sb, Nothing, False) = do
             r <- stepa sa
@@ -743,14 +691,12 @@ instance Monad m => Semialign (Stream m) where
 instance Monad m => Zip (Stream m) where
     zipWith = Stream.zipWith
 
-#if MIN_VERSION_vector(0,11,0)
 instance Monad m => Align (Bundle m v) where
     nil = Bundle.empty
 
 instance Monad m => Semialign (Bundle m v) where
     alignWith f Bundle{sElems = sa, sSize = na} Bundle{sElems = sb, sSize = nb}
       = Bundle.fromStream (alignWith f sa sb) (Bundle.larger na nb)
-#endif
 
 instance Monad m => Zip (Bundle m v) where
     zipWith = Bundle.zipWith

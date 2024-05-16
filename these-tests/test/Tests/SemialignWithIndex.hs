@@ -1,11 +1,11 @@
-{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Tests.SemialignWithIndex (alignWithKeyProps) where
 
-import Prelude hiding (zip, repeat)
+import Prelude hiding (repeat, zip)
 
 import Data.Functor.WithIndex    (FunctorWithIndex (imap))
+import Data.Typeable             (Typeable, typeOf1)
 import Test.QuickCheck
        (Arbitrary (..), CoArbitrary, Property, once, (===))
 import Test.QuickCheck.Function  (Fun (..), Function, applyFun)
@@ -26,13 +26,6 @@ import Data.Semialign.Indexed
 import Data.These
 
 import Tests.Orphans ()
-
-#if MIN_VERSION_base(4,7,0)
-#define Typeable1 Typeable
-import Data.Typeable (Typeable, typeOf1)
-#else
-import Data.Typeable (Typeable1, typeOf1)
-#endif
 
 -------------------------------------------------------------------------------
 -- Props
@@ -67,7 +60,7 @@ alignWithKeyProps = testGroup "AlignWithIndex"
 data P (f :: * -> *) = P
 
 repeatIndexedLaws
-    :: forall f i. (RepeatWithIndex i f, Typeable1 f
+    :: forall f i. (RepeatWithIndex i f, Typeable f
        , Function i, CoArbitrary i, Show i
        , Eq (f A), Show (f A), Arbitrary (f A)
        , Eq (f B), Show (f B), Arbitrary (f B)
@@ -87,7 +80,7 @@ repeatIndexedLaws p = testGroup name $
         f = applyFun f'
 
 semialignIndexedLaws
-    :: forall f i. (ZipWithIndex i f, Typeable1 f
+    :: forall f i. (ZipWithIndex i f, Typeable f
        , Function i, CoArbitrary i, Show i
        , Eq (f A), Show (f A), Arbitrary (f A)
        , Eq (f B), Show (f B), Arbitrary (f B)
@@ -100,7 +93,7 @@ semialignIndexedLaws p = testGroup name $ semialignIndexedLaws' p where
 
 
 semialignIndexedLaws'
-    :: forall f i. (ZipWithIndex i f, Typeable1 f
+    :: forall f i. (ZipWithIndex i f, Typeable f
        , Function i, CoArbitrary i, Show i
        , Eq (f A), Show (f A), Arbitrary (f A)
        , Eq (f B), Show (f B), Arbitrary (f B)

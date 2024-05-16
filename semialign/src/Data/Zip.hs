@@ -50,6 +50,4 @@ instance Repeat f => Applicative (Zippy f) where
     Zippy f <*> Zippy x = Zippy $ zipWith ($) f x
 #endif
 
-#if MIN_VERSION_base(4,10,0)
     liftA2 f (Zippy x) (Zippy y) = Zippy $ zipWith f x y
-#endif

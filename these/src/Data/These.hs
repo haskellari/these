@@ -1,22 +1,8 @@
-{-# LANGUAGE CPP                #-}
--- | The 'These' type and associated operations. Now enhanced with "Control.Lens" magic!
+-- | The 'These' type and associated operations.
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE Safe               #-}
-
-#if MIN_VERSION_base(4,9,0)
-#define LIFTED_FUNCTOR_CLASSES 1
-#else
-#if MIN_VERSION_transformers(0,5,0)
-#define LIFTED_FUNCTOR_CLASSES 1
-#else
-#if MIN_VERSION_transformers_compat(0,5,0) && !MIN_VERSION_transformers(0,4,0)
-#define LIFTED_FUNCTOR_CLASSES 1
-#endif
-#endif
-#endif
-
 module Data.These (
       These(..)
 
@@ -41,47 +27,31 @@ module Data.These (
     ) where
 
 import Control.Applicative  (Applicative (..), (<$>))
-import Control.DeepSeq      (NFData (..))
+import Control.DeepSeq      (NFData (..), NFData1 (..), NFData2 (..))
 import Data.Bifoldable      (Bifoldable (..))
 import Data.Bifoldable1     (Bifoldable1 (..))
 import Data.Bifunctor       (Bifunctor (..))
+import Data.Bifunctor.Assoc (Assoc (..))
+import Data.Bifunctor.Swap  (Swap (..))
 import Data.Binary          (Binary (..))
 import Data.Bitraversable   (Bitraversable (..))
 import Data.Data            (Data, Typeable)
 import Data.Either          (partitionEithers)
 import Data.Foldable        (Foldable (..))
+import Data.Functor.Classes
+       (Eq1 (..), Eq2 (..), Ord1 (..), Ord2 (..), Read1 (..), Read2 (..),
+       Show1 (..), Show2 (..))
 import Data.Hashable        (Hashable (..))
 import Data.Hashable.Lifted (Hashable1 (..), Hashable2 (..))
 import Data.List.NonEmpty   (NonEmpty (..))
 import Data.Monoid          (Monoid (..))
 import Data.Semigroup       (Semigroup (..))
 import Data.Traversable     (Traversable (..))
-import GHC.Generics         (Generic)
+import GHC.Generics         (Generic, Generic1)
 import Prelude
        (Bool (..), Either (..), Eq (..), Functor (..), Int, Monad (..),
        Ord (..), Ordering (..), Read (..), Show (..), fail, id, lex, readParen,
        seq, showParen, showString, ($), (&&), (.))
-
-#if MIN_VERSION_deepseq(1,4,3)
-import Control.DeepSeq (NFData1 (..), NFData2 (..))
-#endif
-
-#if __GLASGOW_HASKELL__ >= 706
-import GHC.Generics (Generic1)
-#endif
-
-#ifdef MIN_VERSION_assoc
-import Data.Bifunctor.Assoc (Assoc (..))
-import Data.Bifunctor.Swap  (Swap (..))
-#endif
-
-#ifdef LIFTED_FUNCTOR_CLASSES
-import Data.Functor.Classes
-       (Eq1 (..), Eq2 (..), Ord1 (..), Ord2 (..), Read1 (..), Read2 (..),
-       Show1 (..), Show2 (..))
-#else
-import Data.Functor.Classes (Eq1 (..), Ord1 (..), Read1 (..), Show1 (..))
-#endif
 
 -- $setup
 -- >>> import Control.Lens
@@ -103,11 +73,7 @@ import Data.Functor.Classes (Eq1 (..), Ord1 (..), Read1 (..), Show1 (..))
 --   For zipping and unzipping of structures with 'These' values, see
 --   "Data.Align".
 data These a b = This a | That b | These a b
-  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic
-#if __GLASGOW_HASKELL__ >= 706
-    , Generic1
-#endif
-    )
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic, Generic1)
 
 -------------------------------------------------------------------------------
 -- Eliminators
@@ -293,7 +259,6 @@ instance (Semigroup a) => Monad (These a) where
 -- Data.Functor.Classes
 -------------------------------------------------------------------------------
 
-#ifdef LIFTED_FUNCTOR_CLASSES
 -- | @since 1.1.1
 instance Eq2 These where
   liftEq2 f _ (This a)    (This a')     = f a a'
@@ -360,17 +325,6 @@ instance Read2 These where
 instance Read a => Read1 (These a) where
   liftReadsPrec = liftReadsPrec2 readsPrec readList
 
-#else
--- | @since 1.1.1
-instance Eq a   => Eq1   (These a) where eq1        = (==)
--- | @since 1.1.1
-instance Ord a  => Ord1  (These a) where compare1   = compare
--- | @since 1.1.1
-instance Show a => Show1 (These a) where showsPrec1 = showsPrec
--- | @since 1.1.1
-instance Read a => Read1 (These a) where readsPrec1 = readsPrec
-#endif
-
 -------------------------------------------------------------------------------
 -- assoc
 -------------------------------------------------------------------------------
@@ -409,7 +363,6 @@ instance (NFData a, NFData b) => NFData (These a b) where
     rnf (That b)    = rnf b
     rnf (These a b) = rnf a `seq` rnf b
 
-#if MIN_VERSION_deepseq(1,4,3)
 -- | @since 1.1.1
 instance NFData a => NFData1 (These a) where
     liftRnf _rnfB (This a)    = rnf a
@@ -421,7 +374,6 @@ instance NFData2 These where
     liftRnf2  rnfA _rnfB (This a)    = rnfA a
     liftRnf2 _rnfA  rnfB (That b)    = rnfB b
     liftRnf2  rnfA  rnfB (These a b) = rnfA a `seq` rnfB b
-#endif
 
 -------------------------------------------------------------------------------
 -- binary
