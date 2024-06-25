@@ -805,18 +805,18 @@ padZip = alignWith (fromThese Nothing Nothing . bimap Just Just)
 padZipWith :: (Semialign f) => (Maybe a -> Maybe b -> c) -> f a -> f b -> f c
 padZipWith f xs ys = uncurry f <$> padZip xs ys
 
--- | Left-padded 'zipWith'.
-lpadZipWith :: (Maybe a -> b -> c) -> [a] -> [b] -> [c]
-lpadZipWith f xs ys = catMaybes $ padZipWith (\x y -> f x <$> y) xs ys
+-- | Left-padded 'zipWith'. Always preserves the shape of the second container.
+lpadZipWith :: (Zip f) => (Maybe a -> b -> c) -> f a -> f b -> f c
+lpadZipWith f xs ys = zipWith f (alignWith justHere xs ys) ys
 
--- | Left-padded 'zip'.
-lpadZip :: [a] -> [b] -> [(Maybe a, b)]
+-- | Left-padded 'zip'. Always preserves the shape of the second container.
+lpadZip :: (Zip f) => f a -> f b -> f (Maybe a, b)
 lpadZip = lpadZipWith (,)
 
--- | Right-padded 'zipWith'.
-rpadZipWith :: (a -> Maybe b -> c) -> [a] -> [b] -> [c]
-rpadZipWith f xs ys = lpadZipWith (flip f) ys xs
+-- | Right-padded 'zipWith'. Always preserves the shape of the first container.
+rpadZipWith :: (Zip f) => (a -> Maybe b -> c) -> f a -> f b -> f c
+rpadZipWith f xs ys = zipWith f xs (alignWith justThere xs ys)
 
--- | Right-padded 'zip'.
-rpadZip :: [a] -> [b] -> [(a, Maybe b)]
+-- | Right-padded 'zip'. Always preserves the shape of the first container.
+rpadZip :: (Zip f) => f a -> f b -> f (a, Maybe b)
 rpadZip = rpadZipWith (,)
