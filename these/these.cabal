@@ -1,6 +1,7 @@
 cabal-version:      >=1.10
 name:               these
 version:            1.2.1
+x-revision:         1
 synopsis:           An either-or-both data type.
 homepage:           https://github.com/haskellari/these
 license:            BSD3
@@ -66,7 +67,7 @@ library
   -- Bifunctor type class comes from bifunctor-classes-compat
   build-depends:
       assoc     >=1.1.1   && <1.2
-    , hashable  >=1.4.4.0 && <1.5
+    , hashable  >=1.4.4.0 && <1.6
 
   if !impl(ghc >=9.6)
     build-depends: foldable1-classes-compat >=0.1 && <0.2
