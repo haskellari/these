@@ -19,7 +19,7 @@ module Control.Monad.Trans.Chronicle (
     -- * The ChronicleT monad transformer
     ChronicleT(..),
     -- * Chronicle operations
-    dictate, disclose, confess,
+    dictate, confess,
     memento, absolve, condemn,
     retcon,
     ) where
@@ -28,7 +28,6 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Fix
 import Control.Monad.Trans
-import Data.Default.Class
 import Data.Functor.Identity
 import Data.Semigroup
 
@@ -154,15 +153,6 @@ instance (Semigroup c, MonadFix m) => MonadFix (ChronicleT c m) where
 --   Equivalent to 'tell' for the 'Writer' monad.
 dictate :: (Semigroup c, Monad m) => c -> ChronicleT c m ()
 dictate c = ChronicleT $ return (These c ())
-
--- | @'disclose' c@ is an action that records the output @c@ and returns a
---   @'Default'@ value.
---
---   This is a convenience function for reporting non-fatal errors in one
---   branch a @case@, or similar scenarios when there is no meaningful
---   result but a placeholder of sorts is needed in order to continue.
-disclose :: (Default a, Semigroup c, Monad m) => c -> ChronicleT c m a
-disclose c = dictate c >> return def
 
 -- | @'confess' c@ is an action that ends with a final output @c@.
 --

@@ -41,7 +41,6 @@ import Control.Monad.Trans.Error as Error
 
 import Control.Monad             (liftM)
 import Control.Monad.Trans.Class (lift)
-import Data.Default.Class
 import Data.Semigroup
 import Prelude
 
@@ -50,15 +49,6 @@ class (Monad m) => MonadChronicle c m | m -> c where
     --
     --   Equivalent to 'tell' for the 'Writer' monad.
     dictate :: c -> m ()
-
-    -- | @'disclose' c@ is an action that records the output @c@ and returns a
-    --   @'Default'@ value.
-    --
-    --   This is a convenience function for reporting non-fatal errors in one
-    --   branch a @case@, or similar scenarios when there is no meaningful
-    --   result but a placeholder of sorts is needed in order to continue.
-    disclose :: (Default a) => c -> m a
-    disclose c = dictate c >> return def
 
     -- | @'confess' c@ is an action that ends with a final record @c@.
     --
