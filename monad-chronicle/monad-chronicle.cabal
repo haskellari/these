@@ -44,6 +44,7 @@ library
     Control.Monad.Chronicle
     Control.Monad.Chronicle.Class
     Control.Monad.Trans.Chronicle
+    Control.Monad.Trans.Chronicle.CPS
 
   -- ghc boot libs
   build-depends:
