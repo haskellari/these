@@ -6,6 +6,9 @@
 module Data.These (
       These(..)
 
+    -- * Functions to make 'These'
+    , maybeThese
+
     -- * Functions to get rid of 'These'
     , these
     , fromThese
@@ -49,9 +52,9 @@ import Data.Semigroup       (Semigroup (..))
 import Data.Traversable     (Traversable (..))
 import GHC.Generics         (Generic, Generic1)
 import Prelude
-       (Bool (..), Either (..), Eq (..), Functor (..), Int, Monad (..),
-       Ord (..), Ordering (..), Read (..), Show (..), fail, id, lex, readParen,
-       seq, showParen, showString, ($), (&&), (.))
+       (Bool (..), Either (..), Eq (..), Functor (..), Int, Maybe(..),
+       Monad (..), Ord (..), Ordering (..), Read (..), Show (..), fail, id,
+       lex, readParen, seq, showParen, showString, ($), (&&), (.))
 
 -- $setup
 -- >>> import Control.Lens
@@ -74,6 +77,18 @@ import Prelude
 --   "Data.Align".
 data These a b = This a | That b | These a b
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic, Generic1)
+
+
+-------------------------------------------------------------------------------
+-- Constructors
+-------------------------------------------------------------------------------
+
+-- | Realises the isomorphism @('Maybe' A, 'Maybe' B) = 'Maybe' ('These' A B)@
+maybeThese :: Maybe a -> Maybe b -> Maybe (These a b)
+maybeThese (Just x) (Just y) = Just (These x y)
+maybeThese (Just x) Nothing = Just (This x)
+maybeThese Nothing (Just y) = Just (That y)
+maybeThese Nothing Nothing = Nothing
 
 -------------------------------------------------------------------------------
 -- Eliminators
