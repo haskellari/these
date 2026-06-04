@@ -247,7 +247,6 @@ instance (Semigroup a) => Applicative (These a) where
 
 
 instance (Semigroup a) => Monad (These a) where
-    return = pure
     This  a   >>= _ = This a
     That    x >>= k = k x
     These a x >>= k = case k x of

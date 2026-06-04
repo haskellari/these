@@ -79,7 +79,6 @@ instance (Semigroup c, Applicative m) => Applicative (ChronicleT c m) where
     ChronicleT f <*> ChronicleT x = ChronicleT (liftA2 (<*>) f x)
 
 instance (Semigroup c, Monad m) => Monad (ChronicleT c m) where
-    return = ChronicleT . return . return
     m >>= k = ChronicleT $
         do cx <- runChronicleT m
            case cx of
